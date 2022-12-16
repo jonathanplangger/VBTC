@@ -1,5 +1,6 @@
-# this file is employed to implement and demo the results from the use of the blendmask model 
+# This file is employed to demo panoptic segmentation model
 import os, json, cv2, random
+import time
 import torch
 import detectron2
 from detectron2.utils.logger import setup_logger
@@ -69,10 +70,20 @@ oldTime = 0.0
 while(cap.isOpened()): 
     ret, frame = cap.read()
 
-    # obtain a prediction for the frame
-    outputs  = predictor(frame)
+    # Instance segmentation method
+    # # obtain a prediction for the frame
+    # outputs  = predictor(frame)
+    # v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2)
+    # out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+    
+    start_time = time.time()
+    # Panoptic segmentation
+    outputs, segments_info  = predictor(frame)["panoptic_seg"]
     v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2)
-    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+    out = v.draw_panoptic_seg_predictions(outputs.to("cpu"), segments_info)
+    print("Frame execution time: " + str(time.time() - start_time))
+
+
     
     # display the image
     cv2.imshow("image", out.get_image())
