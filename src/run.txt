@@ -1,0 +1,2 @@
+# Command used to run old_demo.py (if it was correctly compiled)
+python demo.py --config-file configs/DLA_34_syncbn_4x.yaml --input ../../datasets/coco/val2017/000000005992.jpg  --confidence-threshold 0.35 --opts MODEL.WEIGHTS models/DLA_34_4x.pth
