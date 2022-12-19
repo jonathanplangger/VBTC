@@ -24,8 +24,9 @@ import time
 
 import  pred
 
-# KITTI dataset
-seq_dir = "../../datasets/odom_KITTI/sequences/10/"
+# Filepath for the given dataset (relative to the location of demo.py)
+# img_dir = "../../datasets/odom_KITTI/sequences/10/image_0/"
+img_dir = "../../datasets/Rellis-3D/00000/pylon_camera_node/"
 
 # code taken from the demo website for detectron2
 cfg = get_cfg()
@@ -39,7 +40,7 @@ cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
 # obtain the predictor based on the configuration
 predictor = DefaultPredictor(cfg)
 
-vid  = pred.VideoPredictor(predictor, seq_dir, cfg, display=True)
+vid  = pred.VideoPredictor(predictor, img_dir, cfg, display=True)
 vid.predict()
 
 

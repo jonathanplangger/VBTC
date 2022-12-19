@@ -1,1 +1,0 @@
-tensor([3, 3, 3,  ..., 3, 3, 3], device='cuda:0', dtype=torch.int32)

@@ -22,36 +22,43 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 import json
 import time 
 
-# class SegVideo(object): 
-#     def __init__(self):
-
-
-
 # ----- For a video stream (KITTI sequence) -------- #
 class VideoPredictor(object):
-    def __init__(self, pred, seq_dir, cfg, display = False):
+    def __init__(self, pred, img_dir, cfg, display = False, dataset = "kitti"):
         """
             Args:
-                pred (DefaultPredictor): Predictor trained for use in segmentation
-                seq_dir (str): Path to the targeted sequence directory
-                cfg (?): Configuration file from detectron2
+                pred (DefaultPredictor): Predictor trained for use in segmentation\n
+                img_dir (str): Path to the targeted sequence directory\n
+                cfg (?): Configuration file from detectron2\n
+                dataset: selects what dataset type is being used. Options are: "kitti", "rellis"
         """
-        self.seg_video = None #Holds the segmented images 
-        self.seq_dir = seq_dir
+        self.img_dir = img_dir
         self.pred = pred
         self.cfg = cfg
         self.disp = display
+        self.dataset = dataset
+
+    def getImageFilePath(self, dataset="kitti"): 
+        """
+            Args: 
+                dataset(str): selects the dataset to be used: Ex. "kitti", "rellis"
+        """    
+        if(dataset == "kitti"): 
+            return "image_0/"
+        elif(dataset == "rellis"): 
+            return
 
 
     def displaySeg(self, img, seg, seg_info): 
         """
             Args:
-
+                img(Image->Tensor): Image file being displayed 
+                seg(list): List of masks representing each segmentation mask
+                seg_info(numpy ndarray): Array containing information regarding each class present during segmentation
         """
             # Visualize the segmentation onto a viewer 
         v = Visualizer(img[:, :, ::-1], MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]), scale=1.2)
         out = v.draw_panoptic_seg_predictions((seg).to("cpu"),seg_info)
-        
         
         # display the image
         cv2.imshow("image", out.get_image())
@@ -61,13 +68,9 @@ class VideoPredictor(object):
             exit("Exiting out of program...")
 
 
-
-
-
-
     def predict(self):
         # should update the code later to use directly the class variables rather than creating a new variable
-        seq_dir = self.seq_dir
+        img_dir = self.img_dir
         predictor = self.pred
 
         # create a new directory if it does not already exist
@@ -75,16 +78,10 @@ class VideoPredictor(object):
             os.mkdir("./results")
         except:
             pass
-
-        # obtain image directory path (for KITTI dataset)
-        img_dir = seq_dir + "image_0/" 
         
-        # obtain the frame times from the times.txt file
-        with open(seq_dir + "times.txt") as f: 
-            lines = f.readlines()  
-
         # open the image files for a video stream
-        cap = cv2.VideoCapture(img_dir + "%06d.png")
+        # cap = cv2.VideoCapture(img_dir + "%06d.jpg") # KITTI dataset
+        cap = cv2.VideoCapture(img_dir + "frame%06d.jpg")
 
         # change in time between frames
         oldTime = 0.0
@@ -95,7 +92,6 @@ class VideoPredictor(object):
         while(cap.isOpened()):
             # obtain an image file 
             ret, frame = cap.read()
-
 
             if frame is not None:
 
@@ -123,33 +119,3 @@ class VideoPredictor(object):
         # log the output file
         log  = open('results/log.txt', 'w')
         print(frame_time, file=log)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # Visualize the segmentation onto a viewer 
-# v = Visualizer(frame[:, :, ::-1], MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]), scale=1.2)
-# out = v.draw_panoptic_seg_predictions(outputs.to("cpu"), segments_info)
-
-
-# # display the image
-# cv2.imshow("image", out.get_image())
-
-# # break out of the loop when q is pressed
-# if cv2.waitKey(1) == ord('q'):
-#     break
