@@ -119,9 +119,6 @@ class VideoPredictor(object):
 
             if frame is not None:
 
-                # increment the quantity of frames present
-                frame_count = frame_count + 1
-
                 # start time
                 start_time = time.time()
                 # Panoptic segmentation
@@ -132,9 +129,9 @@ class VideoPredictor(object):
                 frame_time.append(exec_time) # add the time to the array 
 
                 #Output the predictions to a file 
-                # o_file = open("results/pred/{:06d}.txt".format(frame_count), 'w')
-                # print(outputs, file=o_file) # output the predictions to the file 
-                # o_file.close()
+                o_file = open("results/pred/{:06d}.txt".format(frame_count), 'w')
+                print(outputs, file=o_file) # output the predictions to the file 
+                o_file.close()
 
                 # display the image 
                 if self.disp:
