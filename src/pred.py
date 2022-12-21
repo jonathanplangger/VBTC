@@ -129,9 +129,14 @@ class VideoPredictor(object):
                 frame_time.append(exec_time) # add the time to the array 
 
                 #Output the predictions to a file 
-                o_file = open("results/pred/{:06d}.txt".format(frame_count), 'w')
-                print(outputs, file=o_file) # output the predictions to the file 
-                o_file.close()
+                pred_f = open("results/pred/{:06d}.txt".format(frame_count), 'w')
+                print(outputs, file=pred_f) # output the predictions to the file 
+                pred_f.close()
+
+                # output the segmentation information to a file 
+                segInfo_f = open("results/segInfo/{:06d}.txt".format(frame_count), "w")
+                print(segments_info, file=segInfo_f)
+                segInfo_f.close()
 
                 # display the image 
                 if self.disp:
