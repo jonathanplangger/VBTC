@@ -83,13 +83,14 @@ class VideoPredictor(object):
         elif(dataset == "rellis"): 
             return
 
-    def displaySeg(self, img, seg, seg_info): 
+    def displaySeg(self, img, seg, seg_info, wait:int=1): 
         """
-            Display the segmentation information onto images. 
-            Args:
-                img(Image->Tensor): Image file being displayed 
-                seg(list): List of masks representing each segmentation mask
-                seg_info(numpy ndarray): Array containing information regarding each class present during segmentation
+            Display the segmentation information onto images. \n
+            Args:\n
+                img(Image->Tensor): Image file being displayed \n
+                seg(List->Tensor): List of masks representing each segmentation mask\n
+                seg_info(numpy ndarray): Array containing information regarding each class present during segmentation\n
+                wait (int): Amount of time (in ms) opencv will wait for a key input before displaying the next frame (default = 1ms)\n
         """
             # Visualize the segmentation onto a viewer 
         v = Visualizer(img[:, :, ::-1], MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]), scale=1.2)
@@ -99,8 +100,24 @@ class VideoPredictor(object):
         cv2.imshow("image", out.get_image())
         
         # exit out of the program if the display is turned off 
-        if cv2.waitKey(1) == ord('q'):
+        if cv2.waitKey(wait) == ord('q'):
             exit("Exiting out of program...")
+
+
+    def displaySingleImg(self, frame_num:int=0):
+        """
+            Allows for the selective display of a single image. Press 'q' to exit opencv window\n
+            Args: \n
+                frame_num: Number of frame image to be displayed
+        """    
+        im  = cv2.imread(self.img_dir+"frame{:06d}.jpg".format(frame_num))
+        seg = torch.load("results/pred/{:06d}.pt".format(frame_num))
+        with open("results/seginfo/{:06d}.json".format(frame_num), 'r') as j: 
+            seg_info = json.loads(j.read())
+
+        # display the image
+        self.displaySeg(im, seg, seg_info, wait=-1)
+
 
     def predict(self):
         # should update the code later to use directly the class variables rather than creating a new variabl

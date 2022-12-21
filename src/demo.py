@@ -40,8 +40,14 @@ cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
 # obtain the predictor based on the configuration
 predictor = DefaultPredictor(cfg)
 
-vid  = pred.VideoPredictor(predictor, img_dir, cfg, display=False, save=True)
+vid  = pred.VideoPredictor(predictor, img_dir, cfg, display=True, save=True)
 vid.predict()
+
+
+
+# --------- Single Image Display ------------- #
+# load the image, segmentation masks, and segmentation informat
+# vid.displaySingleImg(0)
 
 
 
