@@ -38,8 +38,34 @@ class VideoPredictor(object):
         self.disp = display
         self.dataset = dataset
 
+    def __createResultsDir(self):
+        """
+            Creates the directory structure required to output the results for the program.
+            No args required
+        """
+        # create a new directory if it does not already exist
+        try: 
+            os.mkdir("./results")
+        except:
+            pass
+
+        # Create a new directory for the predictions
+        try: 
+            os.mkdir("./results/pred")
+        except:
+            pass
+
+        # Create a new directory for the segmentation information 
+        try: 
+            os.mkdir("./results/segInfo")
+        except:
+            pass
+
+
+
     def getImageFilePath(self, dataset="kitti"): 
         """
+            Obtain the file path based on the different datasets
             Args: 
                 dataset(str): selects the dataset to be used: Ex. "kitti", "rellis"
         """    
@@ -51,6 +77,7 @@ class VideoPredictor(object):
 
     def displaySeg(self, img, seg, seg_info): 
         """
+            Display the segmentation information onto images. 
             Args:
                 img(Image->Tensor): Image file being displayed 
                 seg(list): List of masks representing each segmentation mask
@@ -73,11 +100,8 @@ class VideoPredictor(object):
         img_dir = self.img_dir
         predictor = self.pred
 
-        # create a new directory if it does not already exist
-        try: 
-            os.mkdir("./results")
-        except:
-            pass
+        # create the directory structure
+        self.__createResultsDir()
         
         # open the image files for a video stream
         # cap = cv2.VideoCapture(img_dir + "%06d.jpg") # KITTI dataset
@@ -102,20 +126,27 @@ class VideoPredictor(object):
                 start_time = time.time()
                 # Panoptic segmentation
                 outputs, segments_info  = predictor(frame)["panoptic_seg"]
-                
                 # total execution time
                 exec_time = round(time.time() - start_time,6)
                 # print("Frame execution time: " + str(exec_time) + " s")
                 frame_time.append(exec_time) # add the time to the array 
+
+                #Output the predictions to a file 
+                # o_file = open("results/pred/{:06d}.txt".format(frame_count), 'w')
+                # print(outputs, file=o_file) # output the predictions to the file 
+                # o_file.close()
 
                 # display the image 
                 if self.disp:
                     self.displaySeg(frame, outputs, segments_info)
 
 
+                # increment the count for the frames 
+                frame_count = frame_count + 1
             else: 
                 break
 
         # log the output file
-        log  = open('results/log.txt', 'w')
+        log  = open('results/time_log.txt', 'w')
         print(frame_time, file=log)
+        log.close()
