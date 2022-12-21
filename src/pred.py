@@ -61,7 +61,14 @@ class VideoPredictor(object):
         except:
             pass
 
-
+    def __printProgress(self, total:int, cur:int): 
+        """
+            Print the current progress of the program onto the console 
+            Args: 
+                total (int): Total amount of files to be processed 
+                cur (int): current file being processed
+        """
+        print('\r', "Progress: {}/{}".format(cur, total), end='')
 
     def getImageFilePath(self, dataset="kitti"): 
         """
@@ -96,8 +103,7 @@ class VideoPredictor(object):
 
 
     def predict(self):
-        # should update the code later to use directly the class variables rather than creating a new variable
-        img_dir = self.img_dir
+        # should update the code later to use directly the class variables rather than creating a new variabl
         predictor = self.pred
 
         # create the directory structure
@@ -105,7 +111,10 @@ class VideoPredictor(object):
         
         # open the image files for a video stream
         # cap = cv2.VideoCapture(img_dir + "%06d.jpg") # KITTI dataset
-        cap = cv2.VideoCapture(img_dir + "frame%06d.jpg")
+        cap = cv2.VideoCapture(self.img_dir + "frame%06d.jpg")
+
+        # obtain the total amounts of frames within the img directory
+        frame_total = len(os.listdir(self.img_dir))
 
         # change in time between frames
         oldTime = 0.0
@@ -116,6 +125,9 @@ class VideoPredictor(object):
         while(cap.isOpened()):
             # obtain an image file 
             ret, frame = cap.read()
+
+            # obtain the current progress for the process.
+            self.__printProgress(frame_total, frame_count)
 
             if frame is not None:
 
