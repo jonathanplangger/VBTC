@@ -6,7 +6,7 @@ import numpy as np
 
 from detectron2.data import DatasetCatalog
 from detectron2.data import build_detection_train_loader, DatasetMapper
-
+from detectron2.config import CfgNode
 
 # directory path for the entire sequence
 
@@ -22,12 +22,8 @@ class DataLoader(object):
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
         DatasetCatalog.register("rellis", self.__reg_rellis)
         data: list[dict] = DatasetCatalog.get("rellis")
-
-        # base configuration for the loader 
-        loader = build_detection_train_loader(dataset = data, mapper = DatasetMapper(is_train=True), total_batch_size = 200)
-
-
-
+        # store the obtained metadata as a parameter
+        self.metadata = data
 
 
     # --------------------------- Database Registrations --------------------------------------#
@@ -68,5 +64,11 @@ class DataLoader(object):
     
 
 
-load = DataLoader()
+# --------- Testing the class above, REMOVE later ------------ #
+loader = DataLoader()
+
+
+
+
+
 

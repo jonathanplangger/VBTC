@@ -28,7 +28,6 @@ img_dir = "../../datasets/Rellis-3D/00000/pylon_camera_node/"
 
 # code taken from the demo website for detectron2
 cfg = get_cfg()
-
 # Select the model being implemented
 cfg.merge_from_file(model_zoo.get_config_file("COCO-PanopticSegmentation/panoptic_fpn_R_50_1x.yaml")) # model configuration file
 cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-PanopticSegmentation/panoptic_fpn_R_50_1x.yaml") # Model weights
