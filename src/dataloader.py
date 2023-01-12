@@ -14,25 +14,28 @@ from detectron2.config import CfgNode
 # ------------- Dataloader for the new dataset ------------- #
 class DataLoader(object):
 
-    def __init__(self):
+    def __init__(self, path=""):
         """
-            Dataloader provides an easy interface for loading data for training and testing of new models.
+            Dataloader provides an easy interface for loading data for training and testing of new models.\n
+            ----------------------------\n
+            Parameters:\n
+            path (str) = File path to the dataset being loaded\n
+
         """
-    
+        self.path = path
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
-        DatasetCatalog.register("rellis", self.__reg_rellis)
-        data: list[dict] = DatasetCatalog.get("rellis")
+        data = self.__reg_rellis()
         # store the obtained metadata as a parameter
         self.metadata = data
+        self.num_classes = 20 # TODO update to depend on the dataset
 
 
     # --------------------------- Database Registrations --------------------------------------#
-    def __reg_rellis(data):
+    def __reg_rellis(self):
         """
             Provides the dataloader with the required format used in detectron2 for  the Rellis 3D Dataset.\n 
             Current iteration employs filepath tied directly to the current file structure of the VM. This may need to be updated in future versions\n
             Parameters: \n
-            data: Required by the datasetcatalog for some reason, for now it is not used in the code below.
             -----------------------------------------\n
             Returns: List[dict] - Metadata regarding each data file 
         """
@@ -45,19 +48,18 @@ class DataLoader(object):
         for line in train_lst.readlines():
             # obtain the image file name as well as the associated segmentation mask
             [img_name, seg_name] = line.split(' ')
+            seg_name = seg_name[:-1] # remove the eol character
             img_id = img_name.split("frame")[1][0:6]
             # Create the new dictionary
             meta = dict(
-                file_name = img_name,
+                file_name = self.path + img_name, # path for image file
                 height="1200",
                 width="1920", 
                 image_id=img_id, 
-                sem_seg_file_name= seg_name
+                sem_seg_file_name= self.path + seg_name # paht for segmentation map
             )
             # add the file to the list
             meta_files.append(meta)
-        
-    
 
         return meta_files
 
@@ -65,8 +67,12 @@ class DataLoader(object):
 
 
 # --------- Testing the class above, REMOVE later ------------ #
-loader = DataLoader()
+rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 
+loader = DataLoader(rellis_path)
+ 
+
+# print(loader.metadata[0]["file_name"])
 
 
 
