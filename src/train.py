@@ -42,7 +42,7 @@ def LoadBatch(db: dataloader.DataLoader):
         LoadBatch(): Load a batch of images. 
     """ 
     images = torch.zeros([batchSize, 3, height, width])
-    ann = torch.zeros([batchSize, height, width])
+    ann = torch.zeros([batchSize, 3, height, width])
 
     for i in range(batchSize):
         images[i], ann[i] = ReadRandomImage(db)
