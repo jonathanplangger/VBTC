@@ -24,7 +24,7 @@ height = int(sample["height"])
 
 batchSize = 3
 
-transformImg=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
+transformImg=tf.Compose([tf.ToPILImage(), tf.ToTensor(), tf.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
 transformAnn=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
 
 def ReadRandomImage(db: dataloader.DataLoader):
