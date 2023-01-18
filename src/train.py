@@ -6,7 +6,7 @@ import torch
 import torchvision.transforms as tf 
 import dataloader
 
-rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
+rellis_path = "C:\Rellis-3D/" #path ot the dataset directory
 
 
 Learning_Rate = 1e-5
@@ -18,7 +18,7 @@ sample = db.metadata[0]
 width = int(sample["width"]) # cast to int to ensure valid type
 height = int(sample["height"])
 
-batchSize = 3
+batchSize = 12
 
 transformImg=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
 transformAnn=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
