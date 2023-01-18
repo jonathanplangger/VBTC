@@ -28,7 +28,7 @@ def load_image(datapoint):
 
 
 TRAIN_LENGTH = info.splits['train'].num_examples
-BATCH_SIZE = 64
+BATCH_SIZE = 64*10
 BUFFER_SIZE = 1000
 STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 

@@ -5,12 +5,8 @@ import torchvision.models.segmentation
 import torch
 import torchvision.transforms as tf 
 import dataloader
-# Empty the cache prior to training the network
-torch.cuda.empty_cache()
-torch.cuda.set_per_process_memory_fraction(1.0)
-torch.cuda._lazy_init()
 
-rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
+rellis_path = "C:\Rellis-3D/" #path ot the dataset directory
 
 
 Learning_Rate = 1e-5
@@ -22,7 +18,7 @@ sample = db.metadata[0]
 width = int(sample["width"]) # cast to int to ensure valid type
 height = int(sample["height"])
 
-batchSize = 3
+batchSize = 12
 
 transformImg=tf.Compose([tf.ToPILImage(), tf.ToTensor(), tf.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
 transformAnn=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
@@ -47,6 +43,7 @@ def LoadBatch(db: dataloader.DataLoader):
     """ 
     images = torch.zeros([batchSize, 3, height, width])
     ann = torch.zeros([batchSize, 3, height, width])
+
     for i in range(batchSize):
         images[i], ann[i] = ReadRandomImage(db)
 
@@ -57,40 +54,27 @@ def LoadBatch(db: dataloader.DataLoader):
 # --------- Load the neural net --------------------- #
 # set to cuda if correctly configured on pc
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# device = torch.device('cpu')
 
-# Configure the model 
-Net = torchvision.models.segmentation.deeplabv3_resnet50(num_classes=20, weights=None)
-Net.classifier[4] = torch.nn.Conv2d(256, db.num_classes, kernel_size=(4,4), stride=(1,1))
-
-# # place model onto GPU
+Net = torchvision.models.segmentation.deeplabv3_resnet50(pretrained = True)
+Net.classifier[4] = torch.nn.Conv2d(256, db.num_classes, kernel_size=(1,1), stride=(1,1))
+# place model onto GPU
 Net = Net.to(device)
-
 
 optimizer = torch.optim.Adam(params=Net.parameters(), lr = Learning_Rate)
 
 # ---- Training loop ---------------#
 for itr in range(20000): 
     images, ann = LoadBatch(db)
-
+    
     images = torch.autograd.Variable(images, requires_grad = False).to(device)
     ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
 
-    Net.train()
-
-    images = images.to(device)
-    ann = ann.to(device)
-
-
-    Pred = Net(images)["out"]
-
+    Pred = Net(images)['out']
 
     criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
     loss = criterion(Pred, ann.long()) # calculate the loss 
     loss.backward() # backpropagation for loss 
     optimizer.step() # apply gradient descent to the weights
-
-    
 
     # save the model at specific intervals
     if itr % 1000 == 0:

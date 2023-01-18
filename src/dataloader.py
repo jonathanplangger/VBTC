@@ -1,12 +1,8 @@
 # This file provides the ability of registering and configuring the loading the data from rellis
 import os, json, cv2
 import time
-import torch, detectron2
+import torch
 import numpy as np
-
-from detectron2.data import DatasetCatalog
-from detectron2.data import build_detection_train_loader, DatasetMapper
-from detectron2.config import CfgNode
 
 # directory path for the entire sequence
 
@@ -39,7 +35,7 @@ class DataLoader(object):
             -----------------------------------------\n
             Returns: List[dict] - Metadata regarding each data file 
         """
-        path = "../../datasets/Rellis-3D/"
+        path = self.path
 
         meta_files = []
 
@@ -66,13 +62,13 @@ class DataLoader(object):
     
 
 
-# --------- Testing the class above, REMOVE later ------------ #
-rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
+# # --------- Testing the class above, REMOVE later ------------ #
+# rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 
-loader = DataLoader(rellis_path)
+# loader = DataLoader(rellis_path)
  
 
-# print(loader.metadata[0]["file_name"])
+# # print(loader.metadata[0]["file_name"])
 
 
 
