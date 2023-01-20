@@ -28,7 +28,7 @@ def load_image(datapoint):
 
 
 TRAIN_LENGTH = info.splits['train'].num_examples
-BATCH_SIZE = 64*10
+BATCH_SIZE = 64
 BUFFER_SIZE = 1000
 STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
@@ -150,17 +150,40 @@ def show_predictions(dataset=None, num=1):
     display([sample_image, sample_mask,
              create_mask(model.predict(sample_image[tf.newaxis, ...]))])
 
-
-show_predictions()
-
-
-
-
-
-
+# observe how the model improves while it is training 
+class DisplayCallback(tf.keras.callbacks.Callback):
+  def on_epoch_end(self, epoch, logs=None):
+    clear_output(wait=True)
+    # show_predictions()
+    print ('\nSample Prediction after epoch {}\n'.format(epoch+1))
 
 
+EPOCHS = 20
+VAL_SUBSPLITS = 5
+VALIDATION_STEPS = info.splits['test'].num_examples//BATCH_SIZE//VAL_SUBSPLITS
 
+model_history = model.fit(train_batches, epochs=EPOCHS,
+                          steps_per_epoch=STEPS_PER_EPOCH,
+                          validation_steps=VALIDATION_STEPS,
+                          validation_data=test_batches,
+                          callbacks=[DisplayCallback()])
+
+
+loss = model_history.history['loss']
+val_loss = model_history.history['val_loss']
+
+plt.figure()
+plt.plot(model_history.epoch, loss, 'r', label='Training loss')
+plt.plot(model_history.epoch, val_loss, 'bo', label='Validation loss')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss Value')
+plt.ylim([0, 1])
+plt.legend()
+plt.show()
+
+# display randome predictions for the models 
+show_predictions(test_batches, 3)
 
 
 
