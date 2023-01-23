@@ -1,82 +1,199 @@
-import os 
-import numpy as np 
+import tensorflow as tf
+import tensorflow_datasets as tfds
+from tensorflow_examples.models.pix2pix import pix2pix
+from IPython.display import clear_output
+import matplotlib.pyplot as plt
+from dataloader import DataLoader
 import cv2
-import torchvision.models.segmentation
-import torch
-import torchvision.transforms as tf 
-import dataloader
 
-rellis_path = "C:\Rellis-3D/" #path ot the dataset directory
+print("---------------------------------------------------------------\n")
+dataset, info = tfds.load('oxford_iiit_pet:3.*.*', with_info=True)
+
+db = DataLoader("./../../datasets/Rellis-3D/")
 
 
-Learning_Rate = 1e-5
-# get rellis dataloader
-db = dataloader.DataLoader(rellis_path)
-# obtain a sample of the database 
-sample = db.metadata[0]
-# obtain image information 
-width = int(sample["width"]) # cast to int to ensure valid type
-height = int(sample["height"])
+# Normalzie the color values into the 0,1 range 
+def normalize(input_image, input_mask):
+  input_image = tf.cast(input_image, tf.float32) / 255.0
+  input_mask -= 1
+  return input_image, input_mask
 
-batchSize = 12
 
-transformImg=tf.Compose([tf.ToPILImage(), tf.ToTensor(), tf.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
-transformAnn=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
+def load_image(datapoint):
+  input_image = tf.image.resize(datapoint['image'], (128, 128))
+  input_mask = tf.image.resize(
+    datapoint['segmentation_mask'],
+    (128, 128),
+    method = tf.image.ResizeMethod.NEAREST_NEIGHBOR,
+  )
 
-def ReadRandomImage(db: dataloader.DataLoader):
-    """
-        Read a random image and converts them into pytorch compatible tensor\n
-        ------------------------\n
-        db(dataloader.Dataloader): Dataloader for the given database. Provides the database images.\n 
-    """
-    
-    idx = np.random.randint(0, len(db.metadata)) # pick a random image from the index
-    img = transformImg(cv2.imread(db.metadata[idx]["file_name"])) # convert to tensor
-    annMap = transformAnn(cv2.imread(db.metadata[idx]["sem_seg_file_name"]))
+  input_image, input_mask = normalize(input_image, input_mask)
 
-    return img, annMap
+  return input_image, input_mask
 
-# Load a batch of images
-def LoadBatch(db: dataloader.DataLoader):
-    """
-        LoadBatch(): Load a batch of images. 
-    """ 
-    images = torch.zeros([batchSize, 3, height, width])
-    ann = torch.zeros([batchSize, 3, height, width])
 
-    for i in range(batchSize):
-        images[i], ann[i] = ReadRandomImage(db)
+TRAIN_LENGTH = len(db.metadata) # same as amount of images in dataset
+BATCH_SIZE = 64
+BUFFER_SIZE = 1000
+STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
-    return images, ann
+# map the dataset to the given transformations
+train_images = dataset['train'].map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
+test_images = dataset['test'].map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
 
 
 
-# --------- Load the neural net --------------------- #
-# set to cuda if correctly configured on pc
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+class Augment(tf.keras.layers.Layer):
+  def __init__(self, seed=42):
+    super().__init__()
+    # both use the same seed, so they'll make the same random changes.
+    self.augment_inputs = tf.keras.layers.RandomFlip(mode="horizontal", seed=seed)
+    self.augment_labels = tf.keras.layers.RandomFlip(mode="horizontal", seed=seed)
 
-Net = torchvision.models.segmentation.deeplabv3_resnet50(pretrained = True)
-Net.classifier[4] = torch.nn.Conv2d(256, db.num_classes, kernel_size=(1,1), stride=(1,1))
-# place model onto GPU
-Net = Net.to(device)
+  def call(self, inputs, labels):
+    inputs = self.augment_inputs(inputs)
+    labels = self.augment_labels(labels)
+    return inputs, labels
 
-optimizer = torch.optim.Adam(params=Net.parameters(), lr = Learning_Rate)
 
-# ---- Training loop ---------------#
-for itr in range(20000): 
-    images, ann = LoadBatch(db)
-    
-    images = torch.autograd.Variable(images, requires_grad = False).to(device)
-    ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
+train_batches = (
+    train_images
+    .cache()
+    .shuffle(BUFFER_SIZE)
+    .batch(BATCH_SIZE)
+    .repeat()
+    .map(Augment())
+    .prefetch(buffer_size=tf.data.AUTOTUNE))
 
-    Pred = Net(images)['out']
+test_batches = test_images.batch(BATCH_SIZE)
 
-    criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
-    loss = criterion(Pred, ann.long()) # calculate the loss 
-    loss.backward() # backpropagation for loss 
-    optimizer.step() # apply gradient descent to the weights
+# configure the displaying of the input image and its respective mask
+def display(display_list):
+  plt.figure(figsize=(15, 15))
 
-    # save the model at specific intervals
-    if itr % 1000 == 0:
-        print("Saving Model" + str(itr) + ".torch")
-        torch.save(Net.save_dict(), str(itr) + ".torch")
+  title = ['Input Image', 'True Mask', 'Predicted Mask']
+
+  for i in range(len(display_list)):
+    plt.subplot(1, len(display_list), i+1)
+    plt.title(title[i])
+    plt.imshow(tf.keras.utils.array_to_img(display_list[i]))
+    plt.axis('off')
+  plt.show()
+
+# grab two images from the model
+for images, masks in train_batches.take(2):
+  sample_image, sample_mask = images[0], masks[0]
+
+
+#-------------------------- Implementing the model ----------------------------------- #
+
+base_model = tf.keras.applications.MobileNetV2(input_shape=[128, 128, 3], include_top=False)
+
+# Use the activations of these layers
+layer_names = [
+    'block_1_expand_relu',   # 64x64
+    'block_3_expand_relu',   # 32x32
+    'block_6_expand_relu',   # 16x16
+    'block_13_expand_relu',  # 8x8
+    'block_16_project',      # 4x4
+]
+base_model_outputs = [base_model.get_layer(name).output for name in layer_names]
+
+# Create the feature extraction model
+down_stack = tf.keras.Model(inputs=base_model.input, outputs=base_model_outputs)
+
+down_stack.trainable = False
+
+
+up_stack = [
+    pix2pix.upsample(512, 3),  # 4x4 -> 8x8
+    pix2pix.upsample(256, 3),  # 8x8 -> 16x16
+    pix2pix.upsample(128, 3),  # 16x16 -> 32x32
+    pix2pix.upsample(64, 3),   # 32x32 -> 64x64
+]
+
+def unet_model(output_channels:int):
+  inputs = tf.keras.layers.Input(shape=[128, 128, 3])
+
+  # Downsampling through the model
+  skips = down_stack(inputs)
+  x = skips[-1]
+  skips = reversed(skips[:-1])
+
+  # Upsampling and establishing the skip connections
+  for up, skip in zip(up_stack, skips):
+    x = up(x)
+    concat = tf.keras.layers.Concatenate()
+    x = concat([x, skip])
+
+  # This is the last layer of the model
+  last = tf.keras.layers.Conv2DTranspose(
+      filters=output_channels, kernel_size=3, strides=2,
+      padding='same')  #64x64 -> 128x128
+
+  x = last(x)
+
+  return tf.keras.Model(inputs=inputs, outputs=x)
+
+
+OUTPUT_CLASSES = 3
+
+model = unet_model(output_channels=OUTPUT_CLASSES)
+model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+def create_mask(pred_mask):
+  pred_mask = tf.math.argmax(pred_mask, axis=-1)
+  pred_mask = pred_mask[..., tf.newaxis]
+  return pred_mask[0]
+
+def show_predictions(dataset=None, num=1):
+  if dataset:
+    for image, mask in dataset.take(num):
+      pred_mask = model.predict(image)
+      display([image[0], mask[0], create_mask(pred_mask)])
+  else:
+    display([sample_image, sample_mask,
+             create_mask(model.predict(sample_image[tf.newaxis, ...]))])
+
+# observe how the model improves while it is training 
+class DisplayCallback(tf.keras.callbacks.Callback):
+  def on_epoch_end(self, epoch, logs=None):
+    clear_output(wait=True)
+    # show_predictions()
+    print ('\nSample Prediction after epoch {}\n'.format(epoch+1))
+
+
+EPOCHS = 20
+VAL_SUBSPLITS = 5
+VALIDATION_STEPS = info.splits['test'].num_examples//BATCH_SIZE//VAL_SUBSPLITS
+
+model_history = model.fit(train_batches, epochs=EPOCHS,
+                          steps_per_epoch=STEPS_PER_EPOCH,
+                          validation_steps=VALIDATION_STEPS,
+                          validation_data=test_batches,
+                          callbacks=[DisplayCallback()])
+
+
+loss = model_history.history['loss']
+val_loss = model_history.history['val_loss']
+
+plt.figure()
+plt.plot(model_history.epoch, loss, 'r', label='Training loss')
+plt.plot(model_history.epoch, val_loss, 'bo', label='Validation loss')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss Value')
+plt.ylim([0, 1])
+plt.legend()
+plt.show()
+
+# display randome predictions for the models 
+show_predictions(test_batches, 3)
+
+
+
+
+
+

@@ -3,9 +3,14 @@ import tensorflow_datasets as tfds
 from tensorflow_examples.models.pix2pix import pix2pix
 from IPython.display import clear_output
 import matplotlib.pyplot as plt
+from dataloader import DataLoader
+import cv2
 
-
+print("---------------------------------------------------------------\n")
 dataset, info = tfds.load('oxford_iiit_pet:3.*.*', with_info=True)
+
+db = DataLoader("./../../datasets/Rellis-3D/")
+
 
 # Normalzie the color values into the 0,1 range 
 def normalize(input_image, input_mask):
@@ -27,13 +32,15 @@ def load_image(datapoint):
   return input_image, input_mask
 
 
-TRAIN_LENGTH = info.splits['train'].num_examples
+TRAIN_LENGTH = len(db.metadata) # same as amount of images in dataset
 BATCH_SIZE = 64
 BUFFER_SIZE = 1000
 STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
+# map the dataset to the given transformations
 train_images = dataset['train'].map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
 test_images = dataset['test'].map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
+
 
 
 class Augment(tf.keras.layers.Layer):

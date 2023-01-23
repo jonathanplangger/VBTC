@@ -1,15 +1,19 @@
 # This file provides the ability of registering and configuring the loading the data from rellis
 import os, json, cv2
 import time
-import torch
+import tensorflow as tf 
 import numpy as np
-
-# directory path for the entire sequence
-
 
 # ------------- Dataloader for the new dataset ------------- #
 class DataLoader(object):
-
+    """
+        Provides the dataloading capabilities for outsides datasets.\n
+        --------------------\n
+        Parameters: 
+        path (str) = Directory path to the data\n
+        metadata (List[dict]) = List of dictionnary elements containing information regarding image files\n
+        num_classes = quantity of differentiable classes within the dataset\n
+    """
     def __init__(self, path=""):
         """
             Dataloader provides an easy interface for loading data for training and testing of new models.\n
@@ -66,8 +70,6 @@ class DataLoader(object):
 # rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 
 # loader = DataLoader(rellis_path)
- 
-
 # # print(loader.metadata[0]["file_name"])
 
 
