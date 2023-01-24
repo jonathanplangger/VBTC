@@ -9,11 +9,15 @@ import numpy as np
 
 print("---------------------------------------------------------------\n")
 db = DataLoader("./../../datasets/Rellis-3D/")
+# obtain height and width for the images
+img_h = db.height
+img_w = db.width 
 
 # Global configuration variables
 BATCH_SIZE = 3
 TRAIN_LENGTH = len(db.metadata)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
+EPOCHS = 1
 
 # -------------- Data Loading, Transformations, and Augmentations ------------------ #
 
@@ -29,10 +33,7 @@ images, annMap, idx = db.load_batch(idx, BATCH_SIZE) # load images in a batch
 images, annMap = normalize(images, annMap) # normalize the image files 
 
 # --------------------- Model Configuration ----------------------------------------#
-
-
-
-
+print("---------------------- Starting Model Training ---------------------------\n")
 
 
 
