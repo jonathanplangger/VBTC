@@ -15,9 +15,7 @@ BATCH_SIZE = 3
 TRAIN_LENGTH = len(db.metadata)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 
-# method only works if the images are a consistent size (like Rellis)
-height = db.metadata[0]["height"]
-width = db.metadata[0]["width"]
+# -------------- Data Loading, Transformations, and Augmentations ------------------ #
 
 # Normalize the color values inot the 0,1 range
 def normalize(input_image, input_mask):
@@ -25,9 +23,12 @@ def normalize(input_image, input_mask):
   input_mask -= 1
   return input_image.numpy(), input_mask
 
+idx = 0 # track location in epoch
 
+images, annMap, idx = db.load_batch(idx, BATCH_SIZE) # load images in a batch 
+images, annMap = normalize(images, annMap) # normalize the image files 
 
-
+# --------------------- Model Configuration ----------------------------------------#
 
 
 

@@ -84,7 +84,6 @@ class DataLoader(object):
             transform = transformation function to be applied to the incoming data
         """
         img = cv2.imread(img_path)
-        print(img)
         mask = cv2.imread(mask_path)
         return img, mask
 
