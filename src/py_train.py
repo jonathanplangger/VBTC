@@ -36,7 +36,7 @@ def ReadRandomImage(db: dataloader.DataLoader):
     
     idx = np.random.randint(0, len(db.metadata)) # pick a random image from the index
     img = transformImg(cv2.imread(db.metadata[idx]["file_name"])) # convert to tensor
-    annMap = transformAnn(cv2.imread(db.metadata[idx]["sem_seg_file_name"]))
+    annMap = transformAnn(cv2.imread(db.metadata[idx]["sem_seg_file_name"])[:,:,0]) # only take one channel (they are the same throughout)
 
     return img, annMap
 
@@ -62,7 +62,14 @@ import torch.nn.functional as F
 # set to cuda if correctly configured on pc
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    
+import unet 
+
+base = 2
+Net = unet.UNet(
+    enc_chs=(3,base, base*2, base*4, base*8, base*16),
+    dec_chs=(base*16, base*8, base*4, base*2, base), 
+    out_sz=(height,width), retain_dim=True
+    )
 
 # # place model onto GPU
 Net = Net.to(device)
@@ -76,10 +83,8 @@ for itr in range(20000):
 
     images = torch.autograd.Variable(images, requires_grad = False).to(device)
     ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
-
-
-
-
+    ann = ann[:,0,:,:] # only use one channel (same throughout)
+    
 
     Net.train()
 
@@ -87,11 +92,12 @@ for itr in range(20000):
     ann = ann.to(device)
 
 
-    Pred = Net(images)["out"]
+    Pred = Net(images)
 
+    Pred = Pred[:,0,:,:] # reduce dimensionality of tensor to match label 
 
     criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
-    loss = criterion(Pred, ann.long()) # calculate the loss 
+    loss = criterion(Pred, ann) # calculate the loss 
     loss.backward() # backpropagation for loss 
     optimizer.step() # apply gradient descent to the weights
 
