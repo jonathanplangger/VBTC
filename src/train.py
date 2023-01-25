@@ -6,12 +6,18 @@ import matplotlib.pyplot as plt
 from dataloader import DataLoader
 import cv2
 import numpy as np 
+import os 
+
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 print("---------------------------------------------------------------\n")
 db = DataLoader("./../../datasets/Rellis-3D/")
 # obtain height and width for the images
-img_h = db.height
-img_w = db.width
+# img_h = db.height
+# img_w = db.width
+img_h = 512
+img_w = 512
+
 
 # Global configuration variables
 BATCH_SIZE = 1
@@ -80,17 +86,22 @@ def build_unet(input_shape):
   """
   inputs = Input(input_shape)
 
-  s1, p1 = encoder_block(inputs, 64)
-  s2, p2 = encoder_block(p1, 128)
-  s3, p3 = encoder_block(p2, 256)
-  s4, p4 = encoder_block(p3, 512)
+  f1 = 20
+  f2 = 60
+  f3 = 120
+  f4 = 200
+
+  s1, p1 = encoder_block(inputs, f1)
+  s2, p2 = encoder_block(p1, f2)
+  s3, p3 = encoder_block(p2, f3)
+  s4, p4 = encoder_block(p3, f4)
 
   b1 = conv_block(p4, 1024)
 
-  d1 = decoder_block(b1, s4, 512)
-  d2 = decoder_block(d1, s3, 256)
-  d3 = decoder_block(d2, s2, 128)
-  d4 = decoder_block(d3, s1, 64)
+  d1 = decoder_block(b1, s4, f4)
+  d2 = decoder_block(d1, s3, f3)
+  d3 = decoder_block(d2, s2, f2)
+  d4 = decoder_block(d3, s1, f1)
 
   outputs = Conv2D(1, 1, padding="same", activation="sigmoid")(d4)
 
@@ -106,7 +117,8 @@ if __name__ == "__main__":
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
-  model.fit(images, annMap, epochs=EPOCHS)
+  # model.fit(images, annMap, epochs=EPOCHS)
+  print(model.summary())
 
   
 
