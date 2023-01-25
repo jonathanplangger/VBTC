@@ -55,13 +55,14 @@ def LoadBatch(db: dataloader.DataLoader):
 
 
 # --------- Load the neural net --------------------- #
+from torchsummary import summary
+from torch import nn 
+import torch.nn.functional as F
+    # summary(Net, ())
 # set to cuda if correctly configured on pc
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# device = torch.device('cpu')
 
-# Configure the model 
-Net = torchvision.models.segmentation.deeplabv3_resnet50(num_classes=20, weights=None)
-Net.classifier[4] = torch.nn.Conv2d(256, db.num_classes, kernel_size=(4,4), stride=(1,1))
+    
 
 # # place model onto GPU
 Net = Net.to(device)
@@ -75,6 +76,10 @@ for itr in range(20000):
 
     images = torch.autograd.Variable(images, requires_grad = False).to(device)
     ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
+
+
+
+
 
     Net.train()
 

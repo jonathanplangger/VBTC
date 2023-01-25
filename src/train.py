@@ -117,8 +117,8 @@ if __name__ == "__main__":
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
-  # model.fit(images, annMap, epochs=EPOCHS)
-  print(model.summary())
+  model.fit(images, annMap, epochs=EPOCHS)
+  # print(model.summary())
 
   
 
