@@ -1,128 +1,117 @@
-import tensorflow as tf
-import tensorflow_datasets as tfds
-from tensorflow_examples.models.pix2pix import pix2pix
-from IPython.display import clear_output
-import matplotlib.pyplot as plt
-from dataloader import DataLoader
-import cv2
-import numpy as np 
 import os 
+import numpy as np 
+import cv2
+import torchvision.models.segmentation
+import torch
+import torchvision.transforms as tf 
+import dataloader
+import torchsummary
 
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-
-print("---------------------------------------------------------------\n")
-db = DataLoader("./../../datasets/Rellis-3D/")
-# obtain height and width for the images
-# img_h = db.height
-# img_w = db.width
-img_h = 512
-img_w = 512
-
-
-# Global configuration variables
-BATCH_SIZE = 1
-TRAIN_LENGTH = len(db.metadata)
-STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
-EPOCHS = 1
-
-# -------------- Data Loading, Transformations, and Augmentations ------------------ #
-
-# Normalize the color values inot the 0,1 range
-def normalize(input_image, input_mask):
-  input_image = tf.cast(input_image, tf.float32) / 255.0
-  input_mask -= 1
-  input_image = tf.image.resize(input_image, [img_h, img_w])
-  input_mask =  tf.image.resize(input_image, [img_h, img_w])
-  return input_image.numpy(), input_mask
-
-idx = 0 # track location in epoch
-
-images, annMap, idx = db.load_batch(idx, BATCH_SIZE) # load images in a batch 
-images, annMap = normalize(images, annMap) # normalize the image files 
-
-# --------------------- Model Configuration ----------------------------------------#
-print("---------------------- Starting Model Training ---------------------------\n")
-
-from tensorflow import keras 
-from keras.models import Model 
-from keras.layers import Conv2D, BatchNormalization, Activation, MaxPool2D, Conv2DTranspose, Concatenate, Input
-
-# https://idiotdeveloper.com/unet-implementation-in-tensorflow-using-keras-api/
-
-def conv_block(input, num_filters):
-  """
-    input: The input represents the feature maps from the previous block.\n
-    num_filters: The num_filters refers to the number of output feature channels for the convolutional layers present in the conv_block function.
-  """
-  x = Conv2D(num_filters, 3, padding="same")(input)
-  x = BatchNormalization()(x)
-  x = Activation("relu")(x)
-
-  x = Conv2D(num_filters, 3, padding="same")(x)
-  x = BatchNormalization()(x)
-  x = Activation("relu")(x)
-
-  return x
-
-def encoder_block(input, num_filters):
-  """
-    input: The input represents the feature maps from the previous block.\n
-    num_filters: The num_filters refers to the number of output feature channels for the convolutional layers present in the conv_block function.
-  """
-  x = conv_block(input, num_filters)
-  p = MaxPool2D((2, 2))(x)
-  return x, p
-
-def decoder_block(input, skip_features, num_filters):
-  x = Conv2DTranspose(num_filters, (2, 2), strides=2, padding="same")(input)
-  x = Concatenate()([x, skip_features])
-  x = conv_block(x, num_filters)
-  return x
+# Empty the cache prior to training the network
+torch.cuda.empty_cache()
+torch.cuda.set_per_process_memory_fraction(1.0)
+torch.cuda._lazy_init()
 
 
-def build_unet(input_shape):
-  """
-    input_shape: It is a tuple of height, width and the number of input channels. For example: (512, 512, 3)
-  """
-  inputs = Input(input_shape)
-
-  f1 = 20
-  f2 = 60
-  f3 = 120
-  f4 = 200
-
-  s1, p1 = encoder_block(inputs, f1)
-  s2, p2 = encoder_block(p1, f2)
-  s3, p3 = encoder_block(p2, f3)
-  s4, p4 = encoder_block(p3, f4)
-
-  b1 = conv_block(p4, 1024)
-
-  d1 = decoder_block(b1, s4, f4)
-  d2 = decoder_block(d1, s3, f3)
-  d3 = decoder_block(d2, s2, f2)
-  d4 = decoder_block(d3, s1, f1)
-
-  outputs = Conv2D(1, 1, padding="same", activation="sigmoid")(d4)
-
-  model = Model(inputs, outputs, name="U-Net")
-  return model
+rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 
 
-if __name__ == "__main__":
-  
-  input_shape = (img_h, img_w, 3)
-  model = build_unet(input_shape)
-  model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+Learning_Rate = 1e-5
+# get rellis dataloader
+db = dataloader.DataLoader(rellis_path)
+# obtain a sample of the database 
+sample = db.metadata[0]
+# obtain image information 
+width = int(sample["width"]) # cast to int to ensure valid type
+height = int(sample["height"])
 
-  model.fit(images, annMap, epochs=EPOCHS)
-  # print(model.summary())
+batchSize = 3
 
-  
+transformImg=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
+transformAnn=tf.Compose([tf.ToPILImage(), tf.ToTensor()])
+
+def ReadRandomImage(db: dataloader.DataLoader):
+    """
+        Read a random image and converts them into pytorch compatible tensor\n
+        ------------------------\n
+        db(dataloader.Dataloader): Dataloader for the given database. Provides the database images.\n 
+    """
+    
+    idx = np.random.randint(0, len(db.metadata)) # pick a random image from the index
+    img = transformImg(cv2.imread(db.metadata[idx]["file_name"])) # convert to tensor
+    annMap = transformAnn(cv2.imread(db.metadata[idx]["sem_seg_file_name"])[:,:,0]) # only take one channel (they are the same throughout)
+
+    return img, annMap
+
+# Load a batch of images
+def LoadBatch(db: dataloader.DataLoader):
+    """
+        LoadBatch(): Load a batch of images. 
+    """ 
+    images = torch.zeros([batchSize, 3, height, width])
+    ann = torch.zeros([batchSize, 3, height, width])
+    for i in range(batchSize):
+        images[i], ann[i] = ReadRandomImage(db)
+
+    return images, ann
 
 
 
+# --------- Load the neural net --------------------- #
+from torchsummary import summary
+from torch import nn 
+import torch.nn.functional as F
+    # summary(Net, ())
+# set to cuda if correctly configured on pc
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+import unet 
+
+base = 2
+Net = unet.UNet(
+    enc_chs=(3,base, base*2, base*4, base*8, base*16),
+    dec_chs=(base*16, base*8, base*4, base*2, base), 
+    out_sz=(height,width), retain_dim=True
+    )
 
 
+# # place model onto GPU
+Net = Net.to(device)
+
+print(torchsummary.summary(Net, (3,height,width)))
+print(torch.cuda.memory_summary())
+
+optimizer = torch.optim.Adam(params=Net.parameters(), lr = Learning_Rate)
+
+# ---- Training loop ---------------#
+for itr in range(20000): 
+    images, ann = LoadBatch(db)
+
+    images = torch.autograd.Variable(images, requires_grad = False).to(device)
+    ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
+    ann = ann[:,0,:,:] # only use one channel (same throughout)
+    
+
+    Net.train()
+
+    images = images.to(device)
+    ann = ann.to(device)
+
+
+    Pred = Net(images)
+
+
+    print(torch.cuda.memory_summary())
+    Pred = Pred[:,0,:,:] # reduce dimensionality of tensor to match label 
+
+    criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
+    loss = criterion(Pred, ann) # calculate the loss 
+    loss.backward() # backpropagation for loss 
+    optimizer.step() # apply gradient descent to the weights
+
+    
+
+    # # save the model at specific intervals
+    # if itr % 1000 == 0:
+    #     print("Saving Model" + str(itr) + ".torch")
+    #     torch.save(Net.save_dict(), str(itr) + ".torch")
