@@ -5,10 +5,13 @@ import torchvision.models.segmentation
 import torch
 import torchvision.transforms as tf 
 import dataloader
+import torchsummary
+
 # Empty the cache prior to training the network
 torch.cuda.empty_cache()
 torch.cuda.set_per_process_memory_fraction(1.0)
 torch.cuda._lazy_init()
+
 
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 
@@ -71,9 +74,12 @@ Net = unet.UNet(
     out_sz=(height,width), retain_dim=True
     )
 
+
 # # place model onto GPU
 Net = Net.to(device)
 
+print(torchsummary.summary(Net, (3,height,width)))
+print(torch.cuda.memory_summary())
 
 optimizer = torch.optim.Adam(params=Net.parameters(), lr = Learning_Rate)
 
@@ -94,6 +100,8 @@ for itr in range(20000):
 
     Pred = Net(images)
 
+
+    print(torch.cuda.memory_summary())
     Pred = Pred[:,0,:,:] # reduce dimensionality of tensor to match label 
 
     criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
@@ -103,7 +111,7 @@ for itr in range(20000):
 
     
 
-    # save the model at specific intervals
-    if itr % 1000 == 0:
-        print("Saving Model" + str(itr) + ".torch")
-        torch.save(Net.save_dict(), str(itr) + ".torch")
+    # # save the model at specific intervals
+    # if itr % 1000 == 0:
+    #     print("Saving Model" + str(itr) + ".torch")
+    #     torch.save(Net.save_dict(), str(itr) + ".torch")
