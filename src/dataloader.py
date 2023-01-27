@@ -88,10 +88,13 @@ class DataLoader(object):
         return img, mask
 
 
-    def load_batch(self, idx, batch_size:int):
+    def load_batch(self, idx:int=None, batch_size:int = 1):
         """
             Load a batch of size "batch_size". Returns the images, annotation maps, and the newly updated index value
         """
+        #initialize the index
+        if idx == None: 
+            idx = 1
 
         images = np.empty((batch_size, self.height, self.width, 3))
         annMap = np.empty((batch_size, self.height, self.width, 3))
@@ -120,3 +123,9 @@ class DataLoader(object):
 # print(loader.metadata[0]["file_name"])
 # images, annMap, idx = loader.load_batch(0, 3)
 
+if __name__ == "__main__": 
+    rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
+    loader = DataLoader(rellis_path)
+    images, ann, idx = loader.load_batch(0, 3)
+    print(images.shape)
+    print(ann.shape)
