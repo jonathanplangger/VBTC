@@ -8,7 +8,7 @@ import dataloader
 import torchsummary
 from dataloader import DataLoader
 from torch.nn.functional import normalize
-
+import tqdm
 
 # Empty the cache prior to training the network
 torch.cuda.empty_cache()
@@ -20,10 +20,10 @@ print("---------------------------------------------------------------\n")
 
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 db = dataloader.DataLoader(rellis_path)
-BATCH_SIZE = 5
+BATCH_SIZE = 20
 TRAIN_LENGTH = len(db.metadata)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
-EPOCHS = 1
+EPOCHS = 4
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
 LR = 1e-5 # learning rate
 
@@ -35,10 +35,9 @@ img_w = int(sample["width"]) # cast to int to ensure valid type
 img_h = int(sample["height"])
 
 # ------------------------ Model Configuration ----------------------------- #
-from torchsummary import summary
 from torch import nn 
 import torch.nn.functional as F
-    # summary(Net, ())
+
 # set to cuda if correctly configured on pc
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -56,7 +55,6 @@ Net = unet.UNet(
 Net = Net.to(device)
 
 print(torchsummary.summary(Net, (3,img_h,img_w)))
-print(torch.cuda.memory_summary())
 
 optimizer = torch.optim.Adam(params=Net.parameters(), lr = LR)
 
@@ -68,37 +66,46 @@ idx = 0
 
 
 # ---- Training loop ---------------#
-for i in range(TOTAL_BATCHES): 
-    
-    # randomize order and load the batch
-    db.randomizeOrder()
-    images, ann, idx = db.load_batch(idx, batch_size=BATCH_SIZE)
+for epoch in range(EPOCHS):
 
-    # prep the images through normalization and re-organization
-    images = normalize(torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)
-    ann = normalize(torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
-    
-    # Create autogradient variables for training
-    images = torch.autograd.Variable(images, requires_grad = False).to(device)
-    ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
-    
+    print("---------------------------------------------------------------\n")
+    print("Training Epoch {}\n".format(epoch))
+    print("---------------------------------------------------------------\n")
 
-    Net.train()
+    with tqdm.tqdm(total=STEPS_PER_EPOCH, unit="Batch") as pbar:
 
-    images = images.to(device)
-    ann = ann.to(device)
+        for i in range(STEPS_PER_EPOCH): 
+            
+            # randomize order and load the batch
+            db.randomizeOrder()
+            images, ann, idx = db.load_batch(idx, batch_size=BATCH_SIZE)
+
+            # prep the images through normalization and re-organization
+            images = normalize(torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)
+            ann = normalize(torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
+            
+            # Create autogradient variables for training
+            images = torch.autograd.Variable(images, requires_grad = False).to(device)
+            ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
+
+            Net.train()
+
+            images = images.to(device)
+            ann = ann.to(device)
 
 
-    Pred = Net(images)
+            Pred = Net(images)
 
-    Pred = Pred[:,0,:,:] # reduce dimensionality of tensor to match label 
+            Pred = Pred[:,0,:,:] # reduce dimensionality of tensor to match label 
 
-    criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
-    loss = criterion(Pred, ann) # calculate the loss 
-    loss.backward() # backpropagation for loss 
-    optimizer.step() # apply gradient descent to the weights
+            criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
+            loss = criterion(Pred, ann) # calculate the loss 
+            loss.backward() # backpropagation for loss 
+            optimizer.step() # apply gradient descent to the weights
 
-    
+            pbar.set_postfix(loss=loss.item())
+
+            pbar.update()
 
 
 
