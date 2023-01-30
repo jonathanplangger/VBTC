@@ -63,11 +63,10 @@ optimizer = torch.optim.Adam(params=Net.parameters(), lr = LR)
 # ------------------------ Training loop ------------------------------------#
 # set the index for handling the images
 idx = 0
-f = open("./results/loss.txt", 'w')
-
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
 #http://localhost:6006/?darkMode=true#timeseries
+#tensorboard --logdir=runs
 
 for epoch in range(EPOCHS):
 
@@ -104,7 +103,7 @@ for epoch in range(EPOCHS):
 
             criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
             loss = criterion(Pred, ann) # calculate the loss 
-            writer.add_scalar("Loss/train", loss, epoch) # record current loss 
+            writer.add_scalar("Loss/train", loss, i) # record current loss 
 
             loss.backward() # backpropagation for loss 
             optimizer.step() # apply gradient descent to the weights
@@ -113,12 +112,6 @@ for epoch in range(EPOCHS):
             pbar.set_postfix(loss=loss.item())
 
             pbar.update()
-
-        # add the loss to the output file
-        f.write(str(loss_val))
-        
-# close the file after testing
-f.close()
 
 # flush buffers and close the writer 
 writer.flush()
