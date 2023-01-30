@@ -7,7 +7,7 @@ import torchvision.transforms as T
 import dataloader
 import torchsummary
 from dataloader import DataLoader
-from torch.nn.functional import normalize
+# from torch.nn.functional import normalize
 import tqdm
 
 # Empty the cache prior to training the network
@@ -23,9 +23,9 @@ db = dataloader.DataLoader(rellis_path)
 BATCH_SIZE = 20
 TRAIN_LENGTH = len(db.metadata)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
-EPOCHS = 4
+EPOCHS = 1
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
-LR = 1e-5 # learning rate
+LR = 1e-3 # learning rate
 
 
 # obtain a sample of the database 
@@ -53,24 +53,30 @@ Net = unet.UNet(
 
 # # place model onto GPU
 Net = Net.to(device)
+Net.train()
 
 print(torchsummary.summary(Net, (3,img_h,img_w)))
 
 optimizer = torch.optim.Adam(params=Net.parameters(), lr = LR)
 
+
+# ------------------------ Training loop ------------------------------------#
 # set the index for handling the images
 idx = 0
+f = open("./results/loss.txt", 'w')
 
-# transformImg = T.Compose([T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
-# transformAnn = T.Compose([T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter() 
+#http://localhost:6006/?darkMode=true#timeseries
 
-
-# ---- Training loop ---------------#
 for epoch in range(EPOCHS):
 
     print("---------------------------------------------------------------\n")
-    print("Training Epoch {}\n".format(epoch))
+    print("Training Epoch {}\n".format(epoch+1))
     print("---------------------------------------------------------------\n")
+
+    # create/wipe the array recording the loss values
+    loss_val = []
 
     with tqdm.tqdm(total=STEPS_PER_EPOCH, unit="Batch") as pbar:
 
@@ -81,14 +87,12 @@ for epoch in range(EPOCHS):
             images, ann, idx = db.load_batch(idx, batch_size=BATCH_SIZE)
 
             # prep the images through normalization and re-organization
-            images = normalize(torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)
-            ann = normalize(torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
+            images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
+            ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]/db.num_classes
             
             # Create autogradient variables for training
             images = torch.autograd.Variable(images, requires_grad = False).to(device)
             ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
-
-            Net.train()
 
             images = images.to(device)
             ann = ann.to(device)
@@ -100,18 +104,22 @@ for epoch in range(EPOCHS):
 
             criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
             loss = criterion(Pred, ann) # calculate the loss 
+            writer.add_scalar("Loss/train", loss, epoch) # record current loss 
+
             loss.backward() # backpropagation for loss 
             optimizer.step() # apply gradient descent to the weights
 
+            # loss_val.append(loss.item())
             pbar.set_postfix(loss=loss.item())
 
             pbar.update()
 
+        # add the loss to the output file
+        f.write(str(loss_val))
+        
+# close the file after testing
+f.close()
 
-
-    # print()
-
-    # # save the model at specific intervals
-    # if i % 1000 == 0:
-    #     print("Saving Model" + str(i) + ".torch")
-    #     torch.save(Net.save_dict(), str(i) + ".torch")
+# flush buffers and close the writer 
+writer.flush()
+writer.close()
