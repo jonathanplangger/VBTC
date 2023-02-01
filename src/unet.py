@@ -14,6 +14,7 @@ class Block(nn.Module):
         self.relu  = nn.ReLU()
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3)
     
+    # configure forward pass through the Block
     def forward(self, x):
         return self.conv2(self.relu(self.conv1(x)))
 
@@ -69,21 +70,29 @@ class UNet(nn.Module):
         self.encoder     = Encoder(enc_chs)
         self.decoder     = Decoder(dec_chs)
         self.head        = nn.Conv2d(dec_chs[-1], num_class, 1)
-        self.retain_dim  = retain_dim
-        self.out_sz = out_sz # dimensions of the output image 
+        self.retain_dim  = retain_dim # bool - does the output retain the same dimension as the input?
+        self.out_sz = out_sz # output size value 
 
     def forward(self, x):
         enc_ftrs = self.encoder(x)
-        out      = self.decoder(enc_ftrs[::-1][0], enc_ftrs[::-1][1:])
-        out      = self.head(out)
+        dec      = self.decoder(enc_ftrs[::-1][0], enc_ftrs[::-1][1:])
+        out      = self.head(dec)
+        # print(self.head.weight)
         if self.retain_dim:
             out = F.interpolate(out, self.out_sz)
         return out
 
-
+#used to test the model
 if __name__ == "__main__":
-    base = 10
-    model = UNet(enc_chs=(3,base, base*2, base*4, base*8, base*16), dec_chs=(base*16, base*8, base*4, base*2, base))
+    img_h = 1900
+    img_w = 1200
+
+    base = 2
+    model = UNet(
+        enc_chs=(3,base, base*2, base*4, base*8, base*16),
+        dec_chs=(base*16, base*8, base*4, base*2, base), 
+        out_sz=(img_h,img_w), retain_dim=True
+        )
     device = torch.device("cuda")
     model = model.to(device)
     torchsummary.summary(model, (3,1920,1200))

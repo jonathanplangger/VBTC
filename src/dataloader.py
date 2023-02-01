@@ -28,7 +28,7 @@ class DataLoader(object):
         data = self.__reg_rellis()
         # store the obtained metadata as a parameter
         self.metadata = data
-        self.num_classes = 20 # TODO update to depend on the dataset
+        self.num_classes = 34 # TODO update to depend on the dataset
         self.size = len(self.metadata) # n# of elements in the entire dataset
         self.height = int(self.metadata[0]["height"])
         self.width = int(self.metadata[0]["width"])

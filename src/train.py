@@ -20,13 +20,14 @@ print("---------------------------------------------------------------\n")
 
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 db = dataloader.DataLoader(rellis_path)
-BATCH_SIZE = 20
+BATCH_SIZE = 1 #3
 TRAIN_LENGTH = len(db.metadata)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
-EPOCHS = 1
+EPOCHS = 1 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
-LR = 1e-3 # learning rate
-
+LR = 1e-2 # learning rate
+BASE = 2 # base value for the UNet feature sizes
+# 16 -> max value for now 
 
 # obtain a sample of the database 
 sample = db.metadata[0]
@@ -43,21 +44,21 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 
 import unet 
 
-base = 2
-Net = unet.UNet(
+base = BASE
+model = unet.UNet(
     enc_chs=(3,base, base*2, base*4, base*8, base*16),
     dec_chs=(base*16, base*8, base*4, base*2, base), 
-    out_sz=(img_h,img_w), retain_dim=True
+    out_sz=(img_h,img_w), retain_dim=True, num_class=1
     )
+model.train()
 
 
 # # place model onto GPU
-Net = Net.to(device)
-Net.train()
+model = model.to(device)
 
-print(torchsummary.summary(Net, (3,img_h,img_w)))
+# print(torchsummary.summary(model, (3,img_h,img_w)))
 
-optimizer = torch.optim.Adam(params=Net.parameters(), lr = LR)
+optimizer = torch.optim.Adam(params=model.parameters(), lr = LR)
 
 
 # ------------------------ Training loop ------------------------------------#
@@ -65,8 +66,8 @@ optimizer = torch.optim.Adam(params=Net.parameters(), lr = LR)
 idx = 0
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
-#http://localhost:6006/?darkMode=true#timeseries
-#tensorboard --logdir=runs
+# http://localhost:6006/?darkMode=true#timeseries
+# tensorboard --logdir=runs
 
 for epoch in range(EPOCHS):
 
@@ -87,7 +88,7 @@ for epoch in range(EPOCHS):
 
             # prep the images through normalization and re-organization
             images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
-            ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]/db.num_classes
+            ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
             
             # Create autogradient variables for training
             images = torch.autograd.Variable(images, requires_grad = False).to(device)
@@ -97,12 +98,19 @@ for epoch in range(EPOCHS):
             ann = ann.to(device)
 
 
-            Pred = Net(images)
+            pred = model(images)
 
-            Pred = Pred[:,0,:,:] # reduce dimensionality of tensor to match label 
+            pred = pred[:,0,:,:] # reduce dimensionality of tensor to match label 
 
-            criterion = torch.nn.CrossEntropyLoss() # use cross-entropy loss function 
-            loss = criterion(Pred, ann) # calculate the loss 
+            # # --- For Testing only ------------------#
+            # import torchvision.transforms as T
+            # transform = T.CenterCrop(100)
+            # pred = transform(pred)
+            # ann = transform(pred)
+            # # --------------------------------------- #
+
+            criterion = torch.nn.CrossEntropyLoss # use cross-entropy loss function 
+            loss = criterion(pred, ann) # calculate the loss 
             writer.add_scalar("Loss/train", loss, i) # record current loss 
 
             loss.backward() # backpropagation for loss 
