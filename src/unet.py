@@ -74,9 +74,9 @@ class UNet(nn.Module):
         self.out_sz = out_sz # output size value 
 
     def forward(self, x):
-        enc_ftrs = self.encoder(x)
-        dec      = self.decoder(enc_ftrs[::-1][0], enc_ftrs[::-1][1:])
-        out      = self.head(dec)
+        out = self.encoder(x)
+        out      = self.decoder(out[::-1][0], out[::-1][1:])
+        out      = self.head(out)
         # print(self.head.weight)
         if self.retain_dim:
             out = F.interpolate(out, self.out_sz)
