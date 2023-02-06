@@ -13,19 +13,23 @@ import tqdm
 # Empty the cache prior to training the network
 torch.cuda.empty_cache()
 torch.cuda.set_per_process_memory_fraction(1.0)
-torch.cuda._lazy_init()
+# torch.cuda._lazy_init()
 
+# Model configuration
+from torch import nn 
+import torch.nn.functional as F
+import unet 
 
 print("---------------------------------------------------------------\n")
 
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 db = dataloader.DataLoader(rellis_path)
-BATCH_SIZE = 5 #3
+BATCH_SIZE = 6 #3
 TRAIN_LENGTH = len(db.metadata)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
-EPOCHS = 3 #10
+EPOCHS = 10 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
-LR = 1e-5 # learning rate
+lr = 1e-4 # learning rate
 BASE = 2 # base value for the UNet feature sizes
 # 16 -> max value for now 
 
@@ -36,19 +40,15 @@ img_w = int(sample["width"]) # cast to int to ensure valid type
 img_h = int(sample["height"])
 
 # ------------------------ Model Configuration ----------------------------- #
-from torch import nn 
-import torch.nn.functional as F
 
 # set to cuda if correctly configured on pc
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-import unet 
 
 base = BASE
 model = unet.UNet(
     enc_chs=(3,base, base*2, base*4, base*8, base*16),
     dec_chs=(base*16, base*8, base*4, base*2, base), 
-    out_sz=(img_h,img_w), retain_dim=True, num_class=34
+    out_sz=(img_h,img_w), retain_dim=True, num_class=20
     )
 model.train()
 
@@ -58,7 +58,7 @@ model = model.to(device)
 
 print(torchsummary.summary(model, (3,img_h,img_w)))
 
-optimizer = torch.optim.Adam(params=model.parameters(), lr = LR)
+optim = torch.optim.Adam(params=model.parameters(), lr = lr)
 
 
 # ------------------------ Training loop ------------------------------------#
@@ -76,7 +76,6 @@ for epoch in range(EPOCHS):
     print("---------------------------------------------------------------\n")
 
     # create/wipe the array recording the loss values
-    loss_val = []
 
     with tqdm.tqdm(total=STEPS_PER_EPOCH, unit="Batch") as pbar:
 
@@ -94,28 +93,32 @@ for epoch in range(EPOCHS):
             images = torch.autograd.Variable(images, requires_grad = False).to(device)
             ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
 
+            # load the images and annotations to the GPU
             images = images.to(device)
             ann = ann.to(device)
 
-
+            # forward pass
             pred = model(images)
-            # print(pred.shape)
-            # print(ann.shape)
-            # print(ann.min())
-            # print(ann.max())
 
             criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
             loss = criterion(pred, ann.long()) # calculate the loss 
             writer.add_scalar("Loss/train", loss, i) # record current loss 
 
             loss.backward() # backpropagation for loss 
-            optimizer.step() # apply gradient descent to the weights
+            optim.step() # apply gradient descent to the weights
 
-            # loss_val.append(loss.item())
+            # update the learning rate based on the amount of error present
+            if optim.param_groups[0]['lr'] == lr and loss.item() < 1.0: 
+                print("Reducing learning rate")
+                optim.param_groups[0]['lr'] = 1e-5
+
+            #update progress bar
             pbar.set_postfix(loss=loss.item())
-
             pbar.update()
 
+    # save the model at the end of each epoch
+    torch.save(model, "saves/epoch{}.pt".format(epoch+1))
+    
 # flush buffers and close the writer 
 writer.flush()
 writer.close()

@@ -15,7 +15,7 @@ class DataLoader(object):
         metadata (List[dict]) = List of dictionnary elements containing information regarding image files\n
         num_classes = quantity of differentiable classes within the dataset\n
     """
-    def __init__(self, path=""):
+    def __init__(self, path="../../datasets/Rellis-3D/"):
         """
             Dataloader provides an easy interface for loading data for training and testing of new models.\n
             ----------------------------\n
