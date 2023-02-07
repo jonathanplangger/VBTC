@@ -29,6 +29,9 @@ images = images.to(device)
 # run model
 pred = model(images)
 
+# softmax the output to obtain the probability masks
+out = torch.nn.functional.softmax(pred, dim=1)
+
 print(pred)
 
 

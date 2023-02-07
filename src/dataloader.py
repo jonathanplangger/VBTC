@@ -1,7 +1,6 @@
 # This file provides the ability of registering and configuring the loading the data from rellis
 import os, json, cv2
 import time
-import tensorflow as tf 
 import numpy as np
 import random
 
