@@ -24,7 +24,7 @@ print("---------------------------------------------------------------\n")
 
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 db = dataloader.DataLoader(rellis_path)
-BATCH_SIZE = 6 #3
+BATCH_SIZE = 3 #3
 TRAIN_LENGTH = len(db.metadata)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 EPOCHS = 10 #10
@@ -48,7 +48,7 @@ base = BASE
 model = unet.UNet(
     enc_chs=(3,base, base*2, base*4, base*8, base*16),
     dec_chs=(base*16, base*8, base*4, base*2, base), 
-    out_sz=(img_h,img_w), retain_dim=True, num_class=20
+    out_sz=(img_h,img_w), retain_dim=True, num_class=35
     )
 model.train()
 
@@ -87,7 +87,7 @@ for epoch in range(EPOCHS):
 
             # prep the images through normalization and re-organization
             images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
-            ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]/20.0
+            ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
             
             # Create autogradient variables for training
             images = torch.autograd.Variable(images, requires_grad = False).to(device)
