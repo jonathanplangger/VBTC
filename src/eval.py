@@ -8,6 +8,26 @@ torch.cuda.empty_cache() # liberate the resources
 import numpy as np
 import matplotlib.pyplot as plt
 
+import yaml
+
+# open the ontology file for rellis and obtain the colours for them
+# ---- TODO -- This needs to be handled by the dataloader and NOT the eval.py
+with open("Rellis_3D_ontology/ontology.yaml", "r") as stream: 
+    try: 
+        ont = yaml.safe_load(stream)[1]
+    except yaml.YAMLError as exc: 
+        print(exc)
+        exit()
+
+# add all the colours to a list object 
+colors = []
+for i in range(35): 
+    try: 
+        val = tuple(ont[i])
+        colors.append(val)
+    except: # if the dict element does not exist
+        colors.append("#000000") # assign black
+
 
 db = dataloader.DataLoader()
 db.randomizeOrder()
@@ -56,7 +76,7 @@ masks = masks.to(torch.bool) # convert to boolean
 
 
 # obtain the segmented image
-seg_img = draw_segmentation_masks(images[0], masks, alpha=0.7)
+seg_img = draw_segmentation_masks(images[0], masks, alpha=0.7, colors=colors)
 
 # code obtained from https://pytorch.org/vision/main/auto_examples/plot_visualization_utils.html
 def show(imgs):
@@ -69,6 +89,7 @@ def show(imgs):
         axs[0, i].imshow(np.asarray(img))
         axs[0, i].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
 
+# show the plot for the segmentation mask 
 show(seg_img)
 plt.show()
 

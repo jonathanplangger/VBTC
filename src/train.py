@@ -102,23 +102,24 @@ for epoch in range(EPOCHS):
 
             criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
             loss = criterion(pred, ann.long()) # calculate the loss 
-            writer.add_scalar("Loss/train", loss, i) # record current loss 
+            writer.add_scalar("Loss/train", loss, epoch*STEPS_PER_EPOCH + i) # record current loss 
 
             loss.backward() # backpropagation for loss 
             optim.step() # apply gradient descent to the weights
 
             # update the learning rate based on the amount of error present
-            if optim.param_groups[0]['lr'] == lr and loss.item() < 1.0: 
+            if optim.param_groups[0]['lr'] == lr and loss.item() < 1.5: 
                 print("Reducing learning rate")
-                optim.param_groups[0]['lr'] = 1e-5
+                optim.param_groups[0]['lr'] = 5e-5
 
             #update progress bar
             pbar.set_postfix(loss=loss.item())
             pbar.update()
 
+    # finish writing to the buffer 
+    writer.flush()
     # save the model at the end of each epoch
     torch.save(model, "saves/epoch{}.pt".format(epoch+1))
     
 # flush buffers and close the writer 
-writer.flush()
 writer.close()
