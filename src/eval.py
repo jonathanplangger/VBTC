@@ -21,12 +21,12 @@ with open("Rellis_3D_ontology/ontology.yaml", "r") as stream:
 
 # add all the colours to a list object 
 colors = []
-for i in range(35): 
+for i in range(35  ): 
     try: 
         val = tuple(ont[i])
         colors.append(val)
     except: # if the dict element does not exist
-        colors.append("#000000") # assign black
+        colors.append("#000000") # assign black colour to the unused masks
 
 
 db = dataloader.DataLoader()
@@ -46,7 +46,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torchvision.transforms.functional as F
 
-images, ann, idx = db.load_batch() # load images
+images, ann, idx = db.load_batch(isTraining=False) # load images
 # prep images and load to GPU
 images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
 images = images.to(device)
@@ -78,7 +78,7 @@ masks = masks.to(torch.bool) # convert to boolean
 # obtain the segmented image
 seg_img = draw_segmentation_masks(images[0], masks, alpha=0.7, colors=colors)
 
-# code obtained from https://pytorch.org/vision/main/auto_examples/plot_visualization_utils.html
+# code for visualization obtained from https://pytorch.org/vision/main/auto_examples/plot_visualization_utils.html
 def show(imgs):
     if not isinstance(imgs, list):
         imgs = [imgs]
@@ -92,6 +92,7 @@ def show(imgs):
 # show the plot for the segmentation mask 
 show(seg_img)
 plt.show()
+
 
 
 

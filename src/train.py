@@ -25,7 +25,7 @@ print("---------------------------------------------------------------\n")
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 db = dataloader.DataLoader(rellis_path)
 BATCH_SIZE = 3 #3
-TRAIN_LENGTH = len(db.metadata)
+TRAIN_LENGTH = len(db.train_meta)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 EPOCHS = 10 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
@@ -34,7 +34,7 @@ BASE = 2 # base value for the UNet feature sizes
 # 16 -> max value for now 
 
 # obtain a sample of the database 
-sample = db.metadata[0]
+sample = db.train_meta[0]
 # obtain image information 
 img_w = int(sample["width"]) # cast to int to ensure valid type
 img_h = int(sample["height"])

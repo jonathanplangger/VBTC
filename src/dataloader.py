@@ -24,13 +24,11 @@ class DataLoader(object):
         """
         self.path = path
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
-        data = self.__reg_rellis()
-        # store the obtained metadata as a parameter
-        self.metadata = data
+        self.train_meta, self.test_meta = self.__reg_rellis() # register training and test dataset
         self.num_classes = 34 # TODO update to depend on the dataset
-        self.size = len(self.metadata) # n# of elements in the entire dataset
-        self.height = int(self.metadata[0]["height"])
-        self.width = int(self.metadata[0]["width"])
+        self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
+        self.height = int(self.train_meta[0]["height"])
+        self.width = int(self.train_meta[0]["width"])
 
 
     # --------------------------- Database Registrations --------------------------------------#
@@ -44,7 +42,7 @@ class DataLoader(object):
         """
         path = self.path
 
-        meta_files = []
+        train_meta = []
 
         train_lst = open(path + "train.lst", "r")
         
@@ -62,16 +60,38 @@ class DataLoader(object):
                 sem_seg_file_name= self.path + seg_name # paht for segmentation map
             )
             # add the file to the list
-            meta_files.append(meta)
+            train_meta.append(meta)
 
-        return meta_files
+        # holds metadata for the testing set 
+        test_meta = []
+
+        test_lst = open(path + "test.lst", "r")
+
+        for line in test_lst.readlines():
+            # obtain the image file name as well as the associated segmentation mask
+            [img_name, seg_name] = line.split(' ')
+            seg_name = seg_name[:-1] # remove the eol character
+            img_id = img_name.split("frame")[1][0:6]
+            # Create the new dictionary
+            meta = dict(
+                file_name = self.path + img_name, # path for image file
+                height="1200",
+                width="1920", 
+                image_id=img_id, 
+                sem_seg_file_name= self.path + seg_name # paht for segmentation map
+            )
+            # add the file to the list
+            test_meta.append(meta)
+
+        return train_meta, test_meta
 
     def randomizeOrder(self):
         """
             Randomizes the order of the metadata object. This will shuffle the elements in the dict in a random order
             \n This will update the object metadata parameter and is NON reversable. Only use for training.
         """    
-        random.shuffle(self.metadata) # shuffle the current order of the list
+        random.shuffle(self.train_meta) # shuffle the current order of the list
+        random.shuffle(self.test_meta) # shuffle the testing set 
 
     def load_frame(self, img_path, mask_path): 
         """
@@ -87,10 +107,28 @@ class DataLoader(object):
         return img, mask
 
 
-    def load_batch(self, idx:int=None, batch_size:int = 1):
+    def load_batch(self, idx:int=None, batch_size:int = 1, isTraining=True):
         """
             Load a batch of size "batch_size". Returns the images, annotation maps, and the newly updated index value
+            ----------------\n
+            Parameters: \n 
+            idx (int): the index of the image in the list, this function iterates this index and returns the value later \n
+            batch_size (int): size of batch being retrieved by the program \n
+            isTraining (bool): batch returns training set if TRUE
+            --------\n
+            Returns: (images, annMap, idx)
+            - images: list of images in the given batch 
+            - annMap: list of annotation maps in the given batch
+            - idx: new index of the iamge on the list.
         """
+
+        # select which kind of data is used for the images
+        if isTraining: 
+            metadata = self.train_meta
+        else: 
+            metadata = self.test_meta
+
+
         #initialize the index
         if idx == None: 
             idx = 1
@@ -100,7 +138,7 @@ class DataLoader(object):
 
         # load image and mask files
         for i in range(batch_size): 
-            images[i], annMap[i] = self.load_frame(self.metadata[i]["file_name"], self.metadata[i]["sem_seg_file_name"])
+            images[i], annMap[i] = self.load_frame(metadata[i]["file_name"], metadata[i]["sem_seg_file_name"])
 
         # update the index value 
         idx += batch_size
@@ -116,12 +154,6 @@ class DataLoader(object):
 
 
 # # --------- Testing the class above, REMOVE later ------------ #
-# rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
-
-# loader = DataLoader(rellis_path)
-# print(loader.metadata[0]["file_name"])
-# images, annMap, idx = loader.load_batch(0, 3)
-
 if __name__ == "__main__": 
     rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
     loader = DataLoader(rellis_path)
