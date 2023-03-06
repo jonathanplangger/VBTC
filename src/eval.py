@@ -64,16 +64,13 @@ pred = torch.nn.functional.softmax(pred, dim=1)
 # Import the Jaccard IoU class
 from torchmetrics import JaccardIndex
 # obtain the iou for this specific class
-jac = JaccardIndex(task = "multiclass", num_classes = 35).to(device)
+jac = JaccardIndex(task = "multiclass", num_classes = 35, average='micro').to(device)
 # convert the annotations to a tensor of the required type (int)
 ann = torch.from_numpy(ann[:,:,:,0]).type(torch.int).to(device)
 # obtain the iou
 iou = jac(pred,ann)
 
 print("IoU Obtained: {:.2f}%".format(iou*100))
-
-
-
 
 
 # ----------- Plot the Results ----------------------- #
@@ -99,20 +96,20 @@ seg_img = draw_segmentation_masks(images[0], masks, alpha=0.7, colors=colors)
 # code for visualization obtained from https://pytorch.org/vision/main/auto_examples/plot_visualization_utils.html
 def show(imgs):
     # Create the figures 
-    fig, axs = plt.subplots(ncols=3, squeeze=False, gridspec_kw = {'wspace':0.1, 'hspace':0})
+    fig, axs = plt.subplots(ncols=3, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
 
     # Image/Mask Blended image 
     if not isinstance(imgs, list):
         imgs = [imgs]
     img = F.to_pil_image(imgs[0].detach())
     axs[0, 0].imshow(np.asarray(img))
-    axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+    axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
     # Ground Truth Annotation masks 
     axs[0,1].imshow(ann.cpu().detach().numpy()[0], cmap='gray')
-    axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+    axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
     # Output mask
     axs[0,2].imshow(torch.argmax(pred,1).cpu().detach().numpy()[0], cmap='gray')
-    axs[0,2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+    axs[0,2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
 
 
     
