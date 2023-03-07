@@ -103,6 +103,7 @@ class DataLoader(object):
             transform = transformation function to be applied to the incoming data
         """
         img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # convert the color code to use RGB
         mask = cv2.imread(mask_path)
         return img, mask
 

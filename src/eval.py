@@ -96,20 +96,28 @@ seg_img = draw_segmentation_masks(images[0], masks, alpha=0.7, colors=colors)
 # code for visualization obtained from https://pytorch.org/vision/main/auto_examples/plot_visualization_utils.html
 def show(imgs):
     # Create the figures 
-    fig, axs = plt.subplots(ncols=3, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
+    fig, axs = plt.subplots(ncols=4, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
 
+    # Base image
+    img = F.to_pil_image(images[0])
+    axs[0, 0].imshow(np.asarray(img))
+    axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Base Image" )
+   
     # Image/Mask Blended image 
     if not isinstance(imgs, list):
         imgs = [imgs]
     img = F.to_pil_image(imgs[0].detach())
-    axs[0, 0].imshow(np.asarray(img))
-    axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
+    axs[0, 1].imshow(np.asarray(img))
+    axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
+   
     # Ground Truth Annotation masks 
-    axs[0,1].imshow(ann.cpu().detach().numpy()[0], cmap='gray')
-    axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
+    axs[0, 2].imshow(ann.cpu().detach().numpy()[0], cmap='gray')
+    axs[0, 2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
+   
     # Output mask
-    axs[0,2].imshow(torch.argmax(pred,1).cpu().detach().numpy()[0], cmap='gray')
-    axs[0,2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
+    axs[0, 3].imshow(torch.argmax(pred,1).cpu().detach().numpy()[0], cmap='gray')
+    axs[0, 3].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
+
 
 
     
