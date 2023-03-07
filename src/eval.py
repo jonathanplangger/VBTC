@@ -42,7 +42,7 @@ db.randomizeOrder()
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # load the model to the device 
-model = torch.load('model.pt')
+model = torch.load('./models/model.pt')
 model.eval()
 model.to(device)
 
