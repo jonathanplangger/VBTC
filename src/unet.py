@@ -71,7 +71,7 @@ class UNet(nn.Module):
         self.decoder     = Decoder(dec_chs)
         self.head        = nn.Conv2d(dec_chs[-1], num_class, 1)
         self.retain_dim  = retain_dim # bool - does the output retain the same dimension as the input?
-        self.out_sz = out_sz # output size value 
+        self.out_sz = out_sz # output size value   
 
     def forward(self, x):
         out = self.encoder(x)
@@ -84,14 +84,14 @@ class UNet(nn.Module):
 
 #used to test the model
 if __name__ == "__main__":
-    img_h = 1900
+    img_h = 1920
     img_w = 1200
 
     base = 2
     model = UNet(
         enc_chs=(3,base, base*2, base*4, base*8, base*16),
         dec_chs=(base*16, base*8, base*4, base*2, base), 
-        out_sz=(img_h,img_w), retain_dim=True
+        out_sz=(img_h,img_w), retain_dim=True, num_class=35
         )
     device = torch.device("cuda")
     model = model.to(device)
