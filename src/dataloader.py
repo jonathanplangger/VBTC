@@ -155,9 +155,9 @@ class DataLoader(object):
 
 
 # # --------- Testing the class above, REMOVE later ------------ #
-if __name__ == "__main__": 
-    rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
-    loader = DataLoader(rellis_path)
-    images, ann, idx = loader.load_batch(0, 3)
-    print(images.shape)
-    print(ann.shape)
+# if __name__ == "__main__": 
+#     rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
+#     loader = DataLoader(rellis_path)
+#     images, ann, idx = loader.load_batch(0, 3)
+#     print(images.shape)
+#     print(ann.shape)
