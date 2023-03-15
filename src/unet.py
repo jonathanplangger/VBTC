@@ -8,11 +8,11 @@ import torch.nn.functional as F
 # https://amaarora.github.io/2020/09/13/unet.html
 
 class Block(nn.Module):
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch, kernel_size=3):
         super().__init__()
-        self.conv1 = nn.Conv2d(in_ch, out_ch, 3)
+        self.conv1 = nn.Conv2d(in_ch, out_ch, kernel_size)
         self.relu  = nn.ReLU()
-        self.conv2 = nn.Conv2d(out_ch, out_ch, 3)
+        self.conv2 = nn.Conv2d(out_ch, out_ch, kernel_size)
     
     # configure forward pass through the Block
     def forward(self, x):
@@ -20,9 +20,9 @@ class Block(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, chs=(3,64,128,256,512,1024)):
+    def __init__(self, chs=(3,64,128,256,512,1024), kernel_size = 3):
         super().__init__()
-        self.enc_blocks = nn.ModuleList([Block(chs[i], chs[i+1]) for i in range(len(chs)-1)])
+        self.enc_blocks = nn.ModuleList([Block(chs[i], chs[i+1], kernel_size) for i in range(len(chs)-1)])
         self.pool       = nn.MaxPool2d(2)
     
     def forward(self, x):
@@ -35,11 +35,11 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, chs=(1024, 512, 256, 128, 64)):
+    def __init__(self, chs=(1024, 512, 256, 128, 64), kernel_size = 3):
         super().__init__()
         self.chs         = chs
-        self.upconvs    = nn.ModuleList([nn.ConvTranspose2d(chs[i], chs[i+1], 2, 2) for i in range(len(chs)-1)])
-        self.dec_blocks = nn.ModuleList([Block(chs[i], chs[i+1]) for i in range(len(chs)-1)]) 
+        self.upconvs    = nn.ModuleList([nn.ConvTranspose2d(chs[i], chs[i+1], kernel_size, 2) for i in range(len(chs)-1)])
+        self.dec_blocks = nn.ModuleList([Block(chs[i], chs[i+1], kernel_size) for i in range(len(chs)-1)]) 
         
     def forward(self, x, encoder_features):
         for i in range(len(self.chs)-1):
@@ -65,10 +65,10 @@ class UNet(nn.Module):
             - retain_dim (bool): Image output retains same size as original input if == True\n
             - out_sz (Tuple[int,int]): (height, width) - dimensions of the desired output image, only applied if retain_dim==True\n
     """
-    def __init__(self, enc_chs=(3,64,128,256,512,1024), dec_chs=(1024, 512, 256, 128, 64), num_class=1, retain_dim=False, out_sz=(572,572)):
+    def __init__(self, enc_chs=(3,64,128,256,512,1024), dec_chs=(1024, 512, 256, 128, 64), num_class=1, retain_dim=False, out_sz=(572,572), kernel_size = 2):
         super().__init__()
-        self.encoder     = Encoder(enc_chs)
-        self.decoder     = Decoder(dec_chs)
+        self.encoder     = Encoder(enc_chs, kernel_size=kernel_size)
+        self.decoder     = Decoder(dec_chs, kernel_size=kernel_size)
         self.head        = nn.Conv2d(dec_chs[-1], num_class, 1)
         self.retain_dim  = retain_dim # bool - does the output retain the same dimension as the input?
         self.out_sz = out_sz # output size value   
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     model = UNet(
         enc_chs=(3,base, base*2, base*4, base*8, base*16),
         dec_chs=(base*16, base*8, base*4, base*2, base), 
-        out_sz=(img_h,img_w), retain_dim=True, num_class=35
+        out_sz=(img_h,img_w), retain_dim=True, num_class=35, kernel_size = 7
         )
     device = torch.device("cuda")
     model = model.to(device)

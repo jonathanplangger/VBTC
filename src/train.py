@@ -24,14 +24,17 @@ print("---------------------------------------------------------------\n")
 
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 db = dataloader.DataLoader(rellis_path)
-BATCH_SIZE = 3 #3
+BATCH_SIZE = 5 #3
 TRAIN_LENGTH = len(db.train_meta)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 EPOCHS = 10 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
 lr = 1e-4 # learning rate
+
+# ML Model Parameters
 BASE = 2 # base value for the UNet feature sizes
-# 16 -> max value for now 
+KERNEL_SIZE = 7
+
 
 # obtain a sample of the database 
 sample = db.train_meta[0]
@@ -48,7 +51,7 @@ base = BASE
 model = unet.UNet(
     enc_chs=(3,base, base*2, base*4, base*8, base*16),
     dec_chs=(base*16, base*8, base*4, base*2, base), 
-    out_sz=(img_h,img_w), retain_dim=True, num_class=35
+    out_sz=(img_h,img_w), retain_dim=True, num_class=35, kernel_size=KERNEL_SIZE
     )
 model.train()
 
