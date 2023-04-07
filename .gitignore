@@ -3,6 +3,8 @@ results/
 runs/
 saves/
 models/
+model.pot
+params.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
