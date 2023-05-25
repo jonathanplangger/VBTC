@@ -139,7 +139,7 @@ class DataLoader(object):
 
         # load image and mask files
         for i in range(batch_size): 
-            images[i], annMap[i] = self.load_frame(metadata[i]["file_name"], metadata[i]["sem_seg_file_name"])
+            images[i], annMap[i] = self.load_frame(metadata[i + idx]["file_name"], metadata[i + idx]["sem_seg_file_name"])
 
         # update the index value 
         idx += batch_size

@@ -65,7 +65,10 @@ torchsummary.summary(model, (3,img_h,img_w))
 
 optim = torch.optim.Adam(params=model.parameters(), lr = lr)
 
-criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
+# criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
+import focal_loss
+criterion = focal_loss.FocalLoss()
+
 dice = torchmetrics.Dice().to(device)
 # Record the model parameters
 writer.add_text("_params/text_summary", tools.logTrainParams(BATCH_SIZE, BASE, STEPS_PER_EPOCH, EPOCHS,lr, criterion, KERNEL_SIZE))
