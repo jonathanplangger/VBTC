@@ -38,7 +38,7 @@ class Decoder(nn.Module):
     def __init__(self, chs=(1024, 512, 256, 128, 64), kernel_size = 3):
         super().__init__()
         self.chs         = chs
-        self.upconvs    = nn.ModuleList([nn.ConvTranspose2d(chs[i], chs[i+1], kernel_size, 2) for i in range(len(chs)-1)])
+        self.upconvs    = nn.ModuleList([nn.ConvTranspose2d(chs[i], chs[i+1], 2, 2) for i in range(len(chs)-1)])
         self.dec_blocks = nn.ModuleList([Block(chs[i], chs[i+1], kernel_size) for i in range(len(chs)-1)]) 
         
     def forward(self, x, encoder_features):

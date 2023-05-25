@@ -14,9 +14,6 @@ import torchmetrics
 
 # Empty the cache prior to training the network
 torch.cuda.empty_cache()
-torch.cuda.set_per_process_memory_fraction(1.0)
-# torch.cuda._lazy_init()
-
 # Model configuration
 from torch import nn 
 import torch.nn.functional as F
@@ -31,12 +28,12 @@ print("---------------------------------------------------------------\n")
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 
 db = dataloader.DataLoader(rellis_path)
-BATCH_SIZE = 5 #3
+BATCH_SIZE = 3 #3
 TRAIN_LENGTH = len(db.train_meta)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 EPOCHS = 10 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
-lr = 1e-5 # learning rate
+lr = 1e-4 # learning rate
 BASE = 2 # base value for the UNet feature sizes
 KERNEL_SIZE = 3
 
@@ -56,19 +53,20 @@ base = BASE
 model = unet.UNet(
     enc_chs=(3,base, base*2, base*4, base*8, base*16),
     dec_chs=(base*16, base*8, base*4, base*2, base), 
-    out_sz=(img_h,img_w), retain_dim=True, num_class=35, kernel_size=KERNEL_SIZE
+    out_sz=(img_h,img_w), retain_dim=True, num_class=db.num_classes, kernel_size=KERNEL_SIZE
     )
 model.train()
 
 # # place model onto GPU
 model = model.to(device)
 
-print(torchsummary.summary(model, (3,img_h,img_w)))
+# Obtain the summary of the model architecture + memory requirements
+torchsummary.summary(model, (3,img_h,img_w))
 
 optim = torch.optim.Adam(params=model.parameters(), lr = lr)
 
 criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
-dice = torchmetrics.Dice()
+dice = torchmetrics.Dice().to(device)
 # Record the model parameters
 writer.add_text("_params/text_summary", tools.logTrainParams(BATCH_SIZE, BASE, STEPS_PER_EPOCH, EPOCHS,lr, criterion, KERNEL_SIZE))
 
@@ -100,18 +98,16 @@ for epoch in range(EPOCHS):
             images = torch.autograd.Variable(images, requires_grad = False).to(device)
             ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
 
-            # load the images and annotations to the GPU
-            images = images.to(device)
-            ann = ann.to(device)
-
             # forward pass
             pred = model(images)
-
             
             loss = criterion(pred, ann.long()) # calculate the loss 
             writer.add_scalar("Loss/train", loss, epoch*STEPS_PER_EPOCH + i) # record current loss 
 
+            
             loss.backward() # backpropagation for loss 
+
+            optim.zero_grad()
             optim.step() # apply gradient descent to the weights
 
             # update the learning rate based on the amount of error present
@@ -119,10 +115,12 @@ for epoch in range(EPOCHS):
             #     print("Reducing learning rate")
             #     optim.param_groups[0]['lr'] = 5e-5
 
+            del images # free up some memory, no longer needed here
+
             # Obtain the performance metrics
             dice_score = dice(pred, ann.long())
             writer.add_scalar("Metrics/Dice", dice_score, epoch*STEPS_PER_EPOCH + i) # record the dice score 
-            
+
             #update progress bar
             pbar.set_postfix(loss=loss.item())
             pbar.update()

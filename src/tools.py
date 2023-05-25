@@ -10,17 +10,17 @@ def logTrainParams(
         kernel_size = None
 ):
     log = """ Model Training Parameters <br />
+    ------------------------------------------------------------  <br />
+    Date: {0} <br />
     ------------------------------------------------------------<br />
-    Date: {0}
-    ------------------------------------------------------------<br />
-    Batch Size: {1}
-    Learning Rate: {2}
-    Base: {3}
-    Kernel Size: {4}
-    Epochs: {5}
-    Steps Per Epochs: {6}
-    Loss Function: {7}
+    Batch Size: {1} <br />
+    Learning Rate: {2} <br />
+    Base: {3} <br />
+    Kernel Size: {4} <br />
+    Epochs: {5} <br />
+    Steps Per Epochs: {6} <br />
+    Loss Function: {7} <br />
     -----------------------------------------------------------<br />  
-    """.format(datetime.now(), batch_size, lr, base, kernel_size, epochs,
+    """.format(datetime.datetime.now(), batch_size, lr, base, kernel_size, epochs,
                 steps_per_epoch, criterion.__class__.__name__)
     return log 

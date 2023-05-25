@@ -13,10 +13,14 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import torchvision.transforms.functional as F
+import torchsummary
 
 # obtain the data
 db = dataloader.DataLoader()
 db.randomizeOrder()
+
+# Empty the cache prior to training the network
+torch.cuda.empty_cache()
 
 TOTAL_NUM_TEST = len(db.test_meta)
 NUM_TEST = TOTAL_NUM_TEST
@@ -51,9 +55,12 @@ for i in range(35):
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # load the model to the device 
-model = torch.load('./models/model.pt')
+model = torch.load('model.pt')
 model.eval()
 model.to(device)
+
+# Obtain the summary of the model architecture + memory requirements
+torchsummary.summary(model, (3,db.height,db.width))
 
 # iterate through all tests while using batches 
 for idx in range(0, NUM_TEST, BATCH_SIZE): 
@@ -70,12 +77,6 @@ for idx in range(0, NUM_TEST, BATCH_SIZE):
 
     # softmax the output to obtain the probability masks
     pred = torch.nn.functional.softmax(pred, dim=1)
-
-    # ------------ Obtain IoU Metrics ------------------- #
-
-    # convert the annotations to a tensor of the required type (int)
-    ann = torch.from_numpy(ann[:,:,:,0]).type(torch.int).to(device)
-    
 
     # ----------- Plot the Results ----------------------- #
     # create a blank array

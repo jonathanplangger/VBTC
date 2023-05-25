@@ -25,7 +25,7 @@ class DataLoader(object):
         self.path = path
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
         self.train_meta, self.test_meta = self.__reg_rellis() # register training and test dataset
-        self.num_classes = 34 # TODO update to depend on the dataset
+        self.num_classes = 35 # TODO update to depend on the dataset
         self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
