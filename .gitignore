@@ -5,6 +5,7 @@ saves/
 models/
 model.pot
 params.txt
+model.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

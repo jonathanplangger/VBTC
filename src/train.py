@@ -9,6 +9,7 @@ import torchsummary
 from dataloader import DataLoader
 # from torch.nn.functional import normalize
 import tqdm
+import tools
 
 # Empty the cache prior to training the network
 torch.cuda.empty_cache()
@@ -19,6 +20,10 @@ torch.cuda.set_per_process_memory_fraction(1.0)
 from torch import nn 
 import torch.nn.functional as F
 import unet 
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter() 
+# http://localhost:6006/?darkMode=true#timeseries
+# tensorboard --logdir=runs
 
 print("---------------------------------------------------------------\n")
 
@@ -30,11 +35,9 @@ TRAIN_LENGTH = len(db.train_meta)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 EPOCHS = 10 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
-lr = 1e-4 # learning rate
-
-# ML Model Parameters
+lr = 1e-5 # learning rate
 BASE = 2 # base value for the UNet feature sizes
-KERNEL_SIZE = 7
+KERNEL_SIZE = 3
 
 
 # obtain a sample of the database 
@@ -56,7 +59,6 @@ model = unet.UNet(
     )
 model.train()
 
-
 # # place model onto GPU
 model = model.to(device)
 
@@ -64,20 +66,20 @@ print(torchsummary.summary(model, (3,img_h,img_w)))
 
 optim = torch.optim.Adam(params=model.parameters(), lr = lr)
 
+criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
+tools.logTrainParams()
+
 
 # ------------------------ Training loop ------------------------------------#
-# set the index for handling the images
-idx = 0
-from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter() 
-# http://localhost:6006/?darkMode=true#timeseries
-# tensorboard --logdir=runs
 
 for epoch in range(EPOCHS):
 
     print("---------------------------------------------------------------\n")
     print("Training Epoch {}\n".format(epoch+1))
     print("---------------------------------------------------------------\n")
+
+    # set the index for handling the images
+    idx = 0
 
     # create/wipe the array recording the loss values
 
@@ -104,7 +106,7 @@ for epoch in range(EPOCHS):
             # forward pass
             pred = model(images)
 
-            criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
+            
             loss = criterion(pred, ann.long()) # calculate the loss 
             writer.add_scalar("Loss/train", loss, epoch*STEPS_PER_EPOCH + i) # record current loss 
 

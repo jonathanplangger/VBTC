@@ -72,23 +72,10 @@ for idx in range(0, NUM_TEST, BATCH_SIZE):
     pred = torch.nn.functional.softmax(pred, dim=1)
 
     # ------------ Obtain IoU Metrics ------------------- #
-    # Import the Jaccard IoU class
-    from torchmetrics import JaccardIndex
-    # obtain the iou for this specific class
-    jac = JaccardIndex(task = "multiclass", num_classes = 35, average='micro').to(device)
+
     # convert the annotations to a tensor of the required type (int)
     ann = torch.from_numpy(ann[:,:,:,0]).type(torch.int).to(device)
     
-    # Obtain the IoU metric for all image/ann pair in the batch
-    for i in range(BATCH_SIZE):
-        # calculate the IoU
-        pred = pred[i,:,:,:]
-        ann = ann[i,:,:]
-        pred = pred[None,:]
-        ann = ann[None,:]
-        iou = jac(pred,ann)
-        print("IoU Obtained: {:.2f}%".format(iou*100))
-
 
     # ----------- Plot the Results ----------------------- #
     # create a blank array
