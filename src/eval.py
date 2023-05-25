@@ -25,7 +25,7 @@ torch.cuda.empty_cache()
 TOTAL_NUM_TEST = len(db.test_meta)
 NUM_TEST = TOTAL_NUM_TEST
 SHOW = False # display the output as an image
-BATCH_SIZE = 3 # configure the size of the batch
+BATCH_SIZE = 1 # configure the size of the batch
 
 # ------------ GEt Colour Representation for the figure ------------------ #
 # open the ontology file for rellis and obtain the colours for them
@@ -68,15 +68,12 @@ for idx in range(0, NUM_TEST, BATCH_SIZE):
     # ------------ Run the model with the loaded images  ---------------- #
 
     images, ann, idx = db.load_batch(idx, BATCH_SIZE, isTraining=False) # load images
+    orig_images = images # store this for later use
     # prep images and load to GPU
-    images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
-    images = images.to(device)
+    images = (torch.from_numpy(images)).to(torch.float32).to(device).permute(0,3,1,2)/255.0
 
     # run model
     pred = model(images)
-
-    # softmax the output to obtain the probability masks
-    pred = torch.nn.functional.softmax(pred, dim=1)
 
     # ----------- Plot the Results ----------------------- #
     # create a blank array
@@ -87,11 +84,12 @@ for idx in range(0, NUM_TEST, BATCH_SIZE):
         masks[classID] = (pred.argmax(dim=1) == classID)
 
     # move the masks and the image onto the CPU
-    images = images.to('cpu')*255.0
+    images = orig_images # restore original images
     masks = masks.to('cpu')
+    del orig_images # no longer needed
 
     # convert the image to uint8 type 
-    images = images.to(torch.uint8)
+    # images = images.to(torch.uint8)
     masks = masks.to(torch.bool) # convert to boolean 
 
 
