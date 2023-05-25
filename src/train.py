@@ -10,6 +10,7 @@ from dataloader import DataLoader
 # from torch.nn.functional import normalize
 import tqdm
 import tools
+import torchmetrics
 
 # Empty the cache prior to training the network
 torch.cuda.empty_cache()
@@ -67,8 +68,9 @@ print(torchsummary.summary(model, (3,img_h,img_w)))
 optim = torch.optim.Adam(params=model.parameters(), lr = lr)
 
 criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
-tools.logTrainParams()
-
+dice = torchmetrics.Dice()
+# Record the model parameters
+writer.add_text("_params/text_summary", tools.logTrainParams(BATCH_SIZE, BASE, STEPS_PER_EPOCH, EPOCHS,lr, criterion, KERNEL_SIZE))
 
 # ------------------------ Training loop ------------------------------------#
 
@@ -80,15 +82,14 @@ for epoch in range(EPOCHS):
 
     # set the index for handling the images
     idx = 0
-
+    db.randomizeOrder()
     # create/wipe the array recording the loss values
 
     with tqdm.tqdm(total=STEPS_PER_EPOCH, unit="Batch") as pbar:
 
         for i in range(STEPS_PER_EPOCH): 
             
-            # randomize order and load the batch
-            db.randomizeOrder()
+
             images, ann, idx = db.load_batch(idx, batch_size=BATCH_SIZE)
 
             # prep the images through normalization and re-organization
@@ -114,10 +115,14 @@ for epoch in range(EPOCHS):
             optim.step() # apply gradient descent to the weights
 
             # update the learning rate based on the amount of error present
-            if optim.param_groups[0]['lr'] == lr and loss.item() < 1.5: 
-                print("Reducing learning rate")
-                optim.param_groups[0]['lr'] = 5e-5
+            # if optim.param_groups[0]['lr'] == lr and loss.item() < 1.5: 
+            #     print("Reducing learning rate")
+            #     optim.param_groups[0]['lr'] = 5e-5
 
+            # Obtain the performance metrics
+            dice_score = dice(pred, ann.long())
+            writer.add_scalar("Metrics/Dice", dice_score, epoch*STEPS_PER_EPOCH + i) # record the dice score 
+            
             #update progress bar
             pbar.set_postfix(loss=loss.item())
             pbar.update()
