@@ -11,7 +11,7 @@ from dataloader import DataLoader
 import tqdm
 import tools
 import torchmetrics
-
+import matplotlib.pyplot as plt 
 # Empty the cache prior to training the network
 torch.cuda.empty_cache()
 # Model configuration
@@ -33,7 +33,7 @@ TRAIN_LENGTH = len(db.train_meta)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 EPOCHS = 10 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
-lr = 1e-4 # learning rate
+lr = 1e-3 # learning rate
 BASE = 2 # base value for the UNet feature sizes
 KERNEL_SIZE = 3
 
@@ -65,9 +65,9 @@ torchsummary.summary(model, (3,img_h,img_w))
 
 optim = torch.optim.Adam(params=model.parameters(), lr = lr)
 
-# criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
-import focal_loss
-criterion = focal_loss.FocalLoss()
+criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
+# import focal_loss
+# criterion = focal_loss.FocalLoss()
 
 dice = torchmetrics.Dice().to(device)
 # Record the model parameters
@@ -107,18 +107,14 @@ for epoch in range(EPOCHS):
             loss = criterion(pred, ann.long()) # calculate the loss 
             writer.add_scalar("Loss/train", loss, epoch*STEPS_PER_EPOCH + i) # record current loss 
 
-            
-            loss.backward() # backpropagation for loss 
-
             optim.zero_grad()
+            loss.backward() # backpropagation for loss 
             optim.step() # apply gradient descent to the weights
 
             # update the learning rate based on the amount of error present
             # if optim.param_groups[0]['lr'] == lr and loss.item() < 1.5: 
             #     print("Reducing learning rate")
             #     optim.param_groups[0]['lr'] = 5e-5
-
-            del images # free up some memory, no longer needed here
 
             # Obtain the performance metrics
             dice_score = dice(pred, ann.long())
