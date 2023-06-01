@@ -24,7 +24,8 @@ torch.cuda.empty_cache()
 
 TOTAL_NUM_TEST = len(db.test_meta)
 NUM_TEST = TOTAL_NUM_TEST
-SHOW = True # display the output as an image
+SHOW = False # display the output as an image
+LOG_RESULTS = True # select whether the evaluation results should be logged 
 BATCH_SIZE = 1 # configure the size of the batch
 
 # ------------ GEt Colour Representation for the figure ------------------ #

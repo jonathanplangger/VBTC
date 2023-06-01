@@ -19,6 +19,8 @@ from torch import nn
 import torch.nn.functional as F
 import unet 
 import datetime
+from patchify import patchify
+        
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
 # http://localhost:6006/?darkMode=true#timeseries
@@ -112,10 +114,13 @@ class TrainModel(object):
                     
 
                     images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size)
+                    
 
                     # prep the images through normalization and re-organization
                     images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
                     ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
+
+                    self.getPatches(images, ann)
                     
                     # Create autogradient variables for training
                     images = torch.autograd.Variable(images, requires_grad = False).to(device)
@@ -171,9 +176,37 @@ class TrainModel(object):
         """.format(datetime.datetime.now(), self.batch_size, self.lr, self.base, self.kernel_size, self.epochs,
                     self.steps_per_epoch, self.criterion.__class__.__name__)
 
-    def getPatches(images, ann): 
+    # Obtain smaller image patches from the larger image inputs, applies this to annotations as well.
+    def getPatches(self, images, ann): 
+        # patching and unpatching code from: https://discuss.pytorch.org/t/patch-making-does-pytorch-have-anything-to-offer/33850/9
+        
+        # kernel (resulting image) size for channel, height, and width
+        kc, kh, kw = 3, 358, 572
+        # stride for the kernel used (use < kernel size for overlap in resulting image output)
+        sc, sh, sw = 3, kh, kw 
+
+        patches = images.unfold(1,kc,sc).unfold(2,kh,sh).unfold(3,kw,sw)
+        unfold_shape = patches.size()
+        patches = patches.contiguous().view(patches.size(0), -1, kc, kh, kw)
+
+        # restore the original dimensions of the input data
+        # patches_orig = patches.view(unfold_shape)
+        # output_c = unfold_shape[1] * unfold_shape[4]
+        # output_h = unfold_shape[2] * unfold_shape[5]
+        # output_w = unfold_shape[3] * unfold_shape[6]
+        # patches_orig = patches_orig.permute(0, 1, 4, 2, 5, 3, 6).contiguous()
+        # patches_orig = patches_orig.view(1, output_c, output_h, output_w)
+
+        return patches 
+
+    def mergePatches(self, patches, unfold_shape): 
         pass
 
+
+    # this function is only used during testing to allow for the visual validation of results, no need for it 
+    # for the training of the network
+    def showTensor(self, image): 
+        plt.imshow(image.permute(1,2,0)) # re-format and plot the image         
 if __name__ == "__main__": 
     train = TrainModel()
     train.train_model() # train the model
