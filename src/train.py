@@ -28,14 +28,14 @@ print("---------------------------------------------------------------\n")
 rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
 
 db = dataloader.DataLoader(rellis_path)
-BATCH_SIZE = 3 #3
+BATCH_SIZE = 1 #3
 TRAIN_LENGTH = len(db.train_meta)
 STEPS_PER_EPOCH = TRAIN_LENGTH//BATCH_SIZE # n# of steps within the specific epoch.
 EPOCHS = 10 #10
 TOTAL_BATCHES = STEPS_PER_EPOCH*EPOCHS # total amount of batches that need to be completed for training
-lr = 1e-3 # learning rate
-BASE = 2 # base value for the UNet feature sizes
-KERNEL_SIZE = 3
+lr = 1e-4 # learning rate
+BASE = 40 # base value for the UNet feature sizes
+KERNEL_SIZE = 5
 
 
 # obtain a sample of the database 
@@ -61,13 +61,14 @@ model.train()
 model = model.to(device)
 
 # Obtain the summary of the model architecture + memory requirements
-torchsummary.summary(model, (3,img_h,img_w))
+summary = torchsummary.summary(model, (3,img_h,img_w))
+writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
 
 optim = torch.optim.Adam(params=model.parameters(), lr = lr)
 
-criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
-# import focal_loss
-# criterion = focal_loss.FocalLoss()
+# criterion = torch.nn.CrossEntropyLoss(reduction='mean') # use cross-entropy loss function 
+import focal_loss
+criterion = focal_loss.FocalLoss()
 
 dice = torchmetrics.Dice().to(device)
 # Record the model parameters
@@ -111,14 +112,15 @@ for epoch in range(EPOCHS):
             loss.backward() # backpropagation for loss 
             optim.step() # apply gradient descent to the weights
 
-            # update the learning rate based on the amount of error present
-            # if optim.param_groups[0]['lr'] == lr and loss.item() < 1.5: 
-            #     print("Reducing learning rate")
-            #     optim.param_groups[0]['lr'] = 5e-5
-
             # Obtain the performance metrics
             dice_score = dice(pred, ann.long())
             writer.add_scalar("Metrics/Dice", dice_score, epoch*STEPS_PER_EPOCH + i) # record the dice score 
+
+            # lower the learning rate
+            if optim.param_groups[0]['lr'] == lr and dice_score.item() > 0.9: 
+                print("Reducing learning rate")
+                optim.param_groups[0]['lr'] = lr/2
+
 
             #update progress bar
             pbar.set_postfix(loss=loss.item())

@@ -24,7 +24,7 @@ torch.cuda.empty_cache()
 
 TOTAL_NUM_TEST = len(db.test_meta)
 NUM_TEST = TOTAL_NUM_TEST
-SHOW = False # display the output as an image
+SHOW = True # display the output as an image
 BATCH_SIZE = 1 # configure the size of the batch
 
 # ------------ GEt Colour Representation for the figure ------------------ #
@@ -70,8 +70,8 @@ for idx in range(0, NUM_TEST, BATCH_SIZE):
     images, ann, idx = db.load_batch(idx, BATCH_SIZE, isTraining=False) # load images
     orig_images = images # store this for later use
     # prep images and load to GPU
-    images = (torch.from_numpy(images)).to(torch.float32).to(device).permute(0,3,1,2)/255.0
-
+    images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
+    images = images.to(device)
     # run model
     pred = model(images)
 
@@ -102,18 +102,18 @@ for idx in range(0, NUM_TEST, BATCH_SIZE):
         fig, axs = plt.subplots(ncols=4, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
 
         # Base image
-        img = F.to_pil_image(images[0])
-        axs[0, 0].imshow(np.asarray(img))
+        # img = F.to_pil_image(images[0])
+        axs[0, 0].imshow(images[0].astype(int))
         axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Base Image" )
 
         # obtain the blended segmentation image 
-        seg_img = draw_segmentation_masks(images[0], masks, alpha=0.7, colors=colors)
+        seg_img = draw_segmentation_masks(torch.tensor(images[0]).permute(2,0,1).to(torch.uint8), masks, alpha=0.7, colors=colors)
         img = F.to_pil_image(seg_img.detach())
         axs[0, 1].imshow(np.asarray(img))
         axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
 
         # Ground Truth Annotation masks 
-        axs[0, 2].imshow(ann.cpu().detach().numpy()[0], cmap='gray')
+        axs[0, 2].imshow(ann[0].astype(int)[:,:,0], cmap='gray')
         axs[0, 2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
 
         # Output mask
@@ -121,6 +121,10 @@ for idx in range(0, NUM_TEST, BATCH_SIZE):
         axs[0, 3].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
 
         plt.show()
+    
+    # Clear memory
+    del pred 
+    del images 
 
     # end the testing if the desired # of tests has been obtained
     if idx == NUM_TEST: 
