@@ -1,19 +1,22 @@
 import torch 
 import dataloader
-import unet 
-import cv2
 from torchvision.utils import draw_segmentation_masks, save_image
 torch.cuda.empty_cache() # liberate the resources 
 import numpy as np
 import matplotlib.pyplot as plt
 # read yaml file 
 import yaml
+import torchmetrics
+from tqdm import tqdm
+import time 
 
 # Display masks
 import numpy as np
 import matplotlib.pyplot as plt
 import torchvision.transforms.functional as F
 import torchsummary
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter() 
 
 # obtain the data
 db = dataloader.DataLoader()
@@ -24,8 +27,7 @@ torch.cuda.empty_cache()
 
 TOTAL_NUM_TEST = len(db.test_meta)
 NUM_TEST = TOTAL_NUM_TEST
-SHOW = False # display the output as an image
-LOG_RESULTS = True # select whether the evaluation results should be logged 
+SHOW = False # display the output as an image, turn off to log results 
 BATCH_SIZE = 1 # configure the size of the batch
 
 # ------------ GEt Colour Representation for the figure ------------------ #
@@ -63,70 +65,93 @@ model.to(device)
 # Obtain the summary of the model architecture + memory requirements
 torchsummary.summary(model, (3,db.height,db.width))
 
+# Use the Dice score as the performance metric to assess model accuracy
+dice = torchmetrics.Dice().to(device)
+
+with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
 # iterate through all tests while using batches 
-for idx in range(0, NUM_TEST, BATCH_SIZE): 
+    for idx in range(0, NUM_TEST, BATCH_SIZE): 
 
-    # ------------ Run the model with the loaded images  ---------------- #
+        # ------------ Run the model with the loaded images  ---------------- #
 
-    images, ann, idx = db.load_batch(idx, BATCH_SIZE, isTraining=False) # load images
-    orig_images = images # store this for later use
-    # prep images and load to GPU
-    images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
-    images = images.to(device)
-    # run model
-    pred = model(images)
+        images, ann, idx = db.load_batch(idx, BATCH_SIZE, isTraining=False) # load images
+        orig_images = images # store this for later use
+        # prep images and load to GPU
+        images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
+        images = images.to(device)
+        ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
 
-    # ----------- Plot the Results ----------------------- #
-    # create a blank array
-    masks = torch.zeros(35,1200,1920, device=device, dtype=torch.bool)
+        startTime = time.time()
 
-    # obtain a mask for each class
-    for classID in range(masks.shape[0]): 
-        masks[classID] = (pred.argmax(dim=1) == classID)
+        # run model
+        pred = model(images)
 
-    # move the masks and the image onto the CPU
-    images = orig_images # restore original images
-    masks = masks.to('cpu')
-    del orig_images # no longer needed
+        # log the time the prediction takes to complete
+        if not SHOW: 
+            writer.add_scalar("Metrics/Time", time.time() - startTime, idx)
 
-    # convert the image to uint8 type 
-    # images = images.to(torch.uint8)
-    masks = masks.to(torch.bool) # convert to boolean 
+        # Measure the performance of the model
+        dice_score = dice(pred, ann.to(device).long())
+
+        if not SHOW:
+            writer.add_scalar("Metrics/Dice", dice_score, idx) # record the dice score 
 
 
+        # ----------- Plot the Results ----------------------- #
+        # create a blank array
+        masks = torch.zeros(35,1200,1920, device=device, dtype=torch.bool)
+
+        # obtain a mask for each class
+        for classID in range(masks.shape[0]): 
+            masks[classID] = (pred.argmax(dim=1) == classID)
+
+        # move the masks and the image onto the CPU
+        images = orig_images # restore original images
+        masks = masks.to('cpu')
+        del orig_images # no longer needed
+
+        # convert the image to uint8 type 
+        # images = images.to(torch.uint8)
+        masks = masks.to(torch.bool) # convert to boolean 
 
 
-    # -------------- Show the image output for the segmentation  ---------- #
-    if SHOW:     
 
-        # Create the output plot
-        fig, axs = plt.subplots(ncols=4, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
 
-        # Base image
-        # img = F.to_pil_image(images[0])
-        axs[0, 0].imshow(images[0].astype(int))
-        axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Base Image" )
+        # -------------- Show the image output for the segmentation  ---------- #
+        if SHOW:     
 
-        # obtain the blended segmentation image 
-        seg_img = draw_segmentation_masks(torch.tensor(images[0]).permute(2,0,1).to(torch.uint8), masks, alpha=0.7, colors=colors)
-        img = F.to_pil_image(seg_img.detach())
-        axs[0, 1].imshow(np.asarray(img))
-        axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
+            # Create the output plot
+            fig, axs = plt.subplots(ncols=4, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
 
-        # Ground Truth Annotation masks 
-        axs[0, 2].imshow(ann[0].astype(int)[:,:,0], cmap='gray')
-        axs[0, 2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
+            # Base image
+            # img = F.to_pil_image(images[0])
+            axs[0, 0].imshow(images[0].astype(int))
+            axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Base Image" )
 
-        # Output mask
-        axs[0, 3].imshow(torch.argmax(pred,1).cpu().detach().numpy()[0], cmap='gray')
-        axs[0, 3].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
+            # obtain the blended segmentation image 
+            seg_img = draw_segmentation_masks(torch.tensor(images[0]).permute(2,0,1).to(torch.uint8), masks, alpha=0.7, colors=colors)
+            img = F.to_pil_image(seg_img.detach())
+            axs[0, 1].imshow(np.asarray(img))
+            axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
 
-        plt.show()
-    
-    # Clear memory
-    del pred 
-    del images 
+            # Ground Truth Annotation masks 
+            axs[0, 2].imshow(ann[0].astype(int)[:,:,0], cmap='gray')
+            axs[0, 2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
 
-    # end the testing if the desired # of tests has been obtained
-    if idx == NUM_TEST: 
-        break
+            # Output mask
+            axs[0, 3].imshow(torch.argmax(pred,1).cpu().detach().numpy()[0], cmap='gray')
+            axs[0, 3].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
+
+            plt.show()
+
+        # Update the progress bar
+        pbar.set_postfix(score = dice_score.item())
+        pbar.update()
+
+        # Clear memory
+        del pred 
+        del images 
+
+        # end the testing if the desired # of tests has been obtained
+        if idx == NUM_TEST: 
+            break
