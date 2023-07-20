@@ -6,6 +6,9 @@ model.pot
 params.txt
 model.pt
 
+# Visual Studio Code Specific Stuff
+.vscode
+
 # HRNet Outputs & Models Employed (Storage required for models is too large).
 models/HRNet-Semantic-Segmentation-HRNet-OCR/pretrained_models/
 models/HRNet-Semantic-Segmentation-HRNet-OCR/output/

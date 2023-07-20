@@ -121,7 +121,6 @@ class TrainModel(object):
                     images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
                     ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
 
-                    self.getPatches(images, ann)
                     
                     # Create autogradient variables for training
                     images = torch.autograd.Variable(images, requires_grad = False).to(device)
