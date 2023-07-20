@@ -2,10 +2,14 @@
 results/
 runs/
 saves/
-models/
 model.pot
 params.txt
 model.pt
+
+# HRNet Outputs & Models Employed (Storage required for models is too large).
+models/HRNet-Semantic-Segmentation-HRNet-OCR/pretrained_models/
+models/HRNet-Semantic-Segmentation-HRNet-OCR/output/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -23,7 +27,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ # removed for lib in HRNet -> is still useful in this case.
 lib64/
 parts/
 sdist/
