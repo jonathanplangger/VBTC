@@ -1,3 +1,11 @@
+import os 
+# Preset environment variables 
+# os.environ['CUDA_LAUNCH_BLOCKING'] = "1" # ONLY FOR DEBUG -  Allows for the stacktrace to be effectively used
+# To run trace: 
+# python -m cProfile -o /tmp/tmp.prof eval.py
+# snakeviz /tmp/tmp.prof
+
+
 import torch 
 import dataloader
 from torchvision.utils import draw_segmentation_masks, save_image
@@ -9,6 +17,7 @@ import yaml
 import torchmetrics
 from tqdm import tqdm
 import time 
+import sklearn
 
 # Display masks
 import numpy as np
@@ -35,7 +44,7 @@ BATCH_SIZE = 1 # configure the size of the batch
 # ---- TODO -- This needs to be handled by the dataloader and NOT the eval.py
 with open("Rellis_3D_ontology/ontology.yaml", "r") as stream: 
     try: 
-        ont = yaml.safe_load(stream)[1]
+        ont = yaml.safe_load(stream)
     except yaml.YAMLError as exc: 
         print(exc)
         exit()
@@ -44,15 +53,13 @@ with open("Rellis_3D_ontology/ontology.yaml", "r") as stream:
 colors = []
 for i in range(35): 
     try: 
-        val = tuple(ont[i])
+        val = tuple(ont[1][i])
         colors.append(val)
     except: # if the dict element does not exist
         colors.append("#000000") # assign black colour to the unused masks
 
 
 # ---------------- Prep the model for testing ------------------- # 
-
-
 
 # set to cuda if correctly configured on pc
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -68,6 +75,24 @@ torchsummary.summary(model, (3,db.height,db.width))
 # Use the Dice score as the performance metric to assess model accuracy
 dice = torchmetrics.Dice().to(device)
 
+# Intersection over Union metric calculator 
+iou = torchmetrics.JaccardIndex(task='multiclass', num_classes=db.num_classes, average='none')
+
+# Obtain the confusion matrix
+# confMat = torchmetrics.ConfusionMatrix(task="multiclass", num_classes=db.num_classes)
+# confMat = confMat.to(device=device)
+
+# Used to tally the final mean intersection over union score
+miou = torch.zeros(db.num_classes).to(device)
+# Count the n# of instances with this class in it
+count_c = torch.zeros(db.num_classes).to(device)
+
+# Create a blank confusion matrix to be input into 
+confusionMatrix = torch.empty([TOTAL_NUM_TEST,db.num_classes, db.num_classes])
+
+from sklearn.metrics import confusion_matrix
+
+
 with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
 # iterate through all tests while using batches 
     for idx in range(0, NUM_TEST, BATCH_SIZE): 
@@ -76,26 +101,22 @@ with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
 
         images, ann, idx = db.load_batch(idx, BATCH_SIZE, isTraining=False) # load images
         orig_images = images # store this for later use
+        orig_ann = ann # store for later display
         # prep images and load to GPU
-        images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
-        images = images.to(device)
-        ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
+        images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0).to(device)
 
-        startTime = time.time()
+        ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:].to(device)
+
+        
+        startTime = time.time() # used to measure prediction time for the model
 
         # run model
-        pred = model(images)
-
-        # log the time the prediction takes to complete
-        if not SHOW: 
-            writer.add_scalar("Metrics/Time", time.time() - startTime, idx)
+        with torch.no_grad(): # do not calculate gradients for this task
+            pred = model(images)
 
         # Measure the performance of the model
-        dice_score = dice(pred, ann.to(device).long())
-
-        if not SHOW:
-            writer.add_scalar("Metrics/Dice", dice_score, idx) # record the dice score 
-
+        dice_score = dice(pred, ann.long())
+        
 
         # ----------- Plot the Results ----------------------- #
         # create a blank array
@@ -114,7 +135,24 @@ with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # images = images.to(torch.uint8)
         masks = masks.to(torch.bool) # convert to boolean 
 
+        # Get the iou score for each of the classes individually
+        iou_score = iou(pred.cpu(), ann.long().cpu()).to(device)
 
+        unique_classes = ann.unique() # get unique classes that are represented in the annotation
+
+        # for each unique class
+        for c in unique_classes: 
+            c = int(c.item()) # convert to int number 
+            miou[c] += iou_score[c] #add to the final sum count for IoU
+            count_c[c] += 1 # increment the final count 
+
+        # Obtain and store the confusion matrix
+        # confusionMatrix[idx] = confMat(pred.cpu(), ann.long().cpu()) # Running this on CPU actually makes it considerably faster
+
+        # Log the results of the evaluation onto tensorboard
+        if not SHOW:
+            writer.add_scalar("Metrics/Dice", dice_score.item(), idx) # record the dice score 
+            writer.add_scalar("Metrics/Time", time.time() - startTime, idx)
 
 
         # -------------- Show the image output for the segmentation  ---------- #
@@ -135,7 +173,7 @@ with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
             axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
 
             # Ground Truth Annotation masks 
-            axs[0, 2].imshow(ann[0].astype(int)[:,:,0], cmap='gray')
+            axs[0, 2].imshow(orig_ann[0].astype(int)[:,:,0], cmap='gray')
             axs[0, 2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
 
             # Output mask
@@ -143,6 +181,8 @@ with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
             axs[0, 3].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
 
             plt.show()
+
+            # exit()
 
         # Update the progress bar
         pbar.set_postfix(score = dice_score.item())
@@ -155,3 +195,25 @@ with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # end the testing if the desired # of tests has been obtained
         if idx == NUM_TEST: 
             break
+
+
+# After the completion of obtaining the metric
+miou = miou/count_c # obtain the average amount for each class 
+
+table = {}
+
+# Map the class names to the mIoU values obtained
+for c in ont[0]: 
+    table[ont[0][c]] = round(miou[c].cpu().item(), 4)
+
+
+
+print("End of Evaluation Program")
+
+
+
+
+
+
+
+   

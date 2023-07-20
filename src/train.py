@@ -44,15 +44,16 @@ class TrainModel(object):
         self.db = db = dataloader.DataLoader("../../datasets/Rellis-3D/")
 
         # Training Parameters
-        self.batch_size = 3 #3
+        self.batch_size = 1 #3
         self.train_length = len(db.train_meta)
         self.steps_per_epoch = int(self.train_length/self.batch_size) # n# of steps within the specific epoch.
         self.epochs = 10 #10
         self.total_batches = self.steps_per_epoch*self.epochs # total amount of batches that need to be completed for training
-        self.lr = 1e-3 # learning rate
-        self.base = 2 # base value for the UNet feature sizes
-        self.kernel_size = 3
-        self.criterion = focal_loss.FocalLoss()
+        self.lr = 1e-5 # learning rate
+        self.base = 40 # base value for the UNet feature sizes - ONLY applies for the U-Net
+        self.kernel_size = 5
+        # self.criterion = focal_loss.FocalLoss()
+        self.criterion = torch.nn.CrossEntropyLoss()
 
         # Image characteristics
         self.img_w = self.db.width
@@ -136,14 +137,14 @@ class TrainModel(object):
                     loss.backward() # backpropagation for loss 
                     optim.step() # apply gradient descent to the weights
 
-                    # update the learning rate based on the amount of error present
-                    # if optim.param_groups[0]['lr'] == lr and loss.item() < 1.5: 
-                    #     print("Reducing learning rate")
-                    #     optim.param_groups[0]['lr'] = 5e-5
-
                     # Obtain the performance metrics
                     dice_score = dice(pred, ann.long())
                     writer.add_scalar("Metrics/Dice", dice_score, epoch*self.steps_per_epoch + i) # record the dice score 
+
+                    # reduce the learning rate once the 4th epoch is reached 
+                    if optim.param_groups[0]['lr'] == self.lr and epoch == 3: 
+                        print("Reducing learning rate")
+                        optim.param_groups[0]['lr'] = self.lr/4
 
                     #update progress bar
                     pbar.set_postfix(loss=loss.item())
@@ -175,32 +176,6 @@ class TrainModel(object):
         -----------------------------------------------------------<br />  
         """.format(datetime.datetime.now(), self.batch_size, self.lr, self.base, self.kernel_size, self.epochs,
                     self.steps_per_epoch, self.criterion.__class__.__name__)
-
-    # Obtain smaller image patches from the larger image inputs, applies this to annotations as well.
-    def getPatches(self, images, ann): 
-        # patching and unpatching code from: https://discuss.pytorch.org/t/patch-making-does-pytorch-have-anything-to-offer/33850/9
-        
-        # kernel (resulting image) size for channel, height, and width
-        kc, kh, kw = 3, 358, 572
-        # stride for the kernel used (use < kernel size for overlap in resulting image output)
-        sc, sh, sw = 3, kh, kw 
-
-        patches = images.unfold(1,kc,sc).unfold(2,kh,sh).unfold(3,kw,sw)
-        unfold_shape = patches.size()
-        patches = patches.contiguous().view(patches.size(0), -1, kc, kh, kw)
-
-        # restore the original dimensions of the input data
-        # patches_orig = patches.view(unfold_shape)
-        # output_c = unfold_shape[1] * unfold_shape[4]
-        # output_h = unfold_shape[2] * unfold_shape[5]
-        # output_w = unfold_shape[3] * unfold_shape[6]
-        # patches_orig = patches_orig.permute(0, 1, 4, 2, 5, 3, 6).contiguous()
-        # patches_orig = patches_orig.view(1, output_c, output_h, output_w)
-
-        return patches 
-
-    def mergePatches(self, patches, unfold_shape): 
-        pass
 
 
     # this function is only used during testing to allow for the visual validation of results, no need for it 

@@ -3,6 +3,7 @@ import os, json, cv2
 import time
 import numpy as np
 import random
+import patchify
 
 # ------------- Dataloader for the new dataset ------------- #
 class DataLoader(object):
@@ -146,18 +147,57 @@ class DataLoader(object):
 
         return images, annMap, idx
 
+    def getPatches(self, img: np.ndarray, patch_size, stride=[1,1], padding=[0,0]): 
+        """
+            Converts the image/annotation into smaller configurable patches. 
+            ---------------------------------\n
+            Parameters: \n
+            img (numpy_ndarray): (B,H,W,C) image in question being patched \n
+            patch_size: [h,w] dimensions of the patch\n
+            stride: [h,w] stride size between patches \n
+            padding: [h,w] padding around the image prior to patching\n
+            -----------------------------------\n
+            Returns: (patch)
+            - patch: patches retrieved from the source image. 
+        """
+        # Break down the patching parameters
+        ph, pw = padding
+        sh, sw = stride 
+        h,w = patch_size
+
+        # get the size of the input image 
+        img_size = img.shape[1:2]
+
+        patch = patchify.patchify(img[0], (h,w,3), step=w)
+        print(patch.shape)
+
+        import matplotlib.pyplot as plt 
+        # plt.imshow(img[0].astype('int'))
+        # plt.show()
+
+        fig, axs = plt.subplots(patch.shape[0], patch.shape[1])
 
 
+        for row, r in enumerate(patch): 
+            for col, c in enumerate(r): 
+                axs[row,col].margins(2,2)
+                axs[row,col].axis('off')
+                axs[row,col].imshow(c[0].astype('int'))
+                
 
 
+        plt.show()
 
 
+        pass
+        
+# --------- Testing the class above, REMOVE later ------------ #
+if __name__ == "__main__": 
+    rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
+    loader = DataLoader(rellis_path)
+    images, ann, idx = loader.load_batch(0, 3)
+    print(images.shape)
+    print(ann.shape)
 
-
-# # --------- Testing the class above, REMOVE later ------------ #
-# if __name__ == "__main__": 
-#     rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
-#     loader = DataLoader(rellis_path)
-#     images, ann, idx = loader.load_batch(0, 3)
-#     print(images.shape)
-#     print(ann.shape)
+    # 240 X 240 seems like the best bet
+    loader.getPatches(images, patch_size=[600,480])
