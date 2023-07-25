@@ -5,7 +5,7 @@ import os
 # python -m cProfile -o /tmp/tmp.prof eval.py
 # snakeviz /tmp/tmp.prof
 
-
+import sys
 import torch 
 import dataloader
 from torchvision.utils import draw_segmentation_masks, save_image
@@ -38,6 +38,9 @@ TOTAL_NUM_TEST = len(db.test_meta)
 NUM_TEST = TOTAL_NUM_TEST
 SHOW = False # display the output as an image, turn off to log results 
 BATCH_SIZE = 1 # configure the size of the batch
+MODEL = "hrnet" # set which model is going to be evaluated
+
+
 
 # ------------ GEt Colour Representation for the figure ------------------ #
 # open the ontology file for rellis and obtain the colours for them
@@ -64,8 +67,15 @@ for i in range(35):
 # set to cuda if correctly configured on pc
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-# load the model to the device 
-model = torch.load('model.pt')
+if MODEL == "unet":
+    # load the model to the device 
+    model = torch.load('model.pt')
+elif MODEL == "hrnet":
+    # TODO - Update to relative path -> current iterations of sys.path did not allow this... 
+    sys.path.insert(0,"/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/tools/")
+    from test import load_model
+    model = load_model("config/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml")
+
 model.eval()
 model.to(device)
 
