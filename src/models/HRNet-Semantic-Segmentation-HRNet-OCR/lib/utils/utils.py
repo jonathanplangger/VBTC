@@ -30,9 +30,7 @@ class FullModel(nn.Module):
     self.model = model
     self.loss = loss
 
-  def forward(self, inputs, labels, *args, **kwargs): 
-    # return self.model(inputs, *args, **kwargs) # comment out when not using torchsummary
-    ### Commented out below to allow for use of torchsummary.
+  def forward(self, inputs, labels, *args, **kwargs):     ### Commented out below to allow for use of torchsummary.
     ### --------------------------------------------------------
     outputs = self.model(inputs, *args, **kwargs)
     loss = self.loss(outputs, labels)
