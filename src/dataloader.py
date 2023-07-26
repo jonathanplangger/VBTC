@@ -215,14 +215,13 @@ class DataLoader(object):
                         33: 17,
                         34: 18}
         
-        temp = label
+        temp = label.clone().detach() # store the old version of the label
         if inverse: # if (0->18), convert to (0->34)
             for v, k in label_mapping.items():
                 label[temp == k] = v
         else: # if (0->34), convert to (0->18)
             for k, v in label_mapping.items():
                 label[temp == k] = v
-        del temp
         return label
         
 # --------- Testing the class above, REMOVE later ------------ #

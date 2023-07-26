@@ -141,7 +141,8 @@ class ComparativeEvaluation():
                     # Use the same interpolation scheme as is used in the source code.
                     pred = TF.interpolate(input=pred, size=(db.height, db.width), mode='bilinear', align_corners=False)
                     pred = pred.argmax(dim=1) # obtain the predictions for each layer
-                    db.map_labels(pred, inverse = True) # convert to 0->34
+
+                    pred = db.map_labels(label=pred, inverse = True) # convert to 0->34
 
                 # Measure the performance of the model
                 dice_score = dice(pred, ann.long())

@@ -83,7 +83,7 @@ TRAIN:
   BATCH_SIZE_PER_GPU: 1
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 11 #Original Rellis trained for 484 epochs! Need to make sure that 10 epochs do indeed cover this. 
+  END_EPOCH: 20 #Original Rellis trained for 484 epochs! Need to make sure that 10 epochs do indeed cover this. 
   RESUME: true
   OPTIMIZER: sgd
   LR: 0.01
