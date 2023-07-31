@@ -32,6 +32,7 @@ class ComparativeEvaluation():
 
     # TODO - Update the code to work in OO fashion 
     def __init__(self):
+        self.model = "hrnet" # pre-set as of right now
         pass
 
     def eval(self):
@@ -154,7 +155,7 @@ class ComparativeEvaluation():
 
                 # obtain a mask for each class
                 for classID in range(masks.shape[0]): 
-                    masks[classID] = (pred.argmax(dim=1) == classID)
+                    masks[classID] = (pred == classID)
 
                 # move the masks and the image onto the CPU
                 images = orig_images # restore original images
