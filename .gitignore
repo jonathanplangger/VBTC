@@ -5,6 +5,7 @@ saves/
 model.pot
 params.txt
 model.pt
+temp/
 
 # Visual Studio Code Specific Stuff
 .vscode

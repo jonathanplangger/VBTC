@@ -67,7 +67,8 @@ class ComparativeEvaluation():
             sys.path.insert(0,os.path.join(src_dir,"tools/"))
             sys.path.insert(0,os.path.join(src_dir,"lib/"))
             from test import load_model
-            model = load_model("/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml")
+            model = load_model("/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml", 
+                               model_file = self.cfg.MODELS.HRNET_OCR.MODEL_FILE)
         else: 
             print("\n\nInvalid model name, please update the configuration file.")
             print("Exiting Program.... ")

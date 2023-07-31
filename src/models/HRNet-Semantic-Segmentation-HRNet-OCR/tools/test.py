@@ -53,12 +53,13 @@ def parse_args():
 
     return args
 
-def load_model(cfg_path):
+def load_model(cfg_path, model_file):
     # args = parse_args()
 
     # Update the config to use the new file path
     config.defrost()
     config.merge_from_file(cfg_path)
+    config.TEST.MODEL_FILE = model_file # update the path to the model file
     config.freeze()
 
     # logger, final_output_dir, _ = create_logger(
