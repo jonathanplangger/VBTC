@@ -27,7 +27,7 @@ from tensorboardX import SummaryWriter
 import _init_paths
 import models
 import datasets
-from config import config
+from . import config
 from config import update_config
 from core.criterion import CrossEntropy, OhemCrossEntropy
 from core.function import train, validate

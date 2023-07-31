@@ -24,8 +24,8 @@ import torch.backends.cudnn as cudnn
 
 import _init_paths
 import models
-import datasets
-from config import config
+# import datasets # datasets are no longer needed to be imported
+from config import config # import the config module (updated for new file path)
 from config import update_config
 from core.function import testval, test
 from utils.modelsummary import get_model_summary

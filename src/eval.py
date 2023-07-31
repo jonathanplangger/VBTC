@@ -28,13 +28,22 @@ from torch.nn import functional as TF
 
 from torch.utils.tensorboard import SummaryWriter
 
+from config_eval import get_cfg_defaults
+
+
+
+
 class ComparativeEvaluation():
 
     # TODO - Update the code to work in OO fashion 
     def __init__(self):
-        self.model_name = "hrnet"
-        self.display_image = True
-        self.batch_size = 1
+
+        # Load and update the configuration file. Serves as the main point of configuration for the testing. 
+        self.cfg = get_cfg_defaults()
+        self.cfg.merge_from_file("configs/config_comparative_study.yaml")
+        self.cfg.freeze()
+
+        # Set up the device where the program is going to be run -> gpu if available
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 
@@ -48,14 +57,21 @@ class ComparativeEvaluation():
             "self.model" is employed as the deciding factor for the model being used. 
 
         """
-        if self.model_name == "unet":
+        if self.cfg.EVAL.MODEL_NAME == "unet":
             # load the model to the device 
             model = torch.load('model.pt')
-        elif self.model_name == "hrnet":
-            # TODO - Update to relative path -> current iterations of sys.path did not allow this... 
-            sys.path.insert(0,"/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/tools/")
+        elif self.cfg.EVAL.MODEL_NAME == "hrnet_ocr":
+            # model source code directory
+            src_dir = self.cfg.MODELS.HRNET_OCR.SRC_DIR
+            # add the source code tools directory to re-use their code
+            sys.path.insert(0,os.path.join(src_dir,"tools/"))
+            sys.path.insert(0,os.path.join(src_dir,"lib/"))
             from test import load_model
-            model = load_model("config/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml")
+            model = load_model("/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml")
+        else: 
+            print("\n\nInvalid model name, please update the configuration file.")
+            print("Exiting Program.... ")
+            exit()
 
         return model
 
@@ -70,9 +86,9 @@ class ComparativeEvaluation():
             pred (tensor): Prediction tensors of logit format directly obtained from the model output 
             db (dataloader.DataLoader): dataloader for the given dataset. 
         """
-        if self.model_name == "unet": 
+        if self.cfg.EVAL.MODEL_NAME == "unet": 
             pred = pred.argmax(dim=1)
-        elif self.model_name == "hrnet": 
+        elif self.cfg.EVAL.MODEL_NAME == "hrnet_ocr": 
             pred = pred[0] # hrnet has 2 outputs, whilst only one is used... 
             # Use the same interpolation scheme as is used in the source code.
             pred = TF.interpolate(input=pred, size=(db.height, db.width), mode='bilinear', align_corners=False)
@@ -145,11 +161,11 @@ class ComparativeEvaluation():
 
         with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # iterate through all tests while using batches 
-            for idx in range(0, NUM_TEST, self.batch_size): 
+            for idx in range(0, NUM_TEST, self.cfg.EVAL.BATCH_SIZE): 
 
                 # ------------ Run the model with the loaded images  ---------------- #
 
-                images, ann, idx = db.load_batch(idx, self.batch_size, isTraining=False) # load images
+                images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, isTraining=False) # load images
                 orig_images = images # store this for later use
                 orig_ann = ann # store for later display
                 # prep images and load to GPU
@@ -203,13 +219,13 @@ class ComparativeEvaluation():
                 # confusionMatrix[idx] = confMat(pred.cpu(), ann.long().cpu()) # Running this on CPU actually makes it considerably faster
 
                 # Log the results of the evaluation onto tensorboard
-                if not self.display_image:
+                if not self.cfg.EVAL.DISPLAY_IMAGE:
                     writer.add_scalar("Metrics/Dice", dice_score.item(), idx) # record the dice score 
                     writer.add_scalar("Metrics/Time", time.time() - startTime, idx)
 
 
                 # -------------- Show the image output for the segmentation  ---------- #
-                if self.display_image:     
+                if self.cfg.EVAL.DISPLAY_IMAGE:     
 
                     # Create the output plot
                     fig, axs = plt.subplots(ncols=4, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
