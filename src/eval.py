@@ -32,8 +32,55 @@ class ComparativeEvaluation():
 
     # TODO - Update the code to work in OO fashion 
     def __init__(self):
-        self.model = "hrnet" # pre-set as of right now
+        self.model_name = "hrnet"
+        self.display_image = True
+        self.batch_size = 1
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+
         pass
+
+    def __load_model(self):
+        """
+            __load_model(self):
+            ------------------------------------------------------------
+            Returns the model based on the configuration selected.
+            "self.model" is employed as the deciding factor for the model being used. 
+
+        """
+        if self.model_name == "unet":
+            # load the model to the device 
+            model = torch.load('model.pt')
+        elif self.model_name == "hrnet":
+            # TODO - Update to relative path -> current iterations of sys.path did not allow this... 
+            sys.path.insert(0,"/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/tools/")
+            from test import load_model
+            model = load_model("config/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml")
+
+        return model
+
+    def __handle_output(self, pred, db): 
+        """
+            __handle_output(self,pred,db): 
+            -------------------------------
+            Convert the output obtained from the prediction to a set of labeled annotations to be later compared to the annotation labels. 
+            This function takes account of the specific structure of the model employed and will convert the output accordingly. 
+            --------------------------------
+            Inputs: 
+            pred (tensor): Prediction tensors of logit format directly obtained from the model output 
+            db (dataloader.DataLoader): dataloader for the given dataset. 
+        """
+        if self.model_name == "unet": 
+            pred = pred.argmax(dim=1)
+        elif self.model_name == "hrnet": 
+            pred = pred[0] # hrnet has 2 outputs, whilst only one is used... 
+            # Use the same interpolation scheme as is used in the source code.
+            pred = TF.interpolate(input=pred, size=(db.height, db.width), mode='bilinear', align_corners=False)
+            pred = pred.argmax(dim=1) # obtain the predictions for each layer
+
+            pred = db.map_labels(label=pred, inverse = True) # convert to 0->34
+
+        return pred
 
     def eval(self):
 
@@ -48,11 +95,6 @@ class ComparativeEvaluation():
 
         TOTAL_NUM_TEST = len(db.test_meta)
         NUM_TEST = TOTAL_NUM_TEST
-        SHOW = True # display the output as an image, turn off to log results 
-        BATCH_SIZE = 1 # configure the size of the batch
-        MODEL = "hrnet" # set which model is going to be evaluated
-        REQUIRE_MAPPING = False # does the output of the model need to be mapped to 0->34 scheme
-
 
         # ------------ GEt Colour Representation for the figure ------------------ #
         # open the ontology file for rellis and obtain the colours for them
@@ -76,39 +118,24 @@ class ComparativeEvaluation():
 
         # ---------------- Prep the model for testing ------------------- # 
 
-        # set to cuda if correctly configured on pc
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-        if MODEL == "unet":
-            # load the model to the device 
-            model = torch.load('model.pt')
-        elif MODEL == "hrnet":
-            # TODO - Update to relative path -> current iterations of sys.path did not allow this... 
-            sys.path.insert(0,"/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/tools/")
-            from test import load_model
-            model = load_model("config/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml")
-            REQUIRE_MAPPING = True
+        model = self.__load_model() # obtain the model based on config
 
         model.eval()
-        model.to(device)
+        model.to(self.device)
 
         # Obtain the summary of the model architecture + memory requirements
         torchsummary.summary(model, (3,db.height,db.width))
 
         # Use the Dice score as the performance metric to assess model accuracy
-        dice = torchmetrics.Dice().to(device)
+        dice = torchmetrics.Dice().to(self.device)
 
         # Intersection over Union metric calculator 
         iou = torchmetrics.JaccardIndex(task='multiclass', num_classes=db.num_classes, average='none')
 
-        # Obtain the confusion matrix
-        # confMat = torchmetrics.ConfusionMatrix(task="multiclass", num_classes=db.num_classes)
-        # confMat = confMat.to(device=device)
-
         # Used to tally the final mean intersection over union score
-        miou = torch.zeros(db.num_classes).to(device)
+        miou = torch.zeros(db.num_classes).to(self.device)
         # Count the n# of instances with this class in it
-        count_c = torch.zeros(db.num_classes).to(device)
+        count_c = torch.zeros(db.num_classes).to(self.device)
 
         # Create a blank confusion matrix to be input into 
         confusionMatrix = torch.empty([TOTAL_NUM_TEST,db.num_classes, db.num_classes])
@@ -118,17 +145,17 @@ class ComparativeEvaluation():
 
         with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # iterate through all tests while using batches 
-            for idx in range(0, NUM_TEST, BATCH_SIZE): 
+            for idx in range(0, NUM_TEST, self.batch_size): 
 
                 # ------------ Run the model with the loaded images  ---------------- #
 
-                images, ann, idx = db.load_batch(idx, BATCH_SIZE, isTraining=False) # load images
+                images, ann, idx = db.load_batch(idx, self.batch_size, isTraining=False) # load images
                 orig_images = images # store this for later use
                 orig_ann = ann # store for later display
                 # prep images and load to GPU
-                images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0).to(device)
+                images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0).to(self.device)
 
-                ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:].to(device)
+                ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:].to(self.device)
 
                 
                 startTime = time.time() # used to measure prediction time for the model
@@ -137,13 +164,8 @@ class ComparativeEvaluation():
                 with torch.no_grad(): # do not calculate gradients for this task
                     pred = model(images)
 
-                if MODEL == "hrnet": 
-                    pred = pred[0] # hrnet has 2 outputs, whilst only one is used... 
-                    # Use the same interpolation scheme as is used in the source code.
-                    pred = TF.interpolate(input=pred, size=(db.height, db.width), mode='bilinear', align_corners=False)
-                    pred = pred.argmax(dim=1) # obtain the predictions for each layer
-
-                    pred = db.map_labels(label=pred, inverse = True) # convert to 0->34
+                # Convert the prediction output to argmax labels representing each class predicted
+                pred = self.__handle_output(pred, db)
 
                 # Measure the performance of the model
                 dice_score = dice(pred, ann.long())
@@ -151,7 +173,7 @@ class ComparativeEvaluation():
 
                 # ----------- Plot the Results ----------------------- #
                 # create a blank array
-                masks = torch.zeros(35,1200,1920, device=device, dtype=torch.bool)
+                masks = torch.zeros(35,1200,1920, device=self.device, dtype=torch.bool)
 
                 # obtain a mask for each class
                 for classID in range(masks.shape[0]): 
@@ -167,7 +189,7 @@ class ComparativeEvaluation():
                 masks = masks.to(torch.bool) # convert to boolean 
 
                 # Get the iou score for each of the classes individually
-                iou_score = iou(pred.cpu(), ann.long().cpu()).to(device)
+                iou_score = iou(pred.cpu(), ann.long().cpu()).to(self.device)
 
                 unique_classes = ann.unique() # get unique classes that are represented in the annotation
 
@@ -181,13 +203,13 @@ class ComparativeEvaluation():
                 # confusionMatrix[idx] = confMat(pred.cpu(), ann.long().cpu()) # Running this on CPU actually makes it considerably faster
 
                 # Log the results of the evaluation onto tensorboard
-                if not SHOW:
+                if not self.display_image:
                     writer.add_scalar("Metrics/Dice", dice_score.item(), idx) # record the dice score 
                     writer.add_scalar("Metrics/Time", time.time() - startTime, idx)
 
 
                 # -------------- Show the image output for the segmentation  ---------- #
-                if SHOW:     
+                if self.display_image:     
 
                     # Create the output plot
                     fig, axs = plt.subplots(ncols=4, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
