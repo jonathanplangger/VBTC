@@ -15,7 +15,7 @@ class DataLoader(object):
         metadata (List[dict]) = List of dictionnary elements containing information regarding image files\n
         num_classes = quantity of differentiable classes within the dataset\n
     """
-    def __init__(self, path="../../datasets/Rellis-3D/"):
+    def __init__(self, path="../../datasets/Rellis-3D/", setType = "train"):
         """
             Dataloader provides an easy interface for loading data for training and testing of new models.\n
             ----------------------------\n
@@ -30,6 +30,7 @@ class DataLoader(object):
         self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
+        self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
 
 
     # --------------------------- Database Registrations --------------------------------------#
@@ -109,14 +110,13 @@ class DataLoader(object):
         return img, mask
 
 
-    def load_batch(self, idx:int=None, batch_size:int = 1, isTraining=True, resize = None):
+    def load_batch(self, idx:int=None, batch_size:int = 1, resize = None):
         """
             Load a batch of size "batch_size". Returns the images, annotation maps, and the newly updated index value
             ----------------\n
             Parameters: \n 
             idx (int): the index of the image in the list, this function iterates this index and returns the value later \n
             batch_size (int): size of batch being retrieved by the program \n
-            isTraining (bool): batch returns training set if TRUE
             --------\n
             Returns: (images, annMap, idx)
             - images: list of images in the given batch 
@@ -125,12 +125,14 @@ class DataLoader(object):
             - resize (h,w): new size to be applied to ONLY the image. Annotation will be left alone. 
         """
 
-        # select which kind of data is used for the images
-        if isTraining: 
+        if self.setType == "train": 
             metadata = self.train_meta
-        else: 
-            metadata = self.test_meta
-
+        elif self.setType == "test":
+            metadata = self.test_meta 
+        elif self.setType == "val": 
+            metadata = None # TODO - > Update this set type to work
+        else: # incorrect version used
+            raise Exception("Invalid set type. Please select either train/test/val.")
 
         #initialize the index
         if idx == None: 

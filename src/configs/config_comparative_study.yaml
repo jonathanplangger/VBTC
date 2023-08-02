@@ -3,10 +3,10 @@ EVAL:
   MODEL_NAME: "hrnet_ocr"
   # hrnet_ocr
   # unet
-  DISPLAY_IMAGE: True 
+  DISPLAY_IMAGE: False 
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
-    RESIZE_IMG: False # will only re-size the image to the dim below if True
+    RESIZE_IMG: True # will only re-size the image to the dim below if True
     HEIGHT: 640
     WIDTH: 1024
   

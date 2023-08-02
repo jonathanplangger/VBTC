@@ -104,7 +104,7 @@ class ComparativeEvaluation():
         writer = SummaryWriter() 
 
         # obtain the data
-        db = dataloader.DataLoader()
+        db = dataloader.DataLoader(setType="test") 
         db.randomizeOrder()
 
         # Empty the cache prior to training the network
@@ -173,7 +173,7 @@ class ComparativeEvaluation():
 
                 # ------------ Run the model with the loaded images  ---------------- #
                 # load the batch from the dataset
-                orig_images, images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, isTraining=False, resize=input_size) # load images
+                orig_images, images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, resize=input_size) # load images
                 
                 # orig_images = images # store this for later use
                 orig_ann = ann # store for later display
@@ -285,6 +285,7 @@ class ComparativeEvaluation():
         for c in ont[0]: 
             table[ont[0][c]] = round(miou[c].cpu().item(), 4)
 
+        print(table)
 
 
         print("End of Evaluation Program")
