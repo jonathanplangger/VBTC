@@ -5,6 +5,9 @@ EVAL:
   # unet
   DISPLAY_IMAGE: True 
   BATCH_SIZE: 1
+  RESIZE_IMG: # re-size input img to model to new size.
+    HEIGHT: 640
+    WIDTH: 1024
   
 MODELS: 
   UNET_MODIF: 

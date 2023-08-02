@@ -13,6 +13,11 @@ _C.EVAL = CN()
 _C.EVAL.MODEL_NAME = "" # Name of the model being used. Options displayed above.
 _C.EVAL.DISPLAY_IMAGE = False # Toggle the display of each prediction alongside the annotations 
 _C.EVAL.BATCH_SIZE = 1 # Image batch size input to the model
+# Re-size the input image to model the set size. Annotation and output image size remains the same as the dataset
+_C.EVAL.RESIZE_IMG = CN() 
+_C.EVAL.RESIZE_IMG.HEIGHT = None # default to not being set, BOTH must be set for the re-sizing to work.
+_C.EVAL.RESIZE_IMG.WIDTH = None
+
 
 # ----------------- Comparative Study Model Parameters ---------------------------- #
 _C.MODELS = CN()

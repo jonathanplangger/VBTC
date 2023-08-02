@@ -140,8 +140,11 @@ class ComparativeEvaluation():
         model.eval()
         model.to(self.device)
 
+        # new img size set by config file
+        input_size = (self.cfg.EVAL.RESIZE_IMG.HEIGHT, self.cfg.EVAL.RESIZE_IMG.WIDTH) 
+
         # Obtain the summary of the model architecture + memory requirements
-        torchsummary.summary(model, (3,db.height,db.width))
+        torchsummary.summary(model, (3,input_size[0],input_size[1]))
 
         # Use the Dice score as the performance metric to assess model accuracy
         dice = torchmetrics.Dice().to(self.device)
@@ -166,7 +169,7 @@ class ComparativeEvaluation():
 
                 # ------------ Run the model with the loaded images  ---------------- #
                 # load the batch from the dataset
-                orig_images, images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, isTraining=False, resize=(640, 1024)) # load images
+                orig_images, images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, isTraining=False, resize=input_size) # load images
                 
                 # orig_images = images # store this for later use
                 orig_ann = ann # store for later display
