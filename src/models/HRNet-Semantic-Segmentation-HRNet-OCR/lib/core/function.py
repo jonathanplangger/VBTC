@@ -48,7 +48,7 @@ def convert_label(label, inverse=False):
                     #  32: 4,
                      33: 17,
                      34: 18}
-    temp = label.copy()
+    temp = label.clone()
     if inverse:
         for v,k in label_mapping.items():
             temp[label == k] = v

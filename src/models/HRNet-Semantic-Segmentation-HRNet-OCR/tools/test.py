@@ -42,7 +42,7 @@ def parse_args():
                         help="Save predictions to disk",
                         action='store_true')
     parser.add_argument('--data-cfg', help='data config (kitti format)',
-                        default='config/rellis.yaml',
+                        default='labels/rellis.yaml',
                         type=str)
     parser.add_argument('opts',
                         help="Modify config options using the command-line",
