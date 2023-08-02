@@ -1,7 +1,7 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
   MODEL_NAME: "hrnet_ocr"
-  # hrnet
+  # hrnet_ocr
   # unet
   DISPLAY_IMAGE: True 
   BATCH_SIZE: 1

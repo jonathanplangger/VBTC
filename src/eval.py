@@ -165,10 +165,12 @@ class ComparativeEvaluation():
             for idx in range(0, NUM_TEST, self.cfg.EVAL.BATCH_SIZE): 
 
                 # ------------ Run the model with the loaded images  ---------------- #
-
-                images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, isTraining=False) # load images
-                orig_images = images # store this for later use
+                # load the batch from the dataset
+                orig_images, images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, isTraining=False, resize=(640, 1024)) # load images
+                
+                # orig_images = images # store this for later use
                 orig_ann = ann # store for later display
+
                 # prep images and load to GPU
                 images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0).to(self.device)
 

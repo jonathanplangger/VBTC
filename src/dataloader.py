@@ -109,7 +109,7 @@ class DataLoader(object):
         return img, mask
 
 
-    def load_batch(self, idx:int=None, batch_size:int = 1, isTraining=True):
+    def load_batch(self, idx:int=None, batch_size:int = 1, isTraining=True, resize = None):
         """
             Load a batch of size "batch_size". Returns the images, annotation maps, and the newly updated index value
             ----------------\n
@@ -122,6 +122,7 @@ class DataLoader(object):
             - images: list of images in the given batch 
             - annMap: list of annotation maps in the given batch
             - idx: new index of the iamge on the list.
+            - resize (h,w): new size to be applied to ONLY the image. Annotation will be left alone. 
         """
 
         # select which kind of data is used for the images
@@ -135,17 +136,29 @@ class DataLoader(object):
         if idx == None: 
             idx = 1
 
-        images = np.empty((batch_size, self.height, self.width, 3))
+        # If no new size is requested, employ the original dimensions
+        if resize == None: 
+            resize = (self.height, self.width)
+            
+        orig_images = np.empty((batch_size, self.height, self.width, 3)) # stores the original images
+        images = np.empty((batch_size, resize[0], resize[1], 3)) # stores the re-sized images
         annMap = np.empty((batch_size, self.height, self.width, 3))
 
         # load image and mask files
         for i in range(batch_size): 
-            images[i], annMap[i] = self.load_frame(metadata[i + idx]["file_name"], metadata[i + idx]["sem_seg_file_name"])
+            orig_images[i], annMap[i] = self.load_frame(metadata[i + idx]["file_name"], metadata[i + idx]["sem_seg_file_name"])
+
+        if resize == None: 
+            images = orig_images  # keep the images the same size
+        else: 
+            for i, img in enumerate(orig_images): # re-size the images to the desired size 
+                # re-size the image to the desired sizes
+                images[i] = cv2.resize(img, (resize[1], resize[0]), interpolation=cv2.INTER_LINEAR)
 
         # update the index value 
         idx += batch_size
 
-        return images, annMap, idx
+        return orig_images, images, annMap, idx
 
     def getPatches(self, img: np.ndarray, patch_size, stride=[1,1], padding=[0,0]): 
         """
