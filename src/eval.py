@@ -140,8 +140,12 @@ class ComparativeEvaluation():
         model.eval()
         model.to(self.device)
 
+        # if the image size needs to be updated
+        if self.cfg.EVAL.INPUT_SIZE.RESIZE_IMG:
         # new img size set by config file
-        input_size = (self.cfg.EVAL.RESIZE_IMG.HEIGHT, self.cfg.EVAL.RESIZE_IMG.WIDTH) 
+            input_size = (self.cfg.EVAL.INPUT_SIZE.HEIGHT, self.cfg.EVAL.INPUT_SIZE.WIDTH) 
+        else: 
+            input_size = (db.height, db.width) # use the original input size values instead.
 
         # Obtain the summary of the model architecture + memory requirements
         torchsummary.summary(model, (3,input_size[0],input_size[1]))

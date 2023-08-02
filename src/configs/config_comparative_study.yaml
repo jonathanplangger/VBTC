@@ -5,7 +5,8 @@ EVAL:
   # unet
   DISPLAY_IMAGE: True 
   BATCH_SIZE: 1
-  RESIZE_IMG: # re-size input img to model to new size.
+  INPUT_SIZE: # re-size input img to model to new size.
+    RESIZE_IMG: False # will only re-size the image to the dim below if True
     HEIGHT: 640
     WIDTH: 1024
   
