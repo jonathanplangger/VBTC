@@ -194,6 +194,7 @@ class BaseDataset(data.Dataset):
         if config.MODEL.NUM_OUTPUTS > 1:
             pred = pred[config.TEST.OUTPUT_INDEX]
 
+        # interpolates the output of the prediction upwards to source dimension of 1200 x 1920
         pred = F.interpolate(
             input=pred, size=size[-2:],
             mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS

@@ -640,12 +640,12 @@ class HighResolutionNet(nn.Module):
         context = self.ocr_gather_head(feats, out_aux)
         feats = self.ocr_distri_head(feats, context)
 
-        out = self.cls_head(feats)
+        out = self.cls_head(feats) # pass through the 1x1 convolutions -> melds the different resolutions together. 
 
         out_aux_seg.append(out_aux)
         out_aux_seg.append(out)
 
-        return out_aux_seg
+        return out_aux_seg # double appended outputs containing the OCR & computed contrast features 
 
     def init_weights(self, pretrained='',):
         logger.info('=> init weights from normal distribution')

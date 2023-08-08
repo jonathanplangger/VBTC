@@ -11,7 +11,7 @@ PRINT_FREQ: 10
 DATASET:
   DATASET: rellis
   ROOT: /home/jplangger/Documents/Dev/datasets/Rellis-3D/
-  TEST_SET: 'val.lst'
+  TEST_SET: 'test.lst'
   TRAIN_SET: 'train.lst'
   NUM_CLASSES: 19
 MODEL:

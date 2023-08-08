@@ -90,7 +90,8 @@ class ComparativeEvaluation():
         if self.cfg.EVAL.MODEL_NAME == "unet": 
             pred = pred.argmax(dim=1)
         elif self.cfg.EVAL.MODEL_NAME == "hrnet_ocr": 
-            pred = pred[0] # hrnet has 2 outputs, whilst only one is used... 
+            pred = pred[1] # hrnet has 2 outputs, whilst only one is used... 
+            pred = pred.exp()
             # Use the same interpolation scheme as is used in the source code.
             pred = TF.interpolate(input=pred, size=(db.height, db.width), mode='bilinear', align_corners=False)
             pred = pred.argmax(dim=1) # obtain the predictions for each layer
@@ -288,7 +289,7 @@ class ComparativeEvaluation():
         print(table)
 
 
-        print("End of Evaluation Program")
+        print("End of Evaluation Program")  
 
 
 
