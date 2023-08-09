@@ -110,7 +110,7 @@ parser.add_argument('--checkpoint_path',type=str,default="")
 parser.add_argument('-wb', '--wt_bound', type=float, default=1.0)
 parser.add_argument('--maxSkip', type=int, default=0)
 parser.add_argument('--data-cfg', help='data config (kitti format)',
-                    default='config/rellis.yaml',
+                    default='datasets/rellis.yaml',
                     type=str)
 parser.add_argument('--viz', dest='viz',
                     help="Save color predictions to disk",
@@ -208,6 +208,11 @@ def main():
 
             batch_pixel_size = input.size(0) * input.size(2) * input.size(3)
             input, mask_cuda = input.cuda(), mask.cuda()
+
+            import torchsummary
+
+            torchsummary.summary(net, (3,1200,1920))
+
 
             with torch.no_grad():
                 seg_out, edge_out = net(input)    # output = (1, 19, 713, 713)

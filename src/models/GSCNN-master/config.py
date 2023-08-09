@@ -63,7 +63,7 @@ __C.STRICTBORDERCLASS= None
 
 __C.DATASET =AttrDict()
 __C.DATASET.CITYSCAPES_DIR='/home/usl/Datasets/cityscapes/'
-__C.DATASET.RELLIS_DIR='/path/to/RELLIS-3D/'
+__C.DATASET.RELLIS_DIR='../../../../datasets/Rellis-3D/'
 __C.DATASET.CV_SPLITS=3
 
 __C.MODEL = AttrDict()
@@ -84,9 +84,9 @@ def assert_and_infer_cfg(args, make_immutable=True):
         __C.BATCH_WEIGHTING=True
 
     if args.syncbn:
-        import encoding
+        # import encoding # removed encoding due to the issue 
         __C.MODEL.BN = 'syncnorm'
-        __C.MODEL.BNFUNC = encoding.nn.BatchNorm2d
+        __C.MODEL.BNFUNC = torch.nn.BatchNorm2d
     else:
         __C.MODEL.BNFUNC = torch.nn.BatchNorm2d
         print('Using regular batch norm')

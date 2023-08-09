@@ -6,6 +6,9 @@ model.pot
 params.txt
 model.pt
 temp/
+# for general outputs from models -> Don't need to be saved onto GitHub
+output/
+
 
 # Visual Studio Code Specific Stuff
 .vscode
@@ -13,6 +16,10 @@ temp/
 # HRNet Outputs & Models Employed (Storage required for models is too large).
 models/HRNet-Semantic-Segmentation-HRNet-OCR/pretrained_models/
 models/HRNet-Semantic-Segmentation-HRNet-OCR/output/
+
+# GSCNN Output & Pre-trained models
+models/GSCNN-master/output/
+gscnn_best.pth
 
 
 # Byte-compiled / optimized / DLL files
