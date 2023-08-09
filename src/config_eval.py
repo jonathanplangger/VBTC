@@ -23,13 +23,18 @@ _C.EVAL.INPUT_SIZE.WIDTH = None # new width
 # ----------------- Comparative Study Model Parameters ---------------------------- #
 _C.MODELS = CN()
 # Modified UNet 
-_C.MODELS.UNET_MODIF = CN()
-_C.MODELS.UNET_MODIF.MODEL_FILE = "" # Path to model file 
+_C.MODELS.UNET = CN()
+_C.MODELS.UNET.MODEL_FILE = "" # Path to model file 
 # HRNet + OCR
 _C.MODELS.HRNET_OCR = CN()
 _C.MODELS.HRNET_OCR.CONFIG = "" # Config file path. Normally located in the HRNet directories
 _C.MODELS.HRNET_OCR.MODEL_FILE="" # Model file being tested by the program
 _C.MODELS.HRNET_OCR.SRC_DIR="" # Directory that holds all the source code for the model 
+# GSCNN
+_C.MODELS.GSCNN = CN()
+_C.MODELS.GSCNN.CONFIG = "" # Config file path
+_C.MODELS.GSCNN.MODEL_FILE = "" # file path to the model file 
+_C.MODELS.GSCNN.SRC_DIR = "" # Source code directory for the GSCNN
 
 
 def get_cfg_defaults():

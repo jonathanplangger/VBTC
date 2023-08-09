@@ -209,10 +209,9 @@ def main():
             batch_pixel_size = input.size(0) * input.size(2) * input.size(3)
             input, mask_cuda = input.cuda(), mask.cuda()
 
+            # added to estimate memory requirements for model
             import torchsummary
-
-            torchsummary.summary(net, (3,1200,1920))
-
+            torchsummary.summary(net, (3,640,1024))
 
             with torch.no_grad():
                 seg_out, edge_out = net(input)    # output = (1, 19, 713, 713)

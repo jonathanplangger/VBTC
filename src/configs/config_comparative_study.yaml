@@ -1,6 +1,6 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
-  MODEL_NAME: "hrnet_ocr"
+  MODEL_NAME: "gscnn"
   # hrnet_ocr
   # unet
   DISPLAY_IMAGE: False 
@@ -11,14 +11,15 @@ EVAL:
     WIDTH: 1024
   
 MODELS: 
-  UNET_MODIF: 
+  UNET: 
     MODEL_FILE: #"model.pt"
   HRNET_OCR:  
     CONFIG: "models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"
     MODEL_FILE: "/home/jplangger/Documents/Dev/VBTC/src/temp/hrnet_best/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484/best.pth"
     # "/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/output/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484/final_state.pth"
     SRC_DIR: "/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR"
-
-
+  GSCNN: 
+    MODEL_FILE: "/home/jplangger/Documents/Dev/VBTC/src/models/GSCNN-master/output/gscnn_best.pth"
+    SRC_DIR: "/home/jplangger/Documents/Dev/VBTC/src/models/GSCNN-master"
 
 

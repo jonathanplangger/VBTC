@@ -17,7 +17,7 @@ import yaml
 import torchmetrics
 from tqdm import tqdm
 import time 
-import sklearn
+import argparse
 
 # Display masks
 import numpy as np
@@ -69,6 +69,22 @@ class ComparativeEvaluation():
             from tools import load_model
             model = load_model("/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml", 
                                model_file = self.cfg.MODELS.HRNET_OCR.MODEL_FILE)
+        elif self.cfg.EVAL.MODEL_NAME == "gscnn": 
+            src_dir = self.cfg.MODELS.GSCNN.SRC_DIR
+            # Add the network files directory to obtain the model 
+            sys.path.insert(0,src_dir) # add the source dir to the path.
+            sys.path.insert(0,os.path.join(src_dir, "network/"))
+            
+            # Prep the args to be passed to the model loader (bypass command line handling on their end)
+            dataset_cls = argparse.Namespace(num_classes=19, ignore_label=0)
+            args = argparse.Namespace(arch = "network.gscnn.GSCNN", dataset_cls = dataset_cls, trunk='resnet101',
+                                      checkpoint_path = self.cfg.MODELS.GSCNN.MODEL_FILE,  
+                                      img_wt_loss=False, joint_edgeseg_loss=False, wt_bound=1.0, edge_weight=1.0, 
+                                      seg_weight=1.0)
+            import network
+            from loss import get_loss # their model loading requires the criterion, only use the base one (configured using args)
+            model = network.get_net(args, get_loss(args))
+
         else: 
             print("\n\nInvalid model name, please update the configuration file.")
             print("Exiting Program.... ")
@@ -95,8 +111,14 @@ class ComparativeEvaluation():
             # Use the same interpolation scheme as is used in the source code.
             pred = TF.interpolate(input=pred, size=(db.height, db.width), mode='bilinear', align_corners=False)
             pred = pred.argmax(dim=1) # obtain the predictions for each layer
-
             pred = db.map_labels(label=pred, inverse = True) # convert to 0->34
+        elif self.cfg.EVAL.MODEL_NAME == "gscnn": 
+            # GSCNN returns two outputs: the shape & regular stream. Only the regular segmentation is required
+            pred, _ = pred  # get the shape stream 
+            pred =  pred.data # get the data for the segmentation 
+            pred = TF.interpolate(input=pred, size=(db.height, db.width), mode='bilinear', align_corners=False)
+            pred = pred.argmax(dim=1) # convert into label mask 
+            pred = db.map_labels(label=pred, inverse=True) # convert the labels to 0->34 scheme
 
         return pred
 
