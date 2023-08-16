@@ -4,6 +4,8 @@ import time
 import numpy as np
 import random
 import patchify
+import albumentations as album 
+
 
 # ------------- Dataloader for the new dataset ------------- #
 class DataLoader(object):
@@ -15,7 +17,7 @@ class DataLoader(object):
         metadata (List[dict]) = List of dictionnary elements containing information regarding image files\n
         num_classes = quantity of differentiable classes within the dataset\n
     """
-    def __init__(self, path="../../datasets/Rellis-3D/", setType = "train"):
+    def __init__(self, path="../../datasets/Rellis-3D/", setType = "train", preprocessing=None):
         """
             Dataloader provides an easy interface for loading data for training and testing of new models.\n
             ----------------------------\n
@@ -31,6 +33,7 @@ class DataLoader(object):
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
         self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
+        self.preprocessing = preprocessing # set the preprocessing function employed on the image inputs to the model
 
 
     # --------------------------- Database Registrations --------------------------------------#
@@ -160,6 +163,12 @@ class DataLoader(object):
         # update the index value 
         idx += batch_size
 
+        # pre-process the image input if defined in the class
+        if self.preprocessing:
+            self.preprocessing = self.get_preprocessing() # unwrap the preprocessing function 
+            sample = self.preprocessing(image = images, mask = annMap)
+            images, annMap = sample['image'], sample['mask']
+
         return orig_images, images, annMap, idx
 
     def getPatches(self, img: np.ndarray, patch_size, stride=[1,1], padding=[0,0]): 
@@ -238,14 +247,29 @@ class DataLoader(object):
             for k, v in label_mapping.items():
                 label[temp == k] = v
         return label
+    
+    # Complete the pre-processing step for the image
+    def get_preprocessing(self): 
+        _transform = []
+        if self.preprocessing: 
+            _transform.append(album.Lambda(image = self.preprocessing))
+    
+        return album.Compose(_transform)
+
         
 # --------- Testing the class above, REMOVE later ------------ #
 if __name__ == "__main__": 
     rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
-    loader = DataLoader(rellis_path)
-    images, ann, idx = loader.load_batch(0, 3)
+
+    from segmentation_models_pytorch.encoders import get_preprocessing_fn
+
+    processing = get_preprocessing_fn('resnet101', 'imagenet')
+
+
+    loader = DataLoader(rellis_path, preprocessing = processing)
+    orig_images, images, ann, idx = loader.load_batch(0, 3)
     print(images.shape)
     print(ann.shape)
 
     # 240 X 240 seems like the best bet
-    loader.getPatches(images, patch_size=[600,480])
+    loader.getPatches(orig_images, patch_size=[600,480])
