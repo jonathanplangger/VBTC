@@ -146,19 +146,11 @@ class DataLoader(object):
             resize = (self.height, self.width)
             
         orig_images = np.empty((batch_size, self.height, self.width, 3)) # stores the original images
-        images = np.empty((batch_size, resize[0], resize[1], 3)) # stores the re-sized images
         annMap = np.empty((batch_size, self.height, self.width, 3))
 
         # load image and mask files
         for i in range(batch_size): 
             orig_images[i], annMap[i] = self.load_frame(metadata[i + idx]["file_name"], metadata[i + idx]["sem_seg_file_name"])
-
-        if resize == None: 
-            images = orig_images  # keep the images the same size
-        else: 
-            for i, img in enumerate(orig_images): # re-size the images to the desired size 
-                # re-size the image to the desired sizes
-                images[i] = cv2.resize(img, (resize[1], resize[0]), interpolation=cv2.INTER_LINEAR)
 
         # update the index value 
         idx += batch_size
@@ -166,8 +158,17 @@ class DataLoader(object):
         # pre-process the image input if defined in the class
         if self.preprocessing:
             self.preprocessing = self.get_preprocessing() # unwrap the preprocessing function 
-            sample = self.preprocessing(image = images, mask = annMap)
+            sample = self.preprocessing(image = orig_images, mask = annMap)
             images, annMap = sample['image'], sample['mask']
+        else: # set the images to simply be the original images
+            images = orig_images
+
+        if resize != None:
+            resized_img = np.empty((batch_size, resize[0], resize[1], 3)) # create a temporary container variable
+            for i, img in enumerate(images): # re-size the images to the desired size 
+                # re-size the image to the desired sizes
+                resized_img[i] = cv2.resize(img, (resize[1], resize[0]), interpolation=cv2.INTER_LINEAR)
+            images = resized_img # override the images with the newly resized images
 
         return orig_images, images, annMap, idx
 

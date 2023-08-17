@@ -102,6 +102,14 @@ class TrainModel(object):
         else: 
             exit("Invalid model name, please specify a valid one in the project configuration file")
 
+    def __handle_output(self, pred):
+        if self.cfg.TRAIN.MODEL_NAME == 'unet': 
+            pred = pred.argmax(dim=1)
+        elif self.cfg.TRAIN.MODEL_NAME == 'deeplabv3plus':
+            print("test")
+
+        return pred
+
     def train_model(self): 
         # Use the GPU as the main device if present
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -125,6 +133,14 @@ class TrainModel(object):
 
         # Log the training parameters        
         # writer.add_text("_params/text_summary", self.logTrainParams())
+
+        # If resizing of the input image is required 
+        if self.cfg.TRAIN.INPUT_SIZE.RESIZE_IMG:
+            # new img size set by config file
+            input_size = (self.cfg.EVAL.INPUT_SIZE.HEIGHT, self.cfg.EVAL.INPUT_SIZE.WIDTH) 
+        else: 
+            input_size = (self.db.height, self.db.width) # use the original input size values instead.
+
             
 
         # ------------------------ Training loop ------------------------------------#
@@ -144,7 +160,7 @@ class TrainModel(object):
                 for i in range(self.steps_per_epoch): 
                     
                     # load the image batch
-                    _, images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size)
+                    _, images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size, resize = input_size)
                     
 
                     # prep the images through normalization and re-organization
@@ -158,6 +174,7 @@ class TrainModel(object):
 
                     # forward pass
                     pred = self.model(images)
+                    pred = self.__handle_output(pred) # handle the model output
                     
                     loss = self.criterion(pred, ann.long()) # calculate the loss 
                     writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 

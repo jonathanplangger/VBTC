@@ -34,7 +34,7 @@ _C.TRAIN.TOTAL_EPOCHS = 10 # n# of epochs to be used during training.
 
 # Used to set the size for the input image. Output will be re-sized to match the original dimensions
 _C.TRAIN.INPUT_SIZE = CN()
-_C.TRAIN.INPUT_SIZE.RESIZE_IMG = False # toggle if the input image is re-sized, TRUE will resize the image
+_C.TRAIN.INPUT_SIZE.RESIZE_IMG = True # toggle if the input image is re-sized, TRUE will resize the image
 _C.TRAIN.INPUT_SIZE.HEIGHT = None # new height
 _C.TRAIN.INPUT_SIZE.WIDTH = None # new width
 
