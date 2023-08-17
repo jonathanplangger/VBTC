@@ -12,12 +12,12 @@ EVAL:
 
 TRAIN:
   MODEL_NAME: 'deeplabv3plus'
-  BATCH_SIZE: 1
+  BATCH_SIZE: 2
   TOTAL_EPOCHS: 10
   INPUT_SIZE:
     RESIZE_IMG: True
-    HEIGHT: 640
-    WIDTH: 1024
+    HEIGHT: 320
+    WIDTH: 512
     
   
 MODELS: 
