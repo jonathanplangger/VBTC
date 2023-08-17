@@ -4,6 +4,7 @@ import cv2
 import torchvision.models.segmentation
 import torch
 import torchvision.transforms as T 
+from torch.nn import functional as TF
 import dataloader
 import torchsummary
 from dataloader import DataLoader
@@ -26,6 +27,8 @@ writer = SummaryWriter()
 # http://localhost:6006/?darkMode=true#timeseries
 # tensorboard --logdir=runs
 
+from config import get_cfg_defaults # obtain model configurations
+
 
 class TrainModel(object):
     """
@@ -38,20 +41,39 @@ class TrainModel(object):
     
     """
     def __init__(self): 
+
+        # initialize configuration and update using config file
+        self.cfg = get_cfg_defaults()
+        self.cfg.merge_from_file("configs/config_comparative_study.yaml")
+        self.cfg.freeze()
+
+        # default to not preprocessing the input to the model
+        preprocess_input = False 
+
+        # Initialize based on the model being trained
+        if self.cfg.TRAIN.MODEL_NAME == "unet": 
+            # U-Net Specific params    
+            self.lr = self.cfg.MODELS.UNET.LR # learning rate
+            self.base = self.cfg.MODELS.UNET.BASE # base value for the UNet feature sizes - ONLY applies for the U-Net
+            self.kernel_size = self.cfg.MODELS.UNET.KERNEL_SIZE # size of the convolution kernel
+        elif self.cfg.TRAIN.MODEL_NAME == "deeplabv3plus": 
+            from segmentation_models_pytorch.encoders import get_preprocessing_fn
+            # get the preprocessing function for the model
+            preprocess_input = get_preprocessing_fn(self.cfg.MODELS.DEEPLABV3PLUS.ENCODER,self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS )
+            self.lr = self.cfg.MODELS.DEEPLABV3PLUS.LR # learning rate
+        else: 
+            exit("Invalid model name, please specify a valid one in the project configuration file")
         
-        # Dataloading parameters
-        self.dbPath = "../../datasets/Rellis-3D/"
-        self.db = db = dataloader.DataLoader("../../datasets/Rellis-3D/")
+        # Dataloader initialization
+        self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input)
 
         # Training Parameters
-        self.batch_size = 1 #3
+        self.batch_size = self.cfg.TRAIN.BATCH_SIZE #3
+        self.epochs = self.cfg.TRAIN.TOTAL_EPOCHS #10
         self.train_length = len(db.train_meta)
         self.steps_per_epoch = int(self.train_length/self.batch_size) # n# of steps within the specific epoch.
-        self.epochs = 10 #10
         self.total_batches = self.steps_per_epoch*self.epochs # total amount of batches that need to be completed for training
-        self.lr = 1e-5 # learning rate
-        self.base = 40 # base value for the UNet feature sizes - ONLY applies for the U-Net
-        self.kernel_size = 5
+        
         # self.criterion = focal_loss.FocalLoss()
         self.criterion = torch.nn.CrossEntropyLoss()
 
@@ -59,15 +81,26 @@ class TrainModel(object):
         self.img_w = self.db.width
         self.img_h = self.db.height
 
-        # model 
-        self.model = unet.UNet(
-            enc_chs=(3,self.base, self.base*2, self.base*4, self.base*8, self.base*16),
-            dec_chs=(self.base*16, self.base*8, self.base*4, self.base*2, self.base), 
-            out_sz=(self.img_h,self.img_w), retain_dim=True, num_class=self.db.num_classes, kernel_size=self.kernel_size
-        )
+        # retrieve the model based on the configuration 
+        self.model = self.load_model() 
 
-        # Misc Params 
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') # use GPU if available 
+    def load_model(self):
+        if self.cfg.TRAIN.MODEL_NAME == 'unet': 
+            return unet.UNet(
+                enc_chs=(3,self.base, self.base*2, self.base*4, self.base*8, self.base*16),
+                dec_chs=(self.base*16, self.base*8, self.base*4, self.base*2, self.base), 
+                out_sz=(self.img_h,self.img_w), retain_dim=True, num_class=self.db.num_classes, kernel_size=self.kernel_size
+            )
+        elif self.cfg.TRAIN.MODEL_NAME == "deeplabv3plus": 
+            import segmentation_models_pytorch as smp # get the library for the model
+            return smp.DeepLabV3Plus(
+                encoder_name=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, 
+                encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
+                classes = self.db.num_classes, 
+                activation = "sigmoid"
+            )
+        else: 
+            exit("Invalid model name, please specify a valid one in the project configuration file")
 
     def train_model(self): 
         # Use the GPU as the main device if present
@@ -76,12 +109,9 @@ class TrainModel(object):
         # Create a tensorboard writer
         writer = SummaryWriter() 
 
-        
-
-
         # Set the model to training mode and place onto GPU
         self.model.train()
-        self.model.to(self.device)
+        self.model.to(device)
 
         # Obtain the summary of the model architecture + memory requirements
         summary = torchsummary.summary(self.model, (3,self.img_h,self.img_w))
@@ -92,10 +122,10 @@ class TrainModel(object):
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.lr)
         #dice performance metric
         dice = torchmetrics.Dice().to(device)
-        
-        # Log the current training parameters
-        writer.add_text("_params/text_summary", self.logTrainParams())
-        
+
+        # Log the training parameters        
+        # writer.add_text("_params/text_summary", self.logTrainParams())
+            
 
         # ------------------------ Training loop ------------------------------------#
         for epoch in range(self.epochs):
@@ -113,8 +143,8 @@ class TrainModel(object):
 
                 for i in range(self.steps_per_epoch): 
                     
-
-                    images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size)
+                    # load the image batch
+                    _, images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size)
                     
 
                     # prep the images through normalization and re-organization

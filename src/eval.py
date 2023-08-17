@@ -28,7 +28,7 @@ from torch.nn import functional as TF
 
 from torch.utils.tensorboard import SummaryWriter
 
-from config_eval import get_cfg_defaults
+from config import get_cfg_defaults
 
 
 

@@ -10,7 +10,7 @@ model = smp.DeepLabV3Plus(
 )
 
 # preprocessing function for the input 
-preprocess_input000 = smp.encoders.get_preprocessing_fn(ENCODER,ENCODER_WEIGHTS)
+preprocess_input = smp.encoders.get_preprocessing_fn(ENCODER,ENCODER_WEIGHTS)
 
 print(type(model))
 
