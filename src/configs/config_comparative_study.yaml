@@ -12,6 +12,7 @@ EVAL:
 
 TRAIN:
   MODEL_NAME: 'deeplabv3plus'
+  CRITERION: 'crossentropyloss'
   BATCH_SIZE: 2
   TOTAL_EPOCHS: 10
   INPUT_SIZE:

@@ -31,6 +31,7 @@ _C.TRAIN = CN() # for all training params
 _C.TRAIN.MODEL_NAME = "" # model that is being used during training. Only limited options are available (see list above)
 _C.TRAIN.BATCH_SIZE = 2
 _C.TRAIN.TOTAL_EPOCHS = 10 # n# of epochs to be used during training.
+_C.TRAIN.CRITERION = "crossentropyloss" # loss function employed by the model ("crossentropyloss" or "focalloss")
 
 # Used to set the size for the input image. Output will be re-sized to match the original dimensions
 _C.TRAIN.INPUT_SIZE = CN()
@@ -47,7 +48,6 @@ _C.MODELS.UNET.MODEL_FILE = "" # Path to model file
 _C.MODELS.UNET.BASE = 40 # base value for the n# of U-Net channels per layer. (Every succeeding layer increases the n# of channels by 2)\
 _C.MODELS.UNET.LR = 1e-5 # learning rate being employed by the model
 _C.MODELS.UNET.KERNEL_SIZE = 5 # kernel size employed in the convolution
-_C.MODELS.UNET.CRITERION = "crossentropyloss" # loss function employed by the model ("crossentropyloss" or "focalloss")
 
 # DeepLabv3+
 _C.MODELS.DEEPLABV3PLUS = CN()
