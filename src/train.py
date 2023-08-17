@@ -103,10 +103,9 @@ class TrainModel(object):
             exit("Invalid model name, please specify a valid one in the project configuration file")
 
     def __handle_output(self, pred):
-        if self.cfg.TRAIN.MODEL_NAME == 'unet': 
-            pred = pred.argmax(dim=1)
-        elif self.cfg.TRAIN.MODEL_NAME == 'deeplabv3plus':
-            print("test")
+        if self.cfg.TRAIN.MODEL_NAME == 'deeplabv3plus':
+            # regeneratre the input size for the prediction 
+            pred = TF.interpolate(input=pred, size=(self.db.height, self.db.width), mode='bilinear', align_corners=False)
 
         return pred
 
@@ -121,11 +120,6 @@ class TrainModel(object):
         self.model.train()
         self.model.to(device)
 
-        # Obtain the summary of the model architecture + memory requirements
-        summary = torchsummary.summary(self.model, (3,self.img_h,self.img_w))
-        # record the model parameters on tensorboard
-        writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
-
         # optimizer for the model 
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.lr)
         #dice performance metric
@@ -137,11 +131,14 @@ class TrainModel(object):
         # If resizing of the input image is required 
         if self.cfg.TRAIN.INPUT_SIZE.RESIZE_IMG:
             # new img size set by config file
-            input_size = (self.cfg.EVAL.INPUT_SIZE.HEIGHT, self.cfg.EVAL.INPUT_SIZE.WIDTH) 
+            input_size = (self.cfg.TRAIN.INPUT_SIZE.HEIGHT, self.cfg.TRAIN.INPUT_SIZE.WIDTH) 
         else: 
             input_size = (self.db.height, self.db.width) # use the original input size values instead.
 
-            
+        # Obtain the summary of the model architecture + memory requirements
+        summary = torchsummary.summary(self.model, (3,input_size[0],input_size[1]))
+        # record the model parameters on tensorboard
+        writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
 
         # ------------------------ Training loop ------------------------------------#
         for epoch in range(self.epochs):

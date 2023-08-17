@@ -9,10 +9,28 @@ EVAL:
     RESIZE_IMG: True # will only re-size the image to the dim below if True
     HEIGHT: 640
     WIDTH: 1024
+
+TRAIN:
+  MODEL_NAME: 'deeplabv3plus'
+  BATCH_SIZE: 1
+  TOTAL_EPOCHS: 10
+  INPUT_SIZE:
+    RESIZE_IMG: True
+    HEIGHT: 640
+    WIDTH: 1024
+    
   
 MODELS: 
   UNET: 
-    MODEL_FILE: #"model.pt"
+    MODEL_FILE: "model.pt"
+    BASE: 40 # base channel amount for the U-Net, increases in further layers
+    LR: 1.0e-5 # learning arte
+    KERNEL_SIZE: 5
+    CRITERION: 'crossentropyloss'
+  DEEPLABV3PLUS:
+    ENCODER: 'resnet101'
+    ENCODER_WEIGHTS: 'imagenet'
+    LR: 1.0e-5
   HRNET_OCR:  
     CONFIG: "models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"
     MODEL_FILE: "/home/jplangger/Documents/Dev/VBTC/src/temp/hrnet_best/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484/best.pth"

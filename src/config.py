@@ -28,7 +28,7 @@ _C.EVAL.INPUT_SIZE.WIDTH = None # new width
   deeplabv3+
 """
 _C.TRAIN = CN() # for all training params
-_C.TRAIN.MODEL_NAME = "deeplabv3plus" # model that is being used during training. Only limited options are available (see list above)
+_C.TRAIN.MODEL_NAME = "" # model that is being used during training. Only limited options are available (see list above)
 _C.TRAIN.BATCH_SIZE = 2
 _C.TRAIN.TOTAL_EPOCHS = 10 # n# of epochs to be used during training.
 

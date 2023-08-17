@@ -34,6 +34,11 @@ class DataLoader(object):
         self.width = int(self.train_meta[0]["width"])
         self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
         self.preprocessing = preprocessing # set the preprocessing function employed on the image inputs to the model
+        
+        # Retrieve the preprocessing function 
+        if self.preprocessing: 
+            self.preprocessing = self.get_preprocessing()
+
 
 
     # --------------------------- Database Registrations --------------------------------------#
@@ -157,7 +162,6 @@ class DataLoader(object):
 
         # pre-process the image input if defined in the class
         if self.preprocessing:
-            self.preprocessing = self.get_preprocessing() # unwrap the preprocessing function 
             sample = self.preprocessing(image = orig_images, mask = annMap)
             images, annMap = sample['image'], sample['mask']
         else: # set the images to simply be the original images
