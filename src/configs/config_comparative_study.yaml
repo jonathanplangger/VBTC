@@ -1,6 +1,6 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
-  MODEL_NAME: "gscnn"
+  MODEL_NAME: "hrnet_ocr"
   DISPLAY_IMAGE: True 
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.

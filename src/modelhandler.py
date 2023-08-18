@@ -145,7 +145,16 @@ class DeepLabV3Plus(Model):
             encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
             classes = self.cfg.DB.NUM_CLASSES, 
             activation = "sigmoid"
-        )        
+        ) 
+    
+    def logTrainParams(self):
+        return super().logTrainParams() + """
+        DeepLabV3+ Parameters: <br />
+        ---------------------- <br />
+        Encoder Structure: {} <br />
+        Encoder Pre-Trained Weights: {} <br />
+        """.format(self.cfg.MODELS.DEEPLABV3PLUS, self.cfg.MODELS.DEEPLABV3PLUS)
+           
 # --------------------------------------------------------------------------------------------------------------- #    
 class HRNet_OCR(Model):
 
