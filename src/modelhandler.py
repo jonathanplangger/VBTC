@@ -161,10 +161,11 @@ class HRNet_OCR(Model):
         return model
         
     def handle_output_eval(self, pred):
+        img_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
         pred = pred[1] # hrnet has 2 outputs, whilst only one is used... 
         pred = pred.exp()
         # Use the same interpolation scheme as is used in the source code.
-        pred = TF.interpolate(input=pred, size=self.input_size, mode='bilinear', align_corners=False)
+        pred = TF.interpolate(input=pred, size=img_size, mode='bilinear', align_corners=False)
         pred = pred.argmax(dim=1) # obtain the predictions for each layer
         pred = map_labels(label=pred, inverse = True) # convert to 0->34
         return pred
@@ -189,10 +190,11 @@ class GSCNN(Model):
         return model
 
     def handle_output_eval(self, pred):
+        img_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
         # GSCNN returns two outputs: the shape & regular stream. Only the regular segmentation is required
         pred, _ = pred  # get the shape stream 
         pred =  pred.data # get the data for the segmentation 
-        pred = TF.interpolate(input=pred, size=self.input_size, mode='bilinear', align_corners=False)
+        pred = TF.interpolate(input=pred, size=img_size, mode='bilinear', align_corners=False)
         pred = pred.argmax(dim=1) # convert into label mask 
         pred = map_labels(label=pred, inverse=True) # convert the labels to 0->34 scheme
         return pred
