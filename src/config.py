@@ -4,8 +4,13 @@ from yacs.config import CfgNode as CN
 _C = CN()
 
 # ----------------- Database Handling Parameters ------------------------------------#
+# These params (other than path) should ideally not be altered since they directly represent the Rellis-3D dataset itself.
 _C.DB = CN()
 _C.DB.PATH = "../../datasets/Rellis-3D/"
+_C.DB.NUM_CLASSES = 35
+_C.DB.IMG_SIZE = CN()
+_C.DB.IMG_SIZE.HEIGHT = 1200 
+_C.DB.IMG_SIZE.WIDTH = 1920
 
 # ----------------- Evaluation Parameter Configuration  ---------------------------- #
 """

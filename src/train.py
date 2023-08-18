@@ -21,7 +21,8 @@ import torch.nn.functional as F
 import unet 
 import datetime
 from patchify import patchify
-        
+import modelhandler
+
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
 # http://localhost:6006/?darkMode=true#timeseries
@@ -37,8 +38,6 @@ class TrainModel(object):
         -------------------------------------------------\n
         Parameters: 
 
-    
-    
     """
     def __init__(self): 
 
@@ -46,6 +45,10 @@ class TrainModel(object):
         self.cfg = get_cfg_defaults()
         self.cfg.merge_from_file("configs/config_comparative_study.yaml")
         self.cfg.freeze()
+
+        # obtain the model-specific operations
+        test = modelhandler.ModelHandler(self.cfg, "train")
+        
 
         # default to not preprocessing the input to the model
         preprocess_input = False 
@@ -74,8 +77,9 @@ class TrainModel(object):
         self.steps_per_epoch = int(self.train_length/self.batch_size) # n# of steps within the specific epoch.
         self.total_batches = self.steps_per_epoch*self.epochs # total amount of batches that need to be completed for training
         
-        # self.criterion = focal_loss.FocalLoss()
-        self.criterion = torch.nn.CrossEntropyLoss()
+        # Get the criterion for training
+        self.criterion = ""
+        self.__get_criterion()
 
         # Image characteristics
         self.img_w = self.db.width
@@ -83,31 +87,6 @@ class TrainModel(object):
 
         # retrieve the model based on the configuration 
         self.model = self.load_model() 
-
-    def load_model(self):
-        if self.cfg.TRAIN.MODEL_NAME == 'unet': 
-            return unet.UNet(
-                enc_chs=(3,self.base, self.base*2, self.base*4, self.base*8, self.base*16),
-                dec_chs=(self.base*16, self.base*8, self.base*4, self.base*2, self.base), 
-                out_sz=(self.img_h,self.img_w), retain_dim=True, num_class=self.db.num_classes, kernel_size=self.kernel_size
-            )
-        elif self.cfg.TRAIN.MODEL_NAME == "deeplabv3plus": 
-            import segmentation_models_pytorch as smp # get the library for the model
-            return smp.DeepLabV3Plus(
-                encoder_name=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, 
-                encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
-                classes = self.db.num_classes, 
-                activation = "sigmoid"
-            )
-        else: 
-            exit("Invalid model name, please specify a valid one in the project configuration file")
-
-    def __handle_output(self, pred):
-        if self.cfg.TRAIN.MODEL_NAME == 'deeplabv3plus':
-            # regeneratre the input size for the prediction 
-            pred = TF.interpolate(input=pred, size=(self.db.height, self.db.width), mode='bilinear', align_corners=False)
-
-        return pred
 
     def train_model(self): 
         # Use the GPU as the main device if present
@@ -201,6 +180,50 @@ class TrainModel(object):
         # flush buffers and close the writer 
         writer.close()
 
+    def __get_criterion(self): 
+        """
+        __get_criterion(self): 
+        ---------------------------------------------------
+        Retrieves the loss function based on the configuration file as defined in self.cfg.TRAIN.CRITERION
+        """
+        if self.cfg.TRAIN.CRITERION == 'crossentropyloss': 
+            self.criterion = torch.nn.CrossEntropyLoss
+        elif self.cfg.TRAIN.CRITERION == "focalloss": 
+            self.criterion = focal_loss.FocalLoss()
+        else: 
+            exit("Invalid loss function, please select a valid one")
+
+    def load_model(self):
+        """
+        load_model(self): 
+        ----------------------------------------
+        Retrieves the model based on the configuration file field self.cfg.TRAIN.MODEL_NAME.\n 
+        Applies the model params specified within the config file.
+        """
+        if self.cfg.TRAIN.MODEL_NAME == 'unet': 
+            return unet.UNet(
+                enc_chs=(3,self.base, self.base*2, self.base*4, self.base*8, self.base*16),
+                dec_chs=(self.base*16, self.base*8, self.base*4, self.base*2, self.base), 
+                out_sz=(self.img_h,self.img_w), retain_dim=True, num_class=self.db.num_classes, kernel_size=self.kernel_size
+            )
+        elif self.cfg.TRAIN.MODEL_NAME == "deeplabv3plus": 
+            import segmentation_models_pytorch as smp # get the library for the model
+            return smp.DeepLabV3Plus(
+                encoder_name=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, 
+                encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
+                classes = self.db.num_classes, 
+                activation = "sigmoid"
+            )
+        else: 
+            exit("Invalid model name, please specify a valid one in the project configuration file")
+
+    def __handle_output(self, pred):
+        if self.cfg.TRAIN.MODEL_NAME == 'deeplabv3plus':
+            # regeneratre the input size for the prediction 
+            pred = TF.interpolate(input=pred, size=(self.db.height, self.db.width), mode='bilinear', align_corners=False)
+
+        return pred
+    
     # Prepares the markdown to log the parameters of the file
     def logTrainParams(self):
         return """ 
