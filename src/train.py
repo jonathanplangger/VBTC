@@ -172,7 +172,7 @@ class TrainModel(object):
         Retrieves the loss function based on the configuration file as defined in self.cfg.TRAIN.CRITERION
         """
         if self.cfg.TRAIN.CRITERION == 'crossentropyloss': 
-            self.criterion = torch.nn.CrossEntropyLoss
+            self.criterion = torch.nn.CrossEntropyLoss()
         elif self.cfg.TRAIN.CRITERION == "focalloss": 
             self.criterion = focal_loss.FocalLoss()
         else: 
