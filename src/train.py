@@ -149,9 +149,9 @@ class TrainModel(object):
                     writer.add_scalar("Metrics/Dice", dice_score, epoch*self.steps_per_epoch + i) # record the dice score 
 
                     # reduce the learning rate once the 4th epoch is reached 
-                    if optim.param_groups[0]['lr'] == self.lr and epoch == 3: 
+                    if optim.param_groups[0]['lr'] == self.cfg.TRAIN.LR and epoch == 3: 
                         print("Reducing learning rate")
-                        optim.param_groups[0]['lr'] = self.lr/4
+                        optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR/4
 
                     #update progress bar
                     pbar.set_postfix(loss=loss.item())
