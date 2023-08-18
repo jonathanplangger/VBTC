@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import logging
 import numpy as np
-from config import cfg
+from gscnn_config import cfg
 from my_functionals.DualTaskLoss import DualTaskLoss
 
 def get_loss(args):
