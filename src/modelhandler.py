@@ -93,7 +93,7 @@ class Model(object):
         Loss Function: {} <br />
         --------------------------------------------------------------- <br />
         Image Resizing <br />
-        ---------------
+        --------------- <br />
         Enabled: {} <br />
         Height: {} |  Width: {} <br />
         --------------------------------------------------------------- <br />
@@ -153,7 +153,7 @@ class DeepLabV3Plus(Model):
         ---------------------- <br />
         Encoder Structure: {} <br />
         Encoder Pre-Trained Weights: {} <br />
-        """.format(self.cfg.MODELS.DEEPLABV3PLUS, self.cfg.MODELS.DEEPLABV3PLUS)
+        """.format(self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS)
            
 # --------------------------------------------------------------------------------------------------------------- #    
 class HRNet_OCR(Model):
