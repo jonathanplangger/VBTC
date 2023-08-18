@@ -37,7 +37,7 @@ _C.TRAIN.MODEL_NAME = "" # model that is being used during training. Only limite
 _C.TRAIN.BATCH_SIZE = 2
 _C.TRAIN.TOTAL_EPOCHS = 10 # n# of epochs to be used during training.
 _C.TRAIN.CRITERION = "crossentropyloss" # loss function employed by the model ("crossentropyloss" or "focalloss")
-
+_C.TRAIN.LR = 1e-5
 # Used to set the size for the input image. Output will be re-sized to match the original dimensions
 _C.TRAIN.INPUT_SIZE = CN()
 _C.TRAIN.INPUT_SIZE.RESIZE_IMG = True # toggle if the input image is re-sized, TRUE will resize the image
@@ -51,14 +51,12 @@ _C.MODELS = CN()
 _C.MODELS.UNET = CN()
 _C.MODELS.UNET.MODEL_FILE = "" # Path to model file 
 _C.MODELS.UNET.BASE = 40 # base value for the n# of U-Net channels per layer. (Every succeeding layer increases the n# of channels by 2)\
-_C.MODELS.UNET.LR = 1e-5 # learning rate being employed by the model
 _C.MODELS.UNET.KERNEL_SIZE = 5 # kernel size employed in the convolution
 
 # DeepLabv3+
 _C.MODELS.DEEPLABV3PLUS = CN()
 _C.MODELS.DEEPLABV3PLUS.ENCODER = 'resnet101' # encoder structure for the model
 _C.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS = 'imagenet' # pre-trained weights for the encoder
-_C.MODELS.DEEPLABV3PLUS.LR = 1e-5 # learning rate for the model
 
 # HRNet + OCR
 _C.MODELS.HRNET_OCR = CN()

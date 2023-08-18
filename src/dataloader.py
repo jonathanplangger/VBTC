@@ -221,37 +221,7 @@ class DataLoader(object):
         pass
 
     def map_labels (self, label, inverse = False):
-        # Code below obtained from Rellis implementation in HRNet
-        # Class 1 (Dirt) is omitted due to how sparse it is in the dataset (see Rellis-3D paper)
-        label_mapping = {0: 0,
-                        1: 0,
-                        3: 1,
-                        4: 2,
-                        5: 3,
-                        6: 4,
-                        7: 5,
-                        8: 6,
-                        9: 7,
-                        10: 8,
-                        12: 9,
-                        15: 10,
-                        17: 11,
-                        18: 12,
-                        19: 13,
-                        23: 14,
-                        27: 15,
-                        31: 16,
-                        33: 17,
-                        34: 18}
-        
-        temp = label.clone().detach() # store the old version of the label
-        if inverse: # if (0->18), convert to (0->34)
-            for v, k in label_mapping.items():
-                label[temp == k] = v
-        else: # if (0->34), convert to (0->18)
-            for k, v in label_mapping.items():
-                label[temp == k] = v
-        return label
+        return map_labels(label, inverse)
     
     # Complete the pre-processing step for the image
     def get_preprocessing(self): 
@@ -260,6 +230,43 @@ class DataLoader(object):
             _transform.append(album.Lambda(image = self.preprocessing))
     
         return album.Compose(_transform)
+
+
+
+# Configured this function to be independent of the class to allow outside calls
+def map_labels (label, inverse = False):
+    # Code below obtained from Rellis implementation in HRNet
+    # Class 1 (Dirt) is omitted due to how sparse it is in the dataset (see Rellis-3D paper)
+    label_mapping = {0: 0,
+                    1: 0,
+                    3: 1,
+                    4: 2,
+                    5: 3,
+                    6: 4,
+                    7: 5,
+                    8: 6,
+                    9: 7,
+                    10: 8,
+                    12: 9,
+                    15: 10,
+                    17: 11,
+                    18: 12,
+                    19: 13,
+                    23: 14,
+                    27: 15,
+                    31: 16,
+                    33: 17,
+                    34: 18}
+    
+    temp = label.clone().detach() # store the old version of the label
+    if inverse: # if (0->18), convert to (0->34)
+        for v, k in label_mapping.items():
+            label[temp == k] = v
+    else: # if (0->34), convert to (0->18)
+        for k, v in label_mapping.items():
+            label[temp == k] = v
+    return label
+
 
         
 # --------- Testing the class above, REMOVE later ------------ #

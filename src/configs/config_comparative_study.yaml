@@ -1,10 +1,10 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
-  MODEL_NAME: "hrnet_ocr"
+  MODEL_NAME: "unet"
   DISPLAY_IMAGE: True 
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
-    RESIZE_IMG: True # will only re-size the image to the dim below if True
+    RESIZE_IMG: False # will only re-size the image to the dim below if True
     HEIGHT: 640
     WIDTH: 1024
 
@@ -13,6 +13,7 @@ TRAIN:
   CRITERION: 'crossentropyloss'
   BATCH_SIZE: 2
   TOTAL_EPOCHS: 10
+  LR: 1.0e-5 # learning rate 
   INPUT_SIZE:
     RESIZE_IMG: True
     HEIGHT: 320
@@ -23,13 +24,11 @@ MODELS:
   UNET: # --> unet
     MODEL_FILE: "model.pt"
     BASE: 40 # base channel amount for the U-Net, increases in further layers
-    LR: 1.0e-5 # learning arte
     KERNEL_SIZE: 5
   # --> deeplabv3plus
   DEEPLABV3PLUS: 
     ENCODER: 'resnet101'
     ENCODER_WEIGHTS: 'imagenet'
-    LR: 1.0e-5
   # --> hrnet_ocr
   HRNET_OCR:  
     CONFIG: "models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"

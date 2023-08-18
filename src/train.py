@@ -47,26 +47,13 @@ class TrainModel(object):
         self.cfg.freeze()
 
         # obtain the model-specific operations
-        test = modelhandler.ModelHandler(self.cfg, "train")
-        
+        self.model_handler = modelhandler.ModelHandler(self.cfg, "train")
+    
 
         # default to not preprocessing the input to the model
         preprocess_input = False 
 
-        # Initialize based on the model being trained
-        if self.cfg.TRAIN.MODEL_NAME == "unet": 
-            # U-Net Specific params    
-            self.lr = self.cfg.MODELS.UNET.LR # learning rate
-            self.base = self.cfg.MODELS.UNET.BASE # base value for the UNet feature sizes - ONLY applies for the U-Net
-            self.kernel_size = self.cfg.MODELS.UNET.KERNEL_SIZE # size of the convolution kernel
-        elif self.cfg.TRAIN.MODEL_NAME == "deeplabv3plus": 
-            from segmentation_models_pytorch.encoders import get_preprocessing_fn
-            # get the preprocessing function for the model
-            preprocess_input = get_preprocessing_fn(self.cfg.MODELS.DEEPLABV3PLUS.ENCODER,self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS )
-            self.lr = self.cfg.MODELS.DEEPLABV3PLUS.LR # learning rate
-        else: 
-            exit("Invalid model name, please specify a valid one in the project configuration file")
-        
+       
         # Dataloader initialization
         self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input)
 
@@ -86,7 +73,7 @@ class TrainModel(object):
         self.img_h = self.db.height
 
         # retrieve the model based on the configuration 
-        self.model = self.load_model() 
+        self.model = self.model_handler.gen_model()
 
     def train_model(self): 
         # Use the GPU as the main device if present
@@ -100,12 +87,12 @@ class TrainModel(object):
         self.model.to(device)
 
         # optimizer for the model 
-        optim = torch.optim.Adam(params=self.model.parameters(), lr = self.lr)
+        optim = torch.optim.Adam(params=self.model.parameters(), lr = self.cfg.TRAIN.LR)
         #dice performance metric
         dice = torchmetrics.Dice().to(device)
 
         # Log the training parameters        
-        # writer.add_text("_params/text_summary", self.logTrainParams())
+        writer.add_text("_params/text_summary", self.model_handler.logTrainParams())
 
         # If resizing of the input image is required 
         if self.cfg.TRAIN.INPUT_SIZE.RESIZE_IMG:
@@ -138,19 +125,17 @@ class TrainModel(object):
                     # load the image batch
                     _, images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size, resize = input_size)
                     
-
                     # prep the images through normalization and re-organization
                     images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
                     ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
 
-                    
                     # Create autogradient variables for training
                     images = torch.autograd.Variable(images, requires_grad = False).to(device)
                     ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
 
                     # forward pass
                     pred = self.model(images)
-                    pred = self.__handle_output(pred) # handle the model output
+                    pred = self.model_handler.handle_output(pred) # handle output based on the model
                     
                     loss = self.criterion(pred, ann.long()) # calculate the loss 
                     writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 
@@ -193,61 +178,13 @@ class TrainModel(object):
         else: 
             exit("Invalid loss function, please select a valid one")
 
-    def load_model(self):
-        """
-        load_model(self): 
-        ----------------------------------------
-        Retrieves the model based on the configuration file field self.cfg.TRAIN.MODEL_NAME.\n 
-        Applies the model params specified within the config file.
-        """
-        if self.cfg.TRAIN.MODEL_NAME == 'unet': 
-            return unet.UNet(
-                enc_chs=(3,self.base, self.base*2, self.base*4, self.base*8, self.base*16),
-                dec_chs=(self.base*16, self.base*8, self.base*4, self.base*2, self.base), 
-                out_sz=(self.img_h,self.img_w), retain_dim=True, num_class=self.db.num_classes, kernel_size=self.kernel_size
-            )
-        elif self.cfg.TRAIN.MODEL_NAME == "deeplabv3plus": 
-            import segmentation_models_pytorch as smp # get the library for the model
-            return smp.DeepLabV3Plus(
-                encoder_name=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, 
-                encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
-                classes = self.db.num_classes, 
-                activation = "sigmoid"
-            )
-        else: 
-            exit("Invalid model name, please specify a valid one in the project configuration file")
-
-    def __handle_output(self, pred):
-        if self.cfg.TRAIN.MODEL_NAME == 'deeplabv3plus':
-            # regeneratre the input size for the prediction 
-            pred = TF.interpolate(input=pred, size=(self.db.height, self.db.width), mode='bilinear', align_corners=False)
-
-        return pred
-    
-    # Prepares the markdown to log the parameters of the file
-    def logTrainParams(self):
-        return """ 
-        ------------------------------------------------------------<br />
-        Model Training Parameters <br />
-        ------------------------------------------------------------  <br />
-        Date: {0} <br />
-        ------------------------------------------------------------<br />
-        Batch Size: {1} <br />
-        Learning Rate: {2} <br />
-        Base: {3} <br />
-        Kernel Size: {4} <br />
-        Epochs: {5} <br />
-        Steps Per Epochs: {6} <br />
-        Loss Function: {7} <br />
-        -----------------------------------------------------------<br />  
-        """.format(datetime.datetime.now(), self.batch_size, self.lr, self.base, self.kernel_size, self.epochs,
-                    self.steps_per_epoch, self.criterion.__class__.__name__)
-
 
     # this function is only used during testing to allow for the visual validation of results, no need for it 
     # for the training of the network
     def showTensor(self, image): 
         plt.imshow(image.permute(1,2,0)) # re-format and plot the image         
+
+# Main program calling 
 if __name__ == "__main__": 
     train = TrainModel()
     train.train_model() # train the model

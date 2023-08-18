@@ -1,6 +1,9 @@
 import datetime
 import unet
-
+from torch.nn import functional as TF
+import torch
+from dataloader import map_labels
+import sys, os, argparse
 
 class Model(object): 
     """
@@ -13,6 +16,7 @@ class Model(object):
     """
     def __init__(self, cfg, mode):
         self.cfg = cfg # configuration file
+        self.resize_img = False # default to false, overwritten in next function
         self.input_size = self.__input_size(mode)
 
     def __input_size(self, mode): 
@@ -23,7 +27,8 @@ class Model(object):
         """
         # string that represents the desired configuration param
         modestr = "self.cfg." + mode.upper() +"."
-        if eval(modestr+'INPUT_SIZE.RESIZE_IMG'): # if image resizing is required
+        self.resize_img = eval(modestr+'INPUT_SIZE.RESIZE_IMG')
+        if self.resize_img: # if image resizing is required
             return (eval(modestr+"INPUT_SIZE.HEIGHT"), eval(modestr+"INPUT_SIZE.WIDTH"))
         else: # if resizing is not required
             return (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
@@ -45,9 +50,29 @@ class Model(object):
         print("No implementation of gen_model() for this class has yet to be configured.\n")
         exit()
 
-    def handle_output(self):
-        print("No implementation of handle_output() for this class has yet to be configured.\n")
-        exit()
+    def handle_output_train(self, pred):
+        """
+        Default handling for the prediction during training. This can be overwritten in child classes if needed
+        -------------------------
+        Params: 
+        pred (tensor): prediction (logits) output originating from the model. 
+        """
+        # If the image was re-sized, regenerate the original size
+        if self.resize_img: 
+            # retrieve the output size for the db.
+            output_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
+            # interpolate to regenerate the original output size. 
+            pred = TF.interpolate(input=pred, size=output_size, mode="bilinear", align_corners=False)
+
+        # as a default, the direct prediction (logits) is used during training. Overwrite if needed
+        return pred
+
+    def handle_output_eval(self, pred): 
+        # Default to stop program if this function is not overwritten by the child Model class. \
+        # This NEEDS to be overwritten in order to work. No default is used since every model has a different
+        # way of obtaining the annotation mask output.  
+        exit("No implementation for handling the output in eval mode is configured for this model type\n")
+        
 
     def logTrainParams(self):
         """
@@ -75,6 +100,9 @@ class Model(object):
         """.format(datetime.datetime.now(), self.cfg.TRAIN.MODEL_NAME, self.cfg.TRAIN.BATCH_SIZE, self.cfg.TRAIN.TOTAL_EPOCHS, self.cfg.TRAIN.CRITERION,
                    self.cfg.TRAIN.INPUT_SIZE.RESIZE_IMG, self.cfg.TRAIN.INPUT_SIZE.HEIGHT, self.cfg.TRAIN.INPUT_SIZE.WIDTH)
         
+# ----------------------------------------------------------------------------------------------------------- #
+#                                           Model Configurations                                              #
+# ----------------------------------------------------------------------------------------------------------- #
 
 class UNet(Model): 
 
@@ -91,7 +119,7 @@ class UNet(Model):
             dec_chs=(base*16, base*8, base*4, base*2, base), 
             out_sz=self.input_size, retain_dim=True, num_class=num_class, kernel_size=kernel_size
         )   
-
+    
     def logTrainParams(self):
         # Add onto the tensorboard string the model parameters
         return super().logTrainParams() + """
@@ -101,10 +129,15 @@ class UNet(Model):
         Kernel Size: {} <br />
         Learning rate: {} <br />
         -------------------------------------------------------------- <br />
-        """.format(self.cfg.MODELS.UNET.BASE, self.cfg.MODELS.UNET.KERNEL_SIZE, self.cfg.MODELS.UNET.LR)
+        """.format(self.cfg.MODELS.UNET.BASE, self.cfg.MODELS.UNET.KERNEL_SIZE, self.cfg.TRAIN.LR)
 
+    def load_model(self): 
+        return torch.load(self.cfg.MODELS.UNET.MODEL_FILE)
+    
+    def handle_output_eval(self, pred):
+        return pred.argmax(dim=1)
+# --------------------------------------------------------------------------------------------------------------- #
 class DeepLabV3Plus(Model): 
-
     def gen_model(self): 
         import segmentation_models_pytorch as smp # get the library for the model
         return smp.DeepLabV3Plus(
@@ -113,7 +146,60 @@ class DeepLabV3Plus(Model):
             classes = self.cfg.DB.NUM_CLASSES, 
             activation = "sigmoid"
         )        
+# --------------------------------------------------------------------------------------------------------------- #    
+class HRNet_OCR(Model):
 
+    def load_model(self): 
+        # model source code directory
+        src_dir = self.cfg.MODELS.HRNET_OCR.SRC_DIR
+        # add the source code tools directory to re-use their code
+        sys.path.insert(0,os.path.join(src_dir,"tools/"))
+        sys.path.insert(0,os.path.join(src_dir,"lib/"))
+        from tools import load_model
+        model = load_model("/home/jplangger/Documents/Dev/VBTC/src/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml", 
+                            model_file = self.cfg.MODELS.HRNET_OCR.MODEL_FILE)
+        return model
+        
+    def handle_output_eval(self, pred):
+        pred = pred[1] # hrnet has 2 outputs, whilst only one is used... 
+        pred = pred.exp()
+        # Use the same interpolation scheme as is used in the source code.
+        pred = TF.interpolate(input=pred, size=self.input_size, mode='bilinear', align_corners=False)
+        pred = pred.argmax(dim=1) # obtain the predictions for each layer
+        pred = map_labels(label=pred, inverse = True) # convert to 0->34
+        return pred
+# --------------------------------------------------------------------------------------------------------------- #
+class GSCNN(Model):
+
+    def load_model(self): 
+        src_dir = self.cfg.MODELS.GSCNN.SRC_DIR
+        # Add the network files directory to obtain the model 
+        sys.path.insert(0,src_dir) # add the source dir to the path.
+        sys.path.insert(0,os.path.join(src_dir, "network/"))
+        
+        # Prep the args to be passed to the model loader (bypass command line handling on their end)
+        dataset_cls = argparse.Namespace(num_classes=19, ignore_label=0)
+        args = argparse.Namespace(arch = "network.gscnn.GSCNN", dataset_cls = dataset_cls, trunk='resnet101',
+                                    checkpoint_path = self.cfg.MODELS.GSCNN.MODEL_FILE,  
+                                    img_wt_loss=False, joint_edgeseg_loss=False, wt_bound=1.0, edge_weight=1.0, 
+                                    seg_weight=1.0)
+        import network
+        from loss import get_loss # their model loading requires the criterion, only use the base one (configured using args)
+        model = network.get_net(args, get_loss(args))
+        return model
+
+    def handle_output_eval(self, pred):
+        # GSCNN returns two outputs: the shape & regular stream. Only the regular segmentation is required
+        pred, _ = pred  # get the shape stream 
+        pred =  pred.data # get the data for the segmentation 
+        pred = TF.interpolate(input=pred, size=self.input_size, mode='bilinear', align_corners=False)
+        pred = pred.argmax(dim=1) # convert into label mask 
+        pred = map_labels(label=pred, inverse=True) # convert the labels to 0->34 scheme
+        return pred
+
+# -------------------------------------------------------------------------------------------------------------------------- #
+#                                                  Model Handler
+# -------------------------------------------------------------------------------------------------------------------------- #
 
 class ModelHandler(object): 
     """
@@ -152,9 +238,9 @@ class ModelHandler(object):
         elif model_name == "deeplabv3plus": 
             return DeepLabV3Plus(self.cfg, self.mode)
         elif model_name == "hrnet_ocr": 
-            pass
+            return HRNet_OCR(self.cfg, self.mode)
         elif model_name == "gscnn": 
-            pass
+            return GSCNN(self.cfg, self.mode)
         else: 
             exit("Invalid model_name specified. Please configure a valid model_name in config file.")
         ######################################################
@@ -181,6 +267,18 @@ class ModelHandler(object):
         This should only be used during training as the model retrieved will not contain weights trained upon Rellis-3D dataset
         """
         return self.model.gen_model()
+    
+    def handle_output(self, pred): 
+        """
+        Handles the output based on the train/eval mode.\n
+        --------------------------
+        If mode == train, the output will be logits. 
+        If mode == eval, the output will be an integer mask which represents each class
+        """
+        if self.mode == "train": 
+            return self.model.handle_output_train(pred)
+        elif self.mode == "eval": 
+            return self.model.handle_output_eval(pred)
 
 # -------------- Testing the code implementation --------------------- #
 if __name__ == "__main__": 
