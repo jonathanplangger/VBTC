@@ -155,7 +155,7 @@ class TrainModel(object):
                     #     print("Reducing learning rate")
                     #     optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR/4
 
-                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR - (self.cfg.TRAIN.LR - self.cfg.TRAIN.FINAL_LR)/((epoch+1)*self.steps_per_epoch)
+                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR - (self.cfg.TRAIN.LR - self.cfg.TRAIN.FINAL_LR)/((epoch+1)*self.steps_per_epoch)*count
 
                     #update progress bar
                     pbar.set_postfix(loss=loss.item(), lr = optim.param_groups[0]['lr'])
