@@ -158,8 +158,7 @@ class TrainModel(object):
                     optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR - (self.cfg.TRAIN.LR - self.cfg.TRAIN.FINAL_LR)/((epoch+1)*self.steps_per_epoch)
 
                     #update progress bar
-                    pbar.set_postfix(loss=loss.item())
-                    pbar.set_postfix(lr = optim.param_groups[0]['lr'])
+                    pbar.set_postfix(loss=loss.item(), lr = optim.param_groups[0]['lr'])
                     pbar.update()
                     count += 1 # increment the counter
 
