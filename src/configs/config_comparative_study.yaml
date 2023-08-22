@@ -14,6 +14,7 @@ TRAIN:
   BATCH_SIZE: 2
   TOTAL_EPOCHS: 10
   LR: 1.0e-5 # learning rate 
+  FINAL_LR: 1.0e-7
   INPUT_SIZE:
     RESIZE_IMG: True
     HEIGHT: 320

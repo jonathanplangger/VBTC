@@ -106,6 +106,8 @@ class TrainModel(object):
         # record the model parameters on tensorboard
         writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
 
+        # count all the steps during training
+        count = 0
         # ------------------------ Training loop ------------------------------------#
         for epoch in range(self.epochs):
 
@@ -148,14 +150,18 @@ class TrainModel(object):
                     dice_score = dice(pred, ann.long())
                     writer.add_scalar("Metrics/Dice", dice_score, epoch*self.steps_per_epoch + i) # record the dice score 
 
-                    # reduce the learning rate once the 4th epoch is reached 
-                    if optim.param_groups[0]['lr'] == self.cfg.TRAIN.LR and epoch == 3: 
-                        print("Reducing learning rate")
-                        optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR/4
+                    # # reduce the learning rate once the 4th epoch is reached 
+                    # if optim.param_groups[0]['lr'] == self.cfg.TRAIN.LR and epoch == 3: 
+                    #     print("Reducing learning rate")
+                    #     optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR/4
+
+                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR - (self.cfg.TRAIN.LR - self.cfg.TRAIN.FINAL_LR)/((epoch+1)*self.steps_per_epoch)
 
                     #update progress bar
                     pbar.set_postfix(loss=loss.item())
+                    pbar.set_postfix(lr = optim.param_groups[0]['lr'])
                     pbar.update()
+                    count += 1 # increment the counter
 
             # finish writing to the buffer 
             writer.flush()

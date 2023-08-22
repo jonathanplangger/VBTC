@@ -38,6 +38,7 @@ _C.TRAIN.BATCH_SIZE = 2
 _C.TRAIN.TOTAL_EPOCHS = 10 # n# of epochs to be used during training.
 _C.TRAIN.CRITERION = "crossentropyloss" # loss function employed by the model ("crossentropyloss" or "focalloss")
 _C.TRAIN.LR = 1e-5
+_C.TRAIN.FINAL_LR = 1e-7
 # Used to set the size for the input image. Output will be re-sized to match the original dimensions
 _C.TRAIN.INPUT_SIZE = CN()
 _C.TRAIN.INPUT_SIZE.RESIZE_IMG = True # toggle if the input image is re-sized, TRUE will resize the image
