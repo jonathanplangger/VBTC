@@ -139,18 +139,19 @@ class TrainModel(object):
 
                     # forward pass
                     pred = self.model(images)
+                    del images # release images from mem -> no longer needed
                     pred = self.model_handler.handle_output(pred) # handle output based on the model
 
-                    loss = self.criterion(pred, ann.long()) # calculate the loss 
+                    loss = self.criterion(pred, ann.long()) # calculate the loss
+                    del ann, pred # release, no longer needed. 
                     writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 
 
-                    # optim.zero_grad()
                     loss.backward() # backpropagation for loss 
                     optim.step() # apply gradient descent to the weights
-
-                    # Obtain the performance metrics
-                    dice_score = dice(pred, ann.long())
-                    writer.add_scalar("Metrics/Dice", dice_score, epoch*self.steps_per_epoch + i) # record the dice score 
+                
+                    # Obtain the performance metrics (disable during training due to increase in memory reservation)
+                    # dice_score = dice(pred, ann.long())
+                    # writer.add_scalar("Metrics/Dice", dice_score, epoch*self.steps_per_epoch + i) # record the dice score 
 
                     # Reduce the learning rate linearly each step to the set FINAL_LR value 
                     optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
@@ -160,8 +161,9 @@ class TrainModel(object):
                     pbar.update()
                     step += 1 # increment the counter
 
-                    # Release these from memory -> avoids over allocation of memory resources
-                    del pred, images, ann, loss, dice_score
+                    del loss # release memory
+                    optim.zero_grad()
+
 
             # finish writing to the buffer 
             writer.flush()
