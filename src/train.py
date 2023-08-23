@@ -22,6 +22,7 @@ import unet
 import datetime
 from patchify import patchify
 import modelhandler
+import tools 
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
@@ -85,6 +86,7 @@ class TrainModel(object):
         # Set the model to training mode and place onto GPU
         self.model.train()
         self.model.to(device)
+        print("Model placed onto device: {} MB".format(torch.cuda.memory_allocated()/pow(1024,2)))
 
         # optimizer for the model 
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.cfg.TRAIN.LR)
@@ -107,7 +109,7 @@ class TrainModel(object):
         writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
 
         # count all the steps during training
-        count = 0
+        step = 0
         # ------------------------ Training loop ------------------------------------#
         for epoch in range(self.epochs):
 
@@ -138,11 +140,11 @@ class TrainModel(object):
                     # forward pass
                     pred = self.model(images)
                     pred = self.model_handler.handle_output(pred) # handle output based on the model
-                    
+
                     loss = self.criterion(pred, ann.long()) # calculate the loss 
                     writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 
 
-                    optim.zero_grad()
+                    # optim.zero_grad()
                     loss.backward() # backpropagation for loss 
                     optim.step() # apply gradient descent to the weights
 
@@ -150,17 +152,16 @@ class TrainModel(object):
                     dice_score = dice(pred, ann.long())
                     writer.add_scalar("Metrics/Dice", dice_score, epoch*self.steps_per_epoch + i) # record the dice score 
 
-                    # # reduce the learning rate once the 4th epoch is reached 
-                    # if optim.param_groups[0]['lr'] == self.cfg.TRAIN.LR and epoch == 3: 
-                    #     print("Reducing learning rate")
-                    #     optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR/4
-
-                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR - (self.cfg.TRAIN.LR - self.cfg.TRAIN.FINAL_LR)/((epoch+1)*self.steps_per_epoch)*count
+                    # Reduce the learning rate linearly each step to the set FINAL_LR value 
+                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
 
                     #update progress bar
                     pbar.set_postfix(loss=loss.item(), lr = optim.param_groups[0]['lr'])
                     pbar.update()
-                    count += 1 # increment the counter
+                    step += 1 # increment the counter
+
+                    # Release these from memory -> avoids over allocation of memory resources
+                    del pred, images, ann, loss, dice_score
 
             # finish writing to the buffer 
             writer.flush()
