@@ -86,7 +86,6 @@ class TrainModel(object):
         # Set the model to training mode and place onto GPU
         self.model.train()
         self.model.to(device)
-        print("Model placed onto device: {} MB".format(torch.cuda.memory_allocated()/pow(1024,2)))
 
         # optimizer for the model 
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.cfg.TRAIN.LR)
@@ -105,7 +104,7 @@ class TrainModel(object):
 
         # Obtain the summary of the model architecture + memory requirements
         summary = torchsummary.summary(self.model, (3,input_size[0],input_size[1]))
-        # record the model parameters on tensorboard
+        # record the model parameters on tensorboard``
         writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
 
         # count all the steps during training
@@ -147,11 +146,6 @@ class TrainModel(object):
                     writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 
 
                     loss.backward() # backpropagation for loss 
-                    optim.step() # apply gradient descent to the weights
-                
-                    # Obtain the performance metrics (disable during training due to increase in memory reservation)
-                    # dice_score = dice(pred, ann.long())
-                    # writer.add_scalar("Metrics/Dice", dice_score, epoch*self.steps_per_epoch + i) # record the dice score 
 
                     # Reduce the learning rate linearly each step to the set FINAL_LR value 
                     optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
@@ -159,10 +153,13 @@ class TrainModel(object):
                     #update progress bar
                     pbar.set_postfix(loss=loss.item(), lr = optim.param_groups[0]['lr'])
                     pbar.update()
-                    step += 1 # increment the counter
 
-                    del loss # release memory
+                    del loss # release memory 
+                    optim.step() # apply gradient descent to the weights
                     optim.zero_grad()
+
+                    step += 1 # increment the counter
+                    # print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
 
 
             # finish writing to the buffer 
