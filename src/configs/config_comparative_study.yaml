@@ -9,12 +9,12 @@ EVAL:
     WIDTH: 1024
 
 TRAIN:
-  MODEL_NAME: 'deeplabv3plus'
+  MODEL_NAME: 'unet'
   CRITERION: 'crossentropyloss'
-  BATCH_SIZE: 2
-  TOTAL_EPOCHS: 10
-  LR: 1.0e-3 # learning rate 
-  FINAL_LR: 1.0e-6
+  BATCH_SIZE: 1
+  TOTAL_EPOCHS: 5
+  LR: 1.0e-4 # learning rate 
+  FINAL_LR: 1.0e-7
   INPUT_SIZE:
     RESIZE_IMG: True
     HEIGHT: 640

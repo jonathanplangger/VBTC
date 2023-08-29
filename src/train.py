@@ -141,25 +141,31 @@ class TrainModel(object):
                     del images # release images from mem -> no longer needed
                     pred = self.model_handler.handle_output(pred) # handle output based on the model
 
+                    # Zero the gradients for the function
+                    optim.zero_grad()
+
                     loss = self.criterion(pred, ann.long()) # calculate the loss
                     del ann, pred # release, no longer needed. 
                     writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 
 
                     loss.backward() # backpropagation for loss 
 
-                    # Reduce the learning rate linearly each step to the set FINAL_LR value 
-                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
-
                     #update progress bar
                     pbar.set_postfix(loss=loss.item(), lr = optim.param_groups[0]['lr'])
                     pbar.update()
 
-                    del loss # release memory 
+                    # del loss # release memory 
                     optim.step() # apply gradient descent to the weights
-                    optim.zero_grad()
+
+
+                    # Measure the total amount of memory that is being reserved training (for optimization purposes)
+                    if step == 2: 
+                        print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
+
+                    # Reduce the learning rate linearly each step to the set FINAL_LR value 
+                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
 
                     step += 1 # increment the counter
-                    # print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
 
 
             # finish writing to the buffer 
@@ -176,10 +182,15 @@ class TrainModel(object):
         ---------------------------------------------------
         Retrieves the loss function based on the configuration file as defined in self.cfg.TRAIN.CRITERION
         """
-        if self.cfg.TRAIN.CRITERION == 'crossentropyloss': 
+        import loss 
+
+        criterion = self.cfg.TRAIN.CRITERION
+        if criterion == 'crossentropyloss': 
             self.criterion = torch.nn.CrossEntropyLoss()
-        elif self.cfg.TRAIN.CRITERION == "focalloss": 
+        elif criterion == "focalloss": 
             self.criterion = focal_loss.FocalLoss()
+        elif criterion == "customiouloss":
+            self.criterion = loss.CustomIoULoss() 
         else: 
             exit("Invalid loss function, please select a valid one")
 
