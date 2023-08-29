@@ -10,7 +10,7 @@ EVAL:
 
 TRAIN:
   MODEL_NAME: 'unet'
-  CRITERION: 'crossentropyloss'
+  CRITERION: 'customiouloss'
   BATCH_SIZE: 1
   TOTAL_EPOCHS: 5
   LR: 1.0e-4 # learning rate 

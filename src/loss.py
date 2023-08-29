@@ -38,7 +38,9 @@ class CustomIoULoss(nn.Module):
         
         # get the IoU score for each class 
         iou_c = torch.div(num, denom) 
-        loss_iou = -1.4*torch.log(torch.pow(iou_c, 0.5) + 1) + 1 # fit the error function 
+        # fit the iou values to a more suitable weighted loss value
+        loss_iou = -1.4*torch.log(torch.pow(iou_c, 0.5) + 1) + 1 
+        # loss_iou = iou_c
 
         # turn off contribution to loss by any classes not within the annotation file        
         num_active = 0
@@ -54,7 +56,7 @@ class CustomIoULoss(nn.Module):
         loss_iou = loss_iou/num_active
         
 
-        return loss_iou
+        return 10*loss_iou
 
 
 # For testing out the loss function first 
