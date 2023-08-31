@@ -77,7 +77,7 @@ class TrainModel(object):
         self.model = self.model_handler.gen_model()
 
     def train_model(self): 
-        # Use the GPU as the main device if present
+        # Use the GPU as the main device if present 
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
         # Create a tensorboard writer
@@ -89,6 +89,8 @@ class TrainModel(object):
 
         # optimizer for the model 
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.cfg.TRAIN.LR)
+        # scheduler for the learning rate 
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, mode="max", patience=400, factor=0.5,verbose=True, min_lr=self.cfg.TRAIN.FINAL_LR)
         #dice performance metric
         dice = torchmetrics.Dice().to(device)
 
@@ -144,6 +146,9 @@ class TrainModel(object):
                     # Zero the gradients for the function
                     optim.zero_grad()
 
+                    dice_score = dice(pred, ann.long())
+                    writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
+
                     loss = self.criterion(pred, ann.long()) # calculate the loss
                     del ann, pred # release, no longer needed. 
                     writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 
@@ -163,7 +168,11 @@ class TrainModel(object):
                         print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
 
                     # Reduce the learning rate linearly each step to the set FINAL_LR value 
-                    optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
+                    # optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
+
+            
+                    # update the learning rate based on scheduler scheme
+                    scheduler.step(dice_score)
 
                     step += 1 # increment the counter
 

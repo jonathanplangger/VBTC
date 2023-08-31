@@ -12,9 +12,9 @@ TRAIN:
   MODEL_NAME: 'unet'
   CRITERION: 'customiouloss'
   BATCH_SIZE: 1
-  TOTAL_EPOCHS: 5
-  LR: 1.0e-4 # learning rate 
-  FINAL_LR: 1.0e-7
+  TOTAL_EPOCHS: 10
+  LR: 1.0e-5 # learning rate 
+  FINAL_LR: 1.0e-10
   INPUT_SIZE:
     RESIZE_IMG: True
     HEIGHT: 640

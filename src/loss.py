@@ -10,7 +10,7 @@ class CustomIoULoss(nn.Module):
 
         super(CustomIoULoss, self).__init__()
         self.num_classes = 35
-
+        self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
         """
@@ -20,7 +20,7 @@ class CustomIoULoss(nn.Module):
         """
 
         # Get the softmax output ([0,1]) for the prediction
-        pred = torch.softmax(pred, dim=1)
+        pred = torch.softmax(pred, dim=1) + self.eps
 
         # Create the onehot tensor for each class (gic)
         ann = torch.unsqueeze(ann,0)
@@ -39,24 +39,24 @@ class CustomIoULoss(nn.Module):
         # get the IoU score for each class 
         iou_c = torch.div(num, denom) 
         # fit the iou values to a more suitable weighted loss value
-        loss_iou = -1.4*torch.log(torch.pow(iou_c, 0.5) + 1) + 1 
-        # loss_iou = iou_c
+        loss_iou = -0.3*torch.atan(5*iou_c - 2.5) + 0.5 
+        # loss_iou = 1-iou_c # base iou implementation -> Employ the class-based IoU directly  
 
         # turn off contribution to loss by any classes not within the annotation file        
         num_active = 0
         for c in range(self.num_classes): 
             if c not in ann: 
-                loss_iou[0,c] = 0
+                loss_iou[0,c] = self.eps
             else: 
                 num_active += 1 # increase the count
 
         #sum up the final loss amount 
         loss_iou = torch.sum(loss_iou, dim=1)
         # Average the iou loss based on the currently active classes within the annotations
-        loss_iou = loss_iou/num_active
+        # loss_iou = loss_iou/num_active
         
 
-        return 10*loss_iou
+        return loss_iou
 
 
 # For testing out the loss function first 
