@@ -54,7 +54,7 @@ class ComparativeEvaluation():
         writer = SummaryWriter() 
 
         # obtain the data
-        db = dataloader.DataLoader(setType="test") 
+        db = dataloader.DataLoader(setType="test", remap = True) 
         db.randomizeOrder()
 
         # Empty the cache prior to training the network
@@ -127,13 +127,7 @@ class ComparativeEvaluation():
                 
                 # orig_images = images # store this for later use
                 orig_ann = ann # store for later display
-
-                # prep images and load to GPU
-                images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0).to(self.device)
-
-                ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:].to(self.device)
-
-                
+              
                 startTime = time.time() # used to measure prediction time for the model
 
                 # run model

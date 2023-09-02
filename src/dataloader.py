@@ -5,7 +5,7 @@ import numpy as np
 import random
 import patchify
 import albumentations as album 
-
+import torch
 
 # ------------- Dataloader for the new dataset ------------- #
 class DataLoader(object):
@@ -17,24 +17,32 @@ class DataLoader(object):
         metadata (List[dict]) = List of dictionnary elements containing information regarding image files\n
         num_classes = quantity of differentiable classes within the dataset\n
     """
-    def __init__(self, path="../../datasets/Rellis-3D/", setType = "train", preprocessing=None):
+    def __init__(self, path="../../datasets/Rellis-3D/", setType = "train", preprocessing=None, remap = False):
         """
             Dataloader provides an easy interface for loading data for training and testing of new models.\n
             ----------------------------\n
             Parameters:\n
             path (str) = File path to the dataset being loaded\n
-
+            setType (str) = Type of operation for the dataloader, operation will vary depending on this configuration, can use either 'train" or "eval"\n
+            preprocessing = preprocessing function (implement to assure compatibility with other models )\n
+            remap (bool)=  selects whether the annotation files must be remapped to a new range of value (to limit the class label range)\n
         """
         self.path = path
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
         self.train_meta, self.test_meta = self.__reg_rellis() # register training and test dataset
-        self.num_classes = 35 # TODO update to depend on the dataset
         self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
         self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
         self.preprocessing = preprocessing # set the preprocessing function employed on the image inputs to the model
-        
+        self.remap = remap
+
+        # Make sure the correct number of classes are configured -> this value is employed by the modelhandler itself
+        if self.remap == True: 
+            self.num_classes = 19
+        else: 
+            self.num_classes = 35
+
         # Retrieve the preprocessing function 
         if self.preprocessing: 
             self.preprocessing = self.get_preprocessing()
@@ -174,6 +182,14 @@ class DataLoader(object):
                 resized_img[i] = cv2.resize(img, (resize[1], resize[0]), interpolation=cv2.INTER_LINEAR)
             images = resized_img # override the images with the newly resized images
 
+        # Convert the numpy ndarray into useful tensor form
+        images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0)
+        annMap = (torch.from_numpy(annMap)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
+
+        # Re-map the annotation labels to match the other scale
+        if self.remap == True: 
+            annMap = self.map_labels(annMap)
+
         return orig_images, images, annMap, idx
 
     def getPatches(self, img: np.ndarray, patch_size, stride=[1,1], padding=[0,0]): 
@@ -221,6 +237,14 @@ class DataLoader(object):
         pass
 
     def map_labels (self, label, inverse = False):
+        """
+        map_labels(self, label, inverse=False)
+        Converts the mapping labels on annotation files / prediction masks from 0->19 to 0->34 
+        -----------\n
+        Params: \n
+        label (int tensor): labels to be converted from one scale to another \n
+        inverse (bool): sets the direction that the conversion is being made, inverse = True converts 0->34 to 0->19\n
+        """ 
         return map_labels(label, inverse)
     
     # Complete the pre-processing step for the image
@@ -235,6 +259,13 @@ class DataLoader(object):
 
 # Configured this function to be independent of the class to allow outside calls
 def map_labels (label, inverse = False):
+    """
+        Converts the mapping labels on annotation files / prediction masks from 0->19 to 0->34 
+        -----------\n
+        Params: \n
+        label (int tensor): labels to be converted from one scale to another \n
+        inverse (bool): sets the direction that the conversion is being made, inverse = True converts 0->34 to 0->19\n
+    """
     # Code below obtained from Rellis implementation in HRNet
     # Class 1 (Dirt) is omitted due to how sparse it is in the dataset (see Rellis-3D paper)
     label_mapping = {0: 0,

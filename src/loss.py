@@ -9,7 +9,6 @@ class CustomIoULoss(nn.Module):
     def __init__(self): 
 
         super(CustomIoULoss, self).__init__()
-        self.num_classes = 35
         self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
@@ -18,6 +17,9 @@ class CustomIoULoss(nn.Module):
             ann (tensor) = annotation (b,h,w)\n
             pred (tensor) = logit output prediction (b,c,h,w) \n
         """
+
+        # Retrieve the n# of classes based on the n# of classes within the prediction channel
+        num_classes = pred.shape[1]
 
         # Get the softmax output ([0,1]) for the prediction
         pred = torch.softmax(pred, dim=1) + self.eps
@@ -51,7 +53,7 @@ class CustomIoULoss(nn.Module):
 
         # turn off contribution to loss by any classes not within the annotation file        
         num_active = 0
-        for c in range(self.num_classes): 
+        for c in range(num_classes): 
             if c not in ann: 
                 loss_iou[0,c] = self.eps
             else: 

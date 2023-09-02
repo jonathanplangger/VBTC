@@ -107,13 +107,13 @@ class Model(object):
 
 class UNet(Model): 
 
-    def gen_model(self):
+    def gen_model(self, num_classes):
         """
             Generates the model based on the parameters specifed within the configuration file.
         """
         base = self.cfg.MODELS.UNET.BASE
         kernel_size = self.cfg.MODELS.UNET.KERNEL_SIZE
-        num_class = self.cfg.DB.NUM_CLASSES
+        num_class = num_classes
 
         return unet.UNet(
             enc_chs=(3,base, base*2, base*4, base*8, base*16),
@@ -272,14 +272,14 @@ class ModelHandler(object):
         """
         return self.model.load_model()
     
-    def gen_model(self): 
+    def gen_model(self, num_classes): 
         """
         gen_model(self)
         ----------------
         Generates the model, ready for training, based on the configuration file. \n 
         This should only be used during training as the model retrieved will not contain weights trained upon Rellis-3D dataset
         """
-        return self.model.gen_model()
+        return self.model.gen_model(num_classes)
     
     def handle_output(self, pred): 
         """

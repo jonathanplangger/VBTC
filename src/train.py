@@ -54,7 +54,7 @@ class TrainModel(object):
         preprocess_input = False 
    
         # Dataloader initialization
-        self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input)
+        self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input, remap = True)
 
         # Training Parameters
         self.batch_size = self.cfg.TRAIN.BATCH_SIZE #3
@@ -72,7 +72,7 @@ class TrainModel(object):
         self.img_h = self.db.height
 
         # retrieve the model based on the configuration 
-        self.model = self.model_handler.gen_model()
+        self.model = self.model_handler.gen_model(self.db.num_classes)
 
     def train_model(self): 
         # Use the GPU as the main device if present 
@@ -128,10 +128,6 @@ class TrainModel(object):
                     # load the image batch
                     _, images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size, resize = input_size)
                     
-                    # prep the images through normalization and re-organization
-                    images = (torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0
-                    ann = (torch.from_numpy(ann)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
-
                     # Create autogradient variables for training
                     images = torch.autograd.Variable(images, requires_grad = False).to(device)
                     ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
