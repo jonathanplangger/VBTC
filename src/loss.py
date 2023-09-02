@@ -29,18 +29,25 @@ class CustomIoULoss(nn.Module):
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
         ann_onehot.scatter_(1, ann, 1) # create onehot vector
 
+        # del ann # free up memory  # TODO, figure out another way to determine which classes are within the annotation file
+
         num = pred * ann_onehot # numerator
         denom = pred + ann_onehot - num # denominator
+
+        del pred # free up memory 
 
         # sum up all the values on a per-class basis
         num = torch.sum(num, dim=(2,3))
         denom = torch.sum(denom, dim=(2,3)) 
         
         # get the IoU score for each class 
-        iou_c = torch.div(num, denom) 
+        loss_iou = torch.div(num, denom) 
+
+        del num, denom 
+
         # fit the iou values to a more suitable weighted loss value
-        loss_iou = -0.3*torch.atan(5*iou_c - 2.5) + 0.5 
-        # loss_iou = 1-iou_c # base iou implementation -> Employ the class-based IoU directly  
+        loss_iou = -0.3*torch.atan(5*loss_iou - 2.5) + 0.5 
+        # loss_iou = 1 - loss_iou # base iou implementation -> Employ the class-based IoU directly  
 
         # turn off contribution to loss by any classes not within the annotation file        
         num_active = 0
@@ -53,7 +60,7 @@ class CustomIoULoss(nn.Module):
         #sum up the final loss amount 
         loss_iou = torch.sum(loss_iou, dim=1)
         # Average the iou loss based on the currently active classes within the annotations
-        # loss_iou = loss_iou/num_active
+        loss_iou = loss_iou/num_active
         
 
         return loss_iou

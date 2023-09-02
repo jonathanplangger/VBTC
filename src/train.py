@@ -50,11 +50,9 @@ class TrainModel(object):
         # obtain the model-specific operations
         self.model_handler = modelhandler.ModelHandler(self.cfg, "train")
     
-
         # default to not preprocessing the input to the model
         preprocess_input = False 
-
-       
+   
         # Dataloader initialization
         self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input)
 
@@ -90,9 +88,9 @@ class TrainModel(object):
         # optimizer for the model 
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.cfg.TRAIN.LR)
         # scheduler for the learning rate 
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, mode="max", patience=400, factor=0.5,verbose=True, min_lr=self.cfg.TRAIN.FINAL_LR)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, mode="min", patience=400, factor=0.5,verbose=True, min_lr=self.cfg.TRAIN.FINAL_LR)
         #dice performance metric
-        dice = torchmetrics.Dice().to(device)
+        # dice = torchmetrics.Dice().to(device)
 
         # Log the training parameters        
         writer.add_text("_params/text_summary", self.model_handler.logTrainParams())
@@ -146,8 +144,8 @@ class TrainModel(object):
                     # Zero the gradients for the function
                     optim.zero_grad()
 
-                    dice_score = dice(pred, ann.long())
-                    writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
+                    # dice_score = dice(pred, ann.long())
+                    # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
 
                     loss = self.criterion(pred, ann.long()) # calculate the loss
                     del ann, pred # release, no longer needed. 
@@ -156,23 +154,25 @@ class TrainModel(object):
                     loss.backward() # backpropagation for loss 
 
                     #update progress bar
-                    pbar.set_postfix(loss=loss.item(), lr = optim.param_groups[0]['lr'])
+                    pbar.set_postfix(lr = optim.param_groups[0]['lr'])
                     pbar.update()
 
                     # del loss # release memory 
                     optim.step() # apply gradient descent to the weights
+                    optim.zero_grad()
 
-
-                    # Measure the total amount of memory that is being reserved training (for optimization purposes)
-                    if step == 2: 
-                        print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
 
                     # Reduce the learning rate linearly each step to the set FINAL_LR value 
                     # optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
 
             
                     # update the learning rate based on scheduler scheme
-                    scheduler.step(dice_score)
+                    scheduler.step(loss)
+
+                    # Measure the total amount of memory that is being reserved training (for optimization purposes)
+                    if step == 2: 
+                        print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
+                        
 
                     step += 1 # increment the counter
 

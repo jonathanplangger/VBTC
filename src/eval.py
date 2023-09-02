@@ -143,7 +143,7 @@ class ComparativeEvaluation():
                 # Convert the prediction output to argmax labels representing each class predicted
                 pred = model_handler.handle_output(pred)
 
-                # Measure the performance of the model
+                # # Measure the performance of the model
                 dice_score = dice(pred, ann.long())
                 
 
@@ -211,7 +211,6 @@ class ComparativeEvaluation():
 
                     plt.show()
 
-                    # exit()
 
                 # Update the progress bar
                 pbar.set_postfix(score = dice_score.item())

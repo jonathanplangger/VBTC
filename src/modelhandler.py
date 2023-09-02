@@ -68,11 +68,12 @@ class Model(object):
         return pred
 
     def handle_output_eval(self, pred): 
-        # Default to stop program if this function is not overwritten by the child Model class. \
-        # This NEEDS to be overwritten in order to work. No default is used since every model has a different
-        # way of obtaining the annotation mask output.  
-        exit("No implementation for handling the output in eval mode is configured for this model type\n")
-        
+        # Default implementation allows for re-sizing if required 
+        if self.resize_img: 
+            output_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
+            pred  = TF.interpolate(input=pred, size = output_size, mode = "bilinear", align_corners=False)
+
+        return pred
 
     def logTrainParams(self):
         """
@@ -135,6 +136,7 @@ class UNet(Model):
         return torch.load(self.cfg.MODELS.UNET.MODEL_FILE)
     
     def handle_output_eval(self, pred):
+        pred = super().handle_output_eval(pred)
         return pred.argmax(dim=1)
 # --------------------------------------------------------------------------------------------------------------- #
 class DeepLabV3Plus(Model): 
