@@ -7,6 +7,7 @@ params.txt
 model.pt
 temp/
 docs/
+backup/
 # for general outputs from models -> Don't need to be saved onto GitHub
 output/
 

@@ -131,7 +131,7 @@ class TrainModel(object):
             self.db.randomizeOrder()
             # create/wipe the array recording the loss values
 
-            with tqdm.tqdm(total=self.steps_per_epoch, unit="Batch") as pbar:
+            with tqdm.tqdm(total=int(self.steps_per_epoch/self.batch_size), unit="Batch") as pbar:
 
                 for i in range(self.steps_per_epoch): 
                     
