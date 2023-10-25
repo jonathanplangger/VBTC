@@ -25,7 +25,7 @@ writer = SummaryWriter()
 
 print("---------------------------------------------------------------\n")
 
-rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory
+rellis_path = "../datasets/Rellis-3D/" #path ot the dataset directory
 
 db = dataloader.DataLoader(rellis_path)
 BATCH_SIZE = 1 #3

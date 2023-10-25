@@ -6,7 +6,7 @@ _C = CN()
 # ----------------- Database Handling Parameters ------------------------------------#
 # These params (other than path) should ideally not be altered since they directly represent the Rellis-3D dataset itself.
 _C.DB = CN()
-_C.DB.PATH = "../../datasets/Rellis-3D/"
+_C.DB.PATH = "../datasets/Rellis-3D/"
 _C.DB.NUM_CLASSES = 35
 _C.DB.EFF_NUM_CLASSES = 19 # effective n# of classes, some of the 35 classes are not used at all 
 _C.DB.IMG_SIZE = CN()
