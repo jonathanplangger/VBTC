@@ -20,10 +20,10 @@ TRAIN:
   INPUT_NORM: True
   INPUT_SIZE:
     RESIZE_IMG: True
-    HEIGHT: 300
-    WIDTH: 480
-    # HEIGHT: 960
-    # WIDTH: 1536
+    # HEIGHT: 300
+    # WIDTH: 480
+    HEIGHT: 960
+    WIDTH: 1536
     
 MODELS: 
   UNET: # --> unet
