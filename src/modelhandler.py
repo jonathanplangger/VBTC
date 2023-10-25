@@ -34,15 +34,16 @@ class Model(object):
             return (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
 
     def load_model(self): 
-        """
-        load_model()
-        ------------------
-        For test cases only. Loads the trained model ready for implementation. 
-        """
+        """load_model(self) Loads the network model based on the specific desired file.\n
+        This method is not implemented in Parent Model class and will return an error unless overwritten in child class.\n
+        :return: Pre-trained torch model 
+        :rtype: nn.Module & Child Variants
+        """        
+
         print("No implementation of load_model() for this class has yet to be configured.\n")
         exit()
 
-    def gen_model(self): 
+    def gen_model(self, num_classes): 
         """
         Generates model based on the configuration specified within the config file. 
         This method should be overwritten by the child class with the specific relevant implementations    
@@ -76,10 +77,14 @@ class Model(object):
         return pred
 
     def logTrainParams(self):
-        """
+        """LogTrainParams() \n 
         Sets up the logging for tensorboard when training the model. State model params & values here.
         Child class should use return of this function and provide a return which provides parameter values for the specific model. 
-        """ 
+        
+        :return: String Formatted to contain training parameters specific to this model (Later logged). 
+        :rtype: string
+        """        
+
         return """
         --------------------------------------------------------------- <br />
         Model Training Parameters <br />
@@ -139,23 +144,7 @@ class UNet(Model):
         pred = super().handle_output_eval(pred)
         return pred.argmax(dim=1)
 # --------------------------------------------------------------------------------------------------------------- #
-class DeepLabV3Plus(Model): 
-    def gen_model(self): 
-        import segmentation_models_pytorch as smp # get the library for the model
-        return smp.DeepLabV3Plus(
-            encoder_name=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, 
-            encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
-            classes = self.cfg.DB.NUM_CLASSES, 
-            activation = "sigmoid"
-        ) 
-    
-    def logTrainParams(self):
-        return super().logTrainParams() + """
-        DeepLabV3+ Parameters: <br />
-        ---------------------- <br />
-        Encoder Structure: {} <br />
-        Encoder Pre-Trained Weights: {} <br />
-        """.format(self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS)
+
            
 # --------------------------------------------------------------------------------------------------------------- #    
 class HRNet_OCR(Model):
@@ -209,6 +198,61 @@ class GSCNN(Model):
         pred = pred.argmax(dim=1) # convert into label mask 
         pred = map_labels(label=pred, inverse=True) # convert the labels to 0->34 scheme
         return pred
+# --------------------------------------------------------------------------------------------------------------- #    
+class DeepLabV3Plus(Model): 
+    """DeepLabV3Plus: Model implementation for the model handler that implements the configured version of the deeplabv3plus model.\n
+    Default configurations can be updated within the project configuration file.
+    """
+
+    def gen_model(self, num_classes):
+        """Constructs the model using the methods provided in the source code. \n
+
+        :param num_classes: Number of classes in the dataset -> Defines the parameters of the model constructed
+        :type num_classes: int
+        :return: Model file for the DeeplabV3+
+        :rtype: network._deeplab.DeepLabV3
+        """
+
+
+        # Genearte the model in the same manner that is being completed within the source main.py file.
+        src_dir = self.cfg.MODELS.DEEPLABV3PLUS.SRC_DIR
+        sys.path.insert(0, src_dir) 
+
+        import network as net 
+        bbn = self.cfg.MODELS.DEEPLABV3PLUS.BACKBONE # retrieve the backbone used from config file 
+        model = net.modeling.__dict__["deeplabv3plus_" + bbn](num_classes = self.cfg.DB.EFF_NUM_CLASSES, output_stride = 16, pretrained_backbone = False)
+        if self.cfg.MODELS.DEEPLABV3PLUS.SEPARABLE_CONV: 
+            net.convert_to_separable_conv(model.classifier)
+
+        return model
+        
+    def logTrainParams(self):
+        return super().logTrainParams() + """
+        DeepLabV3+ Parameters: <br />
+        ---------------------- <br />
+        Backbone Structure: {} <br />
+        """.format(self.cfg.MODELS.DEEPLABV3PLUS.BACKBONE) # Add more as necessary. 
+
+### Old implementation of the model using the smp library instead of source code
+# class DeepLabV3Plus(Model): 
+#     def gen_model(self, num_classes): 
+#         import segmentation_models_pytorch as smp # get the library for the model
+#         return smp.DeepLabV3Plus(
+#             encoder_name=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, 
+#             encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
+#             classes = num_classes,
+#             activation = "sigmoid"
+#         ) 
+    
+#     def logTrainParams(self):
+#         return super().logTrainParams() + """
+#         DeepLabV3+ Parameters: <br />
+#         ---------------------- <br />
+#         Encoder Structure: {} <br />
+#         Encoder Pre-Trained Weights: {} <br />
+#         """.format(self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS)
+
+
 
 # -------------------------------------------------------------------------------------------------------------------------- #
 #                                                  Model Handler
@@ -219,7 +263,7 @@ class ModelHandler(object):
     Class ModelHandler:\n
     -----------------------------------\n
     Handles the various operations required for the 'Model' classes.\n
-    Serves as a front API for selecting the correct model and performing the required functions.
+    Serves as a front API for selecting the correct model and performing the required functions.\n
     ------------------------------------\n
     Params:\n
     cfg (CfgNode): Configuration information from the main programs

@@ -10,9 +10,9 @@ import torch.nn.functional as F
 class Block(nn.Module):
     def __init__(self, in_ch, out_ch, kernel_size=3):
         super().__init__()
-        self.conv1 = nn.Conv2d(in_ch, out_ch, kernel_size)
+        self.conv1 = nn.Conv2d(in_ch, out_ch, kernel_size, padding=2)
         self.relu  = nn.ReLU()
-        self.conv2 = nn.Conv2d(out_ch, out_ch, kernel_size)
+        self.conv2 = nn.Conv2d(out_ch, out_ch, kernel_size, padding=2)
     
     # configure forward pass through the Block
     def forward(self, x):

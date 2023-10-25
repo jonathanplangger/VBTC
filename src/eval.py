@@ -31,7 +31,7 @@ from torch.utils.tensorboard import SummaryWriter
 from config import get_cfg_defaults
 import modelhandler
 
-
+EPS = 1e-10 # used to avoid dividing by zero. 
 
 class ComparativeEvaluation():
 
@@ -45,6 +45,7 @@ class ComparativeEvaluation():
 
         # Set up the device where the program is going to be run -> gpu if available
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    
 
     def eval(self):
 
@@ -62,28 +63,9 @@ class ComparativeEvaluation():
 
         TOTAL_NUM_TEST = len(db.test_meta)
         NUM_TEST = TOTAL_NUM_TEST
+        # NUM_TEST = 100 # For testing purposes ONLY
 
-        # ------------ GEt Colour Representation for the figure ------------------ #
-        # open the ontology file for rellis and obtain the colours for them
-        # ---- TODO -- This needs to be handled by the dataloader and NOT the eval.py
-        with open("Rellis_3D_ontology/ontology.yaml", "r") as stream: 
-            try: 
-                ont = yaml.safe_load(stream)
-            except yaml.YAMLError as exc: 
-                print(exc)
-                exit()
-
-        # add all the colours to a list object 
-        colors = []
-        for i in range(35): 
-            try: 
-                val = tuple(ont[1][i])
-                colors.append(val)
-            except: # if the dict element does not exist
-                colors.append("#000000") # assign black colour to the unused masks
-
-
-        # ---------------- Prep the model for testing ------------------- # 
+        colors = db.get_colors()
 
         # Get model and place on GPU. 
         model = model_handler.load_model()
@@ -107,14 +89,16 @@ class ComparativeEvaluation():
         iou = torchmetrics.JaccardIndex(task='multiclass', num_classes=db.num_classes, average='none')
 
         # Used to tally the final mean intersection over union score
-        miou = torch.zeros(db.num_classes).to(self.device)
+        iou_c = torch.zeros(db.num_classes + 1).to(self.device) # +1 since there are 20 classes and not 19
         # Count the n# of instances with this class in it
-        count_c = torch.zeros(db.num_classes).to(self.device)
+        count_c = torch.zeros(db.num_classes + 1).to(self.device)
 
         # Create a blank confusion matrix to be input into 
         confusionMatrix = torch.empty([TOTAL_NUM_TEST,db.num_classes, db.num_classes])
 
         from sklearn.metrics import confusion_matrix
+
+        mean_dice = torch.tensor(0.).cuda() # used to calculate the mean Dice value for the model
 
 
         with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
@@ -134,11 +118,34 @@ class ComparativeEvaluation():
                 with torch.no_grad(): # do not calculate gradients for this task
                     pred = model(images)
 
+                ############################################################################
+                # # Our way of calculating the IoU_score (REMOVE THIS LATER)
+                # npred = torch.softmax(pred, dim=1)
+
+                # # Create the onehot tensor for each class (gic)
+                # nann = torch.unsqueeze(ann,0)
+                # nann = nann.long() # convert to required variable type
+                # ann_onehot = torch.zeros(npred.shape) # obtain blank array w/ same shape as the prediction
+                # ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
+                # ann_onehot.scatter_(1, nann, 1) # create onehot vector
+
+                # num = npred * ann_onehot # numerator
+                # denom = npred + ann_onehot - num # denominator                
+
+                # num = torch.sum(num, dim=(2,3))
+                # denom = torch.sum(denom, dim=(2,3))
+
+                # iou_score = torch.div(num, denom)
+
+                ###########################################################################
+                
                 # Convert the prediction output to argmax labels representing each class predicted
                 pred = model_handler.handle_output(pred)
 
                 # # Measure the performance of the model
                 dice_score = dice(pred, ann.long())
+                mean_dice += dice_score
+
                 
 
                 # ----------- Plot the Results ----------------------- #
@@ -166,7 +173,7 @@ class ComparativeEvaluation():
                 # for each unique class
                 for c in unique_classes: 
                     c = int(c.item()) # convert to int number 
-                    miou[c] += iou_score[c] #add to the final sum count for IoU
+                    iou_c[c] += iou_score[c] #add to the final sum count for IoU
                     count_c[c] += 1 # increment the final count 
 
                 # Obtain and store the confusion matrix
@@ -218,19 +225,24 @@ class ComparativeEvaluation():
                 if idx == NUM_TEST: 
                     break
 
+        # Get the mean value 
+        mean_dice = mean_dice / NUM_TEST           
 
         # After the completion of obtaining the metric
-        miou = miou/count_c # obtain the average amount for each class 
+        iou_c = (iou_c/(count_c+EPS)).cpu() # obtain the average amount for each class 
 
         table = {}
-
-        # Map the class names to the mIoU values obtained
-        for c in ont[0]: 
-            table[ont[0][c]] = round(miou[c].cpu().item(), 4)
-
-        print(table)
+        ont = list(ont[0].values())
 
 
+        for c, _ in enumerate(iou_c): 
+            if c == 1: 
+                table[ont[c]] =  0.0
+            else: 
+                table[ont[c]] =  round(float(iou_c[c-1]),4)
+        
+        print("Mean Dice Value Obtained: {:.4f}".format(mean_dice))
+        print(list(table.values())) # print the raw prediction values for the table
         print("End of Evaluation Program")  
 
 

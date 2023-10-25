@@ -1,7 +1,4 @@
-import os 
-import numpy as np 
-import cv2
-import torchvision.models.segmentation
+import torch.nn as nn
 import torch
 import torchvision.transforms as T 
 from torch.nn import functional as TF
@@ -23,6 +20,10 @@ import datetime
 from patchify import patchify
 import modelhandler
 import tools 
+from io import StringIO as SIO
+# Add the loss odyssey loss functions to the implementation
+import sys
+sys.path.insert(1,"/home/jplangger/Documents/Dev/VBTC/src/loss_odyssey")
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
@@ -31,15 +32,15 @@ writer = SummaryWriter()
 
 from config import get_cfg_defaults # obtain model configurations
 
+        # Class Provides the basic functionalities required for the training process.\n
+        # The training process was configured into a class to better suit the needs for modularity and logging purposes\n
+        # -------------------------------------------------\n
 
 class TrainModel(object):
-    """
-        Class Provides the basic functionalities required for the training process.\n
-        The training process was configured into a class to better suit the needs for modularity and logging purposes\n
-        -------------------------------------------------\n
-        Parameters: 
+    """ Implements the basic functionalities for the implementation of model training. Configuration of training is defined by the configuration file. \n
+    No configuration params are available at the moment.
 
-    """
+    """    
     def __init__(self): 
 
         # initialize configuration and update using config file
@@ -71,8 +72,10 @@ class TrainModel(object):
         self.img_w = self.db.width
         self.img_h = self.db.height
 
-        # retrieve the model based on the configuration 
-        self.model = self.model_handler.gen_model(self.db.num_classes)
+        if self.cfg.TRAIN.PRETRAINED == True: # Pre-trained model is being used
+            self.model = self.model_handler.load_model()
+        else: # Generate a new model based on configuration file
+            self.model = self.model_handler.gen_model(self.db.num_classes)
 
     def train_model(self): 
         # Use the GPU as the main device if present 
@@ -88,9 +91,9 @@ class TrainModel(object):
         # optimizer for the model 
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.cfg.TRAIN.LR)
         # scheduler for the learning rate 
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, mode="min", patience=400, factor=0.5,verbose=True, min_lr=self.cfg.TRAIN.FINAL_LR)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, mode="min", patience=1, factor=0.1,verbose=True, min_lr=self.cfg.TRAIN.FINAL_LR)
         #dice performance metric
-        # dice = torchmetrics.Dice().to(device)
+        dice = torchmetrics.Dice().to(device)
 
         # Log the training parameters        
         writer.add_text("_params/text_summary", self.model_handler.logTrainParams())
@@ -102,10 +105,17 @@ class TrainModel(object):
         else: 
             input_size = (self.db.height, self.db.width) # use the original input size values instead.
 
-        # Obtain the summary of the model architecture + memory requirements
-        summary = torchsummary.summary(self.model, (3,input_size[0],input_size[1]))
-        # record the model parameters on tensorboard``
-        writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
+        # # Obtain the summary of the model architecture + memory requirements
+        ##TODO: Fix Summary not working with DLV3+, execution halts at same location 
+        # summary = torchsummary.summary(self.model, (3,input_size[0],input_size[1]))
+        # # record the model parameters on tensorboard``
+        # writer.add_text("Model/", str(summary).replace("\n", " <br \>")) # Print the summary on tensorboard
+
+        from torchinfo import summary 
+        model_summary = summary(self.model, input_size=(self.batch_size, 3, input_size[0], input_size[1]))
+
+        # string used to log when each learning rate values are updated
+        lr_str = ""
 
         # count all the steps during training
         step = 0
@@ -140,38 +150,57 @@ class TrainModel(object):
                     # Zero the gradients for the function
                     optim.zero_grad()
 
-                    # dice_score = dice(pred, ann.long())
-                    # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
+                    dice_score = dice(pred, ann.long())
+                    writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
 
                     loss = self.criterion(pred, ann.long()) # calculate the loss
                     del ann, pred # release, no longer needed. 
-                    writer.add_scalar("Loss/train", loss, epoch*self.steps_per_epoch + i) # record current loss 
 
-                    loss.backward() # backpropagation for loss 
+                    # Add a list wrapper if only 1 loss value is obtained as output (due to reduction scheme of LF )
+                    if loss.numel() == 1: 
+                        loss = [loss] 
+                    for l in loss: 
+                        writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss 
+                        pbar.set_postfix(l = l.item(),lr = optim.param_groups[0]['lr'])
+                    
+                    sum(loss).backward()
 
-                    #update progress bar
-                    pbar.set_postfix(lr = optim.param_groups[0]['lr'])
+                    # loss.backward() # backpropagation for loss 
+
+
                     pbar.update()
 
                     # del loss # release memory 
                     optim.step() # apply gradient descent to the weights
                     optim.zero_grad()
 
-
-                    # Reduce the learning rate linearly each step to the set FINAL_LR value 
-                    # optim.param_groups[0]['lr'] = self.cfg.TRAIN.LR + (self.cfg.TRAIN.FINAL_LR - self.cfg.TRAIN.LR)/((self.cfg.TRAIN.TOTAL_EPOCHS)*self.steps_per_epoch)*step
-
-            
-                    # update the learning rate based on scheduler scheme
-                    scheduler.step(loss)
-
                     # Measure the total amount of memory that is being reserved training (for optimization purposes)
                     if step == 2: 
                         print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
                         
-
                     step += 1 # increment the counter
 
+            ############# Output LR update to Tensorboard ############################
+            
+            # Update the std out to save to a string 
+            temp = sys.stdout
+            sys.stdout = o = SIO()
+            # update the learning rate based on scheduler scheme (every epoch)
+            scheduler.step(loss)
+            sys.stdout = temp # restore original output 
+
+            # get the result of the step update 
+            new_lr = o.getvalue()
+
+            # save the lr update to then place it on tensorboard
+            if new_lr != "": 
+                lr_str += new_lr + "<br />" # store the value on the string
+                print(new_lr)
+
+            # write the update to tensorboard
+            writer.add_text("_lr/lr_update", lr_str)
+
+            ############# End Output LR update to Tensorboard ############################
 
             # finish writing to the buffer 
             writer.flush()
@@ -188,14 +217,41 @@ class TrainModel(object):
         Retrieves the loss function based on the configuration file as defined in self.cfg.TRAIN.CRITERION
         """
         import loss 
+        
+        from loss_odyssey import dice_loss
+
 
         criterion = self.cfg.TRAIN.CRITERION
+        # Call the loss function based on the configuration file
         if criterion == 'crossentropyloss': 
             self.criterion = torch.nn.CrossEntropyLoss()
         elif criterion == "focalloss": 
-            self.criterion = focal_loss.FocalLoss()
-        elif criterion == "customiouloss":
-            self.criterion = loss.CustomIoULoss() 
+            self.criterion = focal_loss.FocalLoss(gamma=2.0)
+        elif criterion == "iouloss": 
+            self.criterion = loss.IoULoss()
+        elif criterion == "dicefocal": # CUrrently not training well -> Requires some testing to make sure that it even works 
+            self.criterion = loss.DiceFocal()
+        elif criterion == "diceloss": 
+            self.criterion = loss.DiceLoss()
+        elif criterion == "tverskyloss": 
+            self.criterion = loss.TverskyLoss()
+        elif criterion == "dicetopk": 
+            self.criterion = loss.DiceTopk()
+        elif criterion == "powerjaccard":
+            self.criterion = loss.PowerJaccard()
+        # ------- CustomIoULoss Versions ---------- #
+        elif criterion == "customioulossv1":
+            self.criterion = loss.CustomIoULossV1()
+        elif criterion == "customioulossv2": 
+            self.criterion = loss.CustomIoULossV2() 
+        elif criterion == "customioulossv3": 
+            self.criterion = loss.CustomIoULossV3()
+        elif criterion == "customioulossv4": 
+            self.criterion = loss.CustomIoULossV4()
+        elif criterion == "customioulossv5":
+            self.criterion = loss.CustomIoULossV5()
+        elif criterion == "customioulossv6":
+            self.criterion = loss.CustomIoULossV6()
         else: 
             exit("Invalid loss function, please select a valid one")
 

@@ -8,6 +8,7 @@ _C = CN()
 _C.DB = CN()
 _C.DB.PATH = "../../datasets/Rellis-3D/"
 _C.DB.NUM_CLASSES = 35
+_C.DB.EFF_NUM_CLASSES = 19 # effective n# of classes, some of the 35 classes are not used at all 
 _C.DB.IMG_SIZE = CN()
 _C.DB.IMG_SIZE.HEIGHT = 1200 
 _C.DB.IMG_SIZE.WIDTH = 1920
@@ -28,10 +29,7 @@ _C.EVAL.INPUT_SIZE.HEIGHT = None # new height
 _C.EVAL.INPUT_SIZE.WIDTH = None # new width
 
 # ------------------ Model Training Parameter Configuration ------------------------- #
-"""
-  unet
-  deeplabv3+
-"""
+
 _C.TRAIN = CN() # for all training params
 _C.TRAIN.MODEL_NAME = "" # model that is being used during training. Only limited options are available (see list above)
 _C.TRAIN.BATCH_SIZE = 2
@@ -39,6 +37,8 @@ _C.TRAIN.TOTAL_EPOCHS = 10 # n# of epochs to be used during training.
 _C.TRAIN.CRITERION = "crossentropyloss" # loss function employed by the model ("crossentropyloss" or "focalloss")
 _C.TRAIN.LR = 1e-5
 _C.TRAIN.FINAL_LR = 1e-7
+_C.TRAIN.PRETRAINED = False
+_C.TRAIN.INPUT_NORM = False # apply batchnormalization to the input image to the model
 # Used to set the size for the input image. Output will be re-sized to match the original dimensions
 _C.TRAIN.INPUT_SIZE = CN()
 _C.TRAIN.INPUT_SIZE.RESIZE_IMG = True # toggle if the input image is re-sized, TRUE will resize the image
@@ -56,8 +56,9 @@ _C.MODELS.UNET.KERNEL_SIZE = 5 # kernel size employed in the convolution
 
 # DeepLabv3+
 _C.MODELS.DEEPLABV3PLUS = CN()
-_C.MODELS.DEEPLABV3PLUS.ENCODER = 'resnet101' # encoder structure for the model
-_C.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS = 'imagenet' # pre-trained weights for the encoder
+_C.MODELS.DEEPLABV3PLUS.BACKBONE = "resnet101"
+_C.MODELS.DEEPLABV3PLUS.SEPARABLE_CONV = True # if separable convolution is being used by the model
+_C.MODELS.DEEPLABV3PLUS.SRC_DIR = "models/DeepLabV3Plus-Pytorch" # path to dir containing src code 
 
 # HRNet + OCR
 _C.MODELS.HRNET_OCR = CN()

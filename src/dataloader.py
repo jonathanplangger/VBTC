@@ -6,6 +6,7 @@ import random
 import patchify
 import albumentations as album 
 import torch
+import yaml
 
 # ------------- Dataloader for the new dataset ------------- #
 class DataLoader(object):
@@ -17,7 +18,7 @@ class DataLoader(object):
         metadata (List[dict]) = List of dictionnary elements containing information regarding image files\n
         num_classes = quantity of differentiable classes within the dataset\n
     """
-    def __init__(self, path="../../datasets/Rellis-3D/", setType = "train", preprocessing=None, remap = False):
+    def __init__(self, path="../../datasets/Rellis-3D/", setType = "train", preprocessing=None, remap = False, input_norm = False):
         """
             Dataloader provides an easy interface for loading data for training and testing of new models.\n
             ----------------------------\n
@@ -26,22 +27,28 @@ class DataLoader(object):
             setType (str) = Type of operation for the dataloader, operation will vary depending on this configuration, can use either 'train" or "eval"\n
             preprocessing = preprocessing function (implement to assure compatibility with other models )\n
             remap (bool)=  selects whether the annotation files must be remapped to a new range of value (to limit the class label range)\n
+            input_norm(bool) = True -> Normalization of the input will occur. 
         """
         self.path = path
+        self.label_mapping = False # updated during database registration
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
-        self.train_meta, self.test_meta = self.__reg_rellis() # register training and test dataset
+        self.train_meta, self.test_meta, self.class_labels = self.__reg_rellis() # register training and test dataset
         self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
         self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
         self.preprocessing = preprocessing # set the preprocessing function employed on the image inputs to the model
         self.remap = remap
+        self.input_norm = input_norm
 
         # Make sure the correct number of classes are configured -> this value is employed by the modelhandler itself
         if self.remap == True: 
             self.num_classes = 19
         else: 
             self.num_classes = 35
+
+        # Batch normalization for the input image (hence c = 3)
+        self.norm = torch.nn.BatchNorm2d(3)
 
         # Retrieve the preprocessing function 
         if self.preprocessing: 
@@ -58,6 +65,52 @@ class DataLoader(object):
             -----------------------------------------\n
             Returns: List[dict] - Metadata regarding each data file 
         """
+
+        self.label_mapping = {0: 0,
+                1: 0,
+                3: 1,
+                4: 2,
+                5: 3,
+                6: 4,
+                7: 5,
+                8: 6,
+                9: 7,
+                10: 8,
+                12: 9,
+                15: 10,
+                17: 11,
+                18: 12,
+                19: 13,
+                23: 14,
+                27: 15,
+                31: 16,
+                33: 17,
+                34: 18}
+
+        class_labels = {
+            0: "void",
+            1: "dirt",
+            3: "grass",
+            4: "tree",
+            5: "pole",
+            6: "water",
+            7: "sky",
+            8: "vehicle",
+            9: "object",
+            10: "asphalt",
+            12: "building",
+            15: "log",
+            17: "person",
+            18: "fence",
+            19: "bush",
+            23: "concrete",
+            27: "barrier",
+            31: "puddle",
+            33: "mud",
+            34: "rubble",
+        }
+
+
         path = self.path
 
         train_meta = []
@@ -101,7 +154,7 @@ class DataLoader(object):
             # add the file to the list
             test_meta.append(meta)
 
-        return train_meta, test_meta
+        return train_meta, test_meta, class_labels
 
     def randomizeOrder(self):
         """
@@ -183,12 +236,18 @@ class DataLoader(object):
             images = resized_img # override the images with the newly resized images
 
         # Convert the numpy ndarray into useful tensor form
-        images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2)/255.0)
+        images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2))
         annMap = (torch.from_numpy(annMap)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
 
         # Re-map the annotation labels to match the other scale
         if self.remap == True: 
             annMap = self.map_labels(annMap)
+
+        # Normalize the input image 
+        if self.input_norm: 
+            images = self.norm(images) 
+        else: # perform a simple division to reduce the overall distribution
+            images = images/255.0
 
         return orig_images, images, annMap, idx
 
@@ -238,13 +297,12 @@ class DataLoader(object):
 
     def map_labels (self, label, inverse = False):
         """
-        map_labels(self, label, inverse=False)
-        Converts the mapping labels on annotation files / prediction masks from 0->19 to 0->34 
-        -----------\n
-        Params: \n
-        label (int tensor): labels to be converted from one scale to another \n
-        inverse (bool): sets the direction that the conversion is being made, inverse = True converts 0->34 to 0->19\n
-        """ 
+            Converts the mapping labels on annotation files / prediction masks from 0->34 to 0->19 
+            -----------\n
+            Params: \n
+            label (int tensor): labels to be converted from one scale to another \n
+            inverse (bool): sets the direction that the conversion is being made, inverse = True converts 0->19 to 0->34\n
+        """
         return map_labels(label, inverse)
     
     # Complete the pre-processing step for the image
@@ -254,8 +312,50 @@ class DataLoader(object):
             _transform.append(album.Lambda(image = self.preprocessing))
     
         return album.Compose(_transform)
+    
 
+    def map_results(self, results):
+        """
+            Converts the 0->19 results into 0->34 tensor(Using the original numbering scheme) 
+        """
+        results = torch.cat((results, torch.zeros(35-19).cuda()))
+        temp = torch.zeros(35) # empty array for assigning values 
+        for k,v in self.label_mapping.items():
+            temp[k] = results[v]
 
+        return temp 
+
+    def get_colors(self, remap_labels=False): 
+        # open the ontology file for rellis and obtain the colours for them
+        # ---- TODO -- This needs to be handled by the dataloader and NOT the eval.py
+        with open("Rellis_3D_ontology/ontology.yaml", "r") as stream: 
+            try: 
+                ont = yaml.safe_load(stream)
+            except yaml.YAMLError as exc: 
+                print(exc)
+                exit()
+
+        # add all the colours to a list object 
+        colors = []
+        for i in range(35): 
+            try: 
+                val = tuple(ont[1][i])
+                colors.append(val)
+            except: # if the dict element does not exist
+                colors.append((0,0,0)) # assign black colour to the unused masks
+
+        if remap_labels: 
+            temp = colors
+            colors = [0]*len(self.label_mapping)
+            for k,v in self.label_mapping.items(): 
+                colors[v+1] = temp[k]
+            colors[0] = (0,0,0)
+
+        return colors
+
+##################################################################################################################
+# Functions Available to import into other programs
+##################################################################################################################
 
 # Configured this function to be independent of the class to allow outside calls
 def map_labels (label, inverse = False):
@@ -266,28 +366,31 @@ def map_labels (label, inverse = False):
         label (int tensor): labels to be converted from one scale to another \n
         inverse (bool): sets the direction that the conversion is being made, inverse = True converts 0->34 to 0->19\n
     """
+
+    label_mapping = {0: 0,
+        1: 0,
+        3: 1,
+        4: 2,
+        5: 3,
+        6: 4,
+        7: 5,
+        8: 6,
+        9: 7,
+        10: 8,
+        12: 9,
+        15: 10,
+        17: 11,
+        18: 12,
+        19: 13,
+        23: 14,
+        27: 15,
+        31: 16,
+        33: 17,
+        34: 18}
+
+
     # Code below obtained from Rellis implementation in HRNet
     # Class 1 (Dirt) is omitted due to how sparse it is in the dataset (see Rellis-3D paper)
-    label_mapping = {0: 0,
-                    1: 0,
-                    3: 1,
-                    4: 2,
-                    5: 3,
-                    6: 4,
-                    7: 5,
-                    8: 6,
-                    9: 7,
-                    10: 8,
-                    12: 9,
-                    15: 10,
-                    17: 11,
-                    18: 12,
-                    19: 13,
-                    23: 14,
-                    27: 15,
-                    31: 16,
-                    33: 17,
-                    34: 18}
     
     temp = label.clone().detach() # store the old version of the label
     if inverse: # if (0->18), convert to (0->34)
@@ -297,6 +400,7 @@ def map_labels (label, inverse = False):
         for k, v in label_mapping.items():
             label[temp == k] = v
     return label
+
 
 
         

@@ -6,6 +6,7 @@ model.pot
 params.txt
 model.pt
 temp/
+docs/
 # for general outputs from models -> Don't need to be saved onto GitHub
 output/
 
