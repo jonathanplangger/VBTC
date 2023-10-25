@@ -13,6 +13,7 @@ output/
 
 # Visual Studio Code Specific Stuff
 .vscode
+launch.json
 
 # HRNet Outputs & Models Employed (Storage required for models is too large).
 models/HRNet-Semantic-Segmentation-HRNet-OCR/pretrained_models/
