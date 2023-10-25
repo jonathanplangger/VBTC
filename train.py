@@ -23,7 +23,7 @@ import tools
 from io import StringIO as SIO
 # Add the loss odyssey loss functions to the implementation
 import sys
-sys.path.insert(1,"/home/jplangger/Documents/Dev/VBTC/src/loss_odyssey")
+sys.path.insert(1,"/home/jplangger/Documents/Dev/VBTC/loss_odyssey")
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 

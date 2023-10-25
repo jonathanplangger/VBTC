@@ -1,6 +1,6 @@
 Namespace(adam=False, amsgrad=False, arch='network.gscnn.GSCNN', att_weight=1.0, batch_weighting=False, bblur=False, best_record={'epoch': -1, 'iter': 0, 'val_loss': 10000000000.0, 'acc': 0, 
         'acc_cls': 0, 'mean_iu': 0, 'fwavacc': 0}, bs_mult=3, bs_mult_val=2, checkpoint_path='output/gscnn_best.pth', ckpt='logs/ckpt', color_aug=0.25, crop_size=720, cv=0, data_cfg='datasets/rellis.yaml',
-        dataset='rellis', dataset_cls=<module 'datasets.rellis' from '/home/jplangger/Documents/Dev/VBTC/src/models/GSCNN-master/datasets/rellis.py'>, date_str='2023_08_09_09_53_21', dual_weight=1.0,
+        dataset='rellis', dataset_cls=<module 'datasets.rellis' from '/home/jplangger/Documents/Dev/VBTC/models/GSCNN-master/datasets/rellis.py'>, date_str='2023_08_09_09_53_21', dual_weight=1.0,
         dump_augmentation_images=False, edge_weight=1.0, eval_thresholds='0.0005,0.001875,0.00375,0.005', evaluate=False, exp='final', exp_path='logs/ckpt/final/testing', gblur=True,
         img_wt_loss=False, joint_edgeseg_loss=True, last_record={}, local_rank=0, lr=0.001, lr_schedule='poly', maxSkip=0, max_epoch=175, mode='test', momentum=0.9, ngpu=1, num_workers=4,
         poly_exp=1.0, pre_size=None, repoly=1.5, rescale=1.0, restore_optimizer=False, rotate=0, scale_max=2.0, scale_min=0.5, seg_weight=1.0, sgd=True, sgd_finetuned=False, snapshot=None, start_epoch=0, 
