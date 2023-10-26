@@ -22,8 +22,9 @@ TRAIN:
     RESIZE_IMG: True
     # HEIGHT: 300
     # WIDTH: 480
-    HEIGHT: 960
-    WIDTH: 1536
+    ### Deeplabv3+ Sizing Below
+    HEIGHT: 600
+    WIDTH: 960
     
 MODELS: 
   UNET: # --> unet
