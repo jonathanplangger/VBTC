@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft
 # Licensed under the MIT License.
 # Written by Ke Sun (sunk@mail.ustc.edu.cn)
-# Modified by Jonathan Plangger
+# Modified by Jonathan Plangger (jonathanplangger@cmail.carleton.ca)
 # ------------------------------------------------------------------------------
 # Updated version of test.py that is directly suited to loading the model into memory for testing. 
 # ------------------------------------------------------------------------------

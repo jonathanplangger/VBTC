@@ -27,8 +27,7 @@ TRAIN:
     
 MODELS: 
   UNET: # --> unet
-    # MODEL_FILE: "model.pt"
-    MODEL_FILE: "/mnt/c/Users/jonat/OneDrive - Carleton University/Masters - Personal/Thesis/Runs/Comparative Study/1_Train/1_LF Research Data/035/model.pt"
+    # MODEL_FILE: "" # Path to model file  
     BASE: 32 #40 # base channel amount for the U-Net, increases in further layers
     KERNEL_SIZE: 5
   # --> deeplabv3plus
