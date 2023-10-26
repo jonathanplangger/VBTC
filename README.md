@@ -1,9 +1,9 @@
-# Vision-based Terrain Classification (VBTC) EMSLab Research Repository
+<div align="justify">
+
+# Vision based Terrain Classification (VBTC) EMSLab Research Repository
 ---------------------------------------------------------------------------------------------------
-This repo contains the code for the implementation of Vision-based Terrain Classification Research as part of the Embedded Multi-Sensor Resarch Laboratory at Carleton University (Ottawa, ON). As a research repository, the code relevant to several aspects are included within this repository.
-Installation instructions for required software solutions and enviroment information is provided in the following sections of the README.MD. We additionally include the implementation instructions for our FCIoU paper which can be used to recreate the comparative study and experiments detailed in the research manuscript.  
-
-
+This repository contains the code for the implementation of Vision-based Terrain Classification Research as part of the Embedded Multi-Sensor Resarch Laboratory at Carleton University (Ottawa, ON). As a research repository, the code relevant to several aspects are included within this repository.
+Installation instructions for required software solutions and enviroment information is provided in the following sections of the README.MD. We additionally include the implementation instructions for our FCIoU paper below which can be used to recreate the comparative study and experiments detailed in the research manuscript.  
 
 #FCIoU: A Focal Class-based Intersection over Union (IoU) Approach to Improving Minority Class Detection Performance for Off-road Segmentation Systems
 --------------------------------------------------------------------------------------------------
@@ -14,7 +14,35 @@ into account and counteract this issue. To this end, we present a novel loss fun
 optimization of class-based Intersection over Union (IoU). The new loss function results in a general
 increase in class-based performance when compared to state-of-the-art targeted loss functions. 
 
+![Image Comparing the segmentation ability for each loss function for a single image](./figures/QualitativeResults.png)
+*Figure: Qualitative Representation of Model Performance for Given Loss Function* 
 
 
 
+
+
+
+##Loss Functions
+Loss function implementations employed within the study are defined in *loss.py*. Each loss function were recreated within this study to suit the task of multi-class segmentation. Further information regarding the specific loss functions are provided within the paper manuscript. 
+
+Selection of loss function for training can be configured through the *CRITERION* field in the *config_comparative_study.yaml* file in the *configs* directory. The possible selections are as follows: 
+<i>
+- fciouv1 -> fciouv6 (V1 and V2 are Featured within the manuscript)
+- dicefocal
+- diceloss
+- dicetopk
+- iouloss
+- powerjaccard
+- tverskyloss
+- focalloss
+</i>
+
+Selecting a specific loss function in the *CRITERION* field results in the use of the corresponding loss function class. 
+
+
+
+
+
+
+</div>
 
