@@ -213,10 +213,7 @@ class ComparativeEvaluation():
         ont = db.get_colors()
 
         for c, _ in enumerate(iou_c): 
-            if c == 1: 
-                table[ont[c]] =  0.0
-            else: 
-                table[ont[c]] =  round(float(iou_c[c-1]),4)
+            table[ont[c]] =  round(float(iou_c[c-1]),4)
         
         print("Mean Dice Value Obtained: {:.4f}".format(mean_dice))
         print(list(table.values())) # print the raw prediction values for the table

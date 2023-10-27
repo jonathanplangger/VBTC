@@ -139,7 +139,7 @@ class UNet(Model):
         """.format(self.cfg.MODELS.UNET.BASE, self.cfg.MODELS.UNET.KERNEL_SIZE, self.cfg.TRAIN.LR)
 
     def load_model(self): 
-        return torch.load(self.cfg.MODELS.UNET.MODEL_FILE)
+        return torch.load(self.cfg.EVAL.MODEL_FILE)
     
     def handle_output_eval(self, pred):
         pred = super().handle_output_eval(pred)
@@ -158,7 +158,7 @@ class HRNet_OCR(Model):
         sys.path.insert(0,os.path.join(src_dir,"lib/"))
         from tools import load_model
         model = load_model("/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml", 
-                            model_file = self.cfg.MODELS.HRNET_OCR.MODEL_FILE)
+                            model_file = self.cfg.MODELS.EVAL.MODEL_FILE)
         return model
         
     def handle_output_eval(self, pred):
@@ -182,7 +182,7 @@ class GSCNN(Model):
         # Prep the args to be passed to the model loader (bypass command line handling on their end)
         dataset_cls = argparse.Namespace(num_classes=19, ignore_label=0)
         args = argparse.Namespace(arch = "network.gscnn.GSCNN", dataset_cls = dataset_cls, trunk='resnet101',
-                                    checkpoint_path = self.cfg.MODELS.GSCNN.MODEL_FILE,  
+                                    checkpoint_path = self.cfg.EVAL.MODEL_FILE,  
                                     img_wt_loss=False, joint_edgeseg_loss=False, wt_bound=1.0, edge_weight=1.0, 
                                     seg_weight=1.0)
         import network
@@ -237,33 +237,12 @@ class DeepLabV3Plus(Model):
         """.format(self.cfg.MODELS.DEEPLABV3PLUS.BACKBONE) # Add more as necessary. 
     
     def load_model(self): 
-        return torch.load(self.cfg.MODELS.DEEPLABV3PLUS.MODEL_FILE)
+        return torch.load(self.cfg.EVAL.MODEL_FILE)
     
     def handle_output_eval(self, pred):
         # Complete the default resizing
         pred = super().handle_output_eval(pred)
         return torch.argmax(pred,dim=1) # get the argmax representation for the output 
-
-
-### Old implementation of the model using the smp library instead of source code
-# class DeepLabV3Plus(Model): 
-#     def gen_model(self, num_classes): 
-#         import segmentation_models_pytorch as smp # get the library for the model
-#         return smp.DeepLabV3Plus(
-#             encoder_name=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, 
-#             encoder_weights=self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS, 
-#             classes = num_classes,
-#             activation = "sigmoid"
-#         ) 
-    
-#     def logTrainParams(self):
-#         return super().logTrainParams() + """
-#         DeepLabV3+ Parameters: <br />
-#         ---------------------- <br />
-#         Encoder Structure: {} <br />
-#         Encoder Pre-Trained Weights: {} <br />
-#         """.format(self.cfg.MODELS.DEEPLABV3PLUS.ENCODER, self.cfg.MODELS.DEEPLABV3PLUS.ENCODER_WEIGHTS)
-
 
 
 # -------------------------------------------------------------------------------------------------------------------------- #
