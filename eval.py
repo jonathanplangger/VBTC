@@ -23,9 +23,8 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import torchvision.transforms.functional as F
-import torchsummary
 from torch.nn import functional as TF
-
+import torchinfo
 from torch.utils.tensorboard import SummaryWriter
 
 from config import get_cfg_defaults
@@ -79,8 +78,8 @@ class ComparativeEvaluation():
         else: 
             input_size = (db.height, db.width) # use the original input size values instead.
 
-        # Obtain the summary of the model architecture + memory requirements
-        torchsummary.summary(model, (3,input_size[0],input_size[1]))
+        # Get the model summary information
+        torchinfo.summary(model, input_size=(1, 3, input_size[0], input_size[1]))
 
         # Use the Dice score as the performance metric to assess model accuracy
         dice = torchmetrics.Dice().to(self.device)
@@ -116,27 +115,6 @@ class ComparativeEvaluation():
                 # run model
                 with torch.no_grad(): # do not calculate gradients for this task
                     pred = model(images)
-
-                ############################################################################
-                # # Our way of calculating the IoU_score (REMOVE THIS LATER)
-                # npred = torch.softmax(pred, dim=1)
-
-                # # Create the onehot tensor for each class (gic)
-                # nann = torch.unsqueeze(ann,0)
-                # nann = nann.long() # convert to required variable type
-                # ann_onehot = torch.zeros(npred.shape) # obtain blank array w/ same shape as the prediction
-                # ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-                # ann_onehot.scatter_(1, nann, 1) # create onehot vector
-
-                # num = npred * ann_onehot # numerator
-                # denom = npred + ann_onehot - num # denominator                
-
-                # num = torch.sum(num, dim=(2,3))
-                # denom = torch.sum(denom, dim=(2,3))
-
-                # iou_score = torch.div(num, denom)
-
-                ###########################################################################
                 
                 # Convert the prediction output to argmax labels representing each class predicted
                 pred = model_handler.handle_output(pred)

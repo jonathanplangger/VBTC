@@ -238,6 +238,12 @@ class DeepLabV3Plus(Model):
     
     def load_model(self): 
         return torch.load(self.cfg.MODELS.DEEPLABV3PLUS.MODEL_FILE)
+    
+    def handle_output_eval(self, pred):
+        # Complete the default resizing
+        pred = super().handle_output_eval(pred)
+        return torch.argmax(pred,dim=1) # get the argmax representation for the output 
+
 
 ### Old implementation of the model using the smp library instead of source code
 # class DeepLabV3Plus(Model): 
