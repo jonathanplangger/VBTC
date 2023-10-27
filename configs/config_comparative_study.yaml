@@ -1,7 +1,6 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
   MODEL_NAME: "unet"
-  MODEL_NAME: "unet"
   DISPLAY_IMAGE: True 
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
@@ -23,17 +22,18 @@ TRAIN:
     # HEIGHT: 300
     # WIDTH: 480
     ### Deeplabv3+ Sizing Below
-    HEIGHT: 600
-    WIDTH: 960
+    HEIGHT: 500
+    WIDTH: 800
     
 MODELS: 
   UNET: # --> unet
     # MODEL_FILE: "" # Path to model file  
+    MODEL_FILE: "../models/1_LF Research Data/014/model.pt"
     BASE: 32 #40 # base channel amount for the U-Net, increases in further layers
     KERNEL_SIZE: 5
   # --> deeplabv3plus
   DEEPLABV3PLUS: 
-    BACKBONE: 'xception'
+    BACKBONE: 'resnet101'
   # --> hrnet_ocr
   HRNET_OCR:  
     CONFIG: "models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"

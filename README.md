@@ -1,9 +1,18 @@
 <div align="justify">
 
 # Vision based Terrain Classification (VBTC) EMSLab Research Repository
----------------------------------------------------------------------------------------------------
 This repository contains the code for the implementation of Vision-based Terrain Classification Research as part of the Embedded Multi-Sensor Resarch Laboratory at Carleton University (Ottawa, ON). As a research repository, the code relevant to several aspects are included within this repository.
 Installation instructions for required software solutions and enviroment information is provided in the following sections of the README.MD. We additionally include the implementation instructions for our FCIoU paper below which can be used to recreate the comparative study and experiments detailed in the research manuscript.  
+
+##Environment Setup & Installation
+**Python** ver. **3.8.15**, **Pytorch** ver. **1.13.1+cu117**, & **TorchVision** ver. **0.14.1+cu117** were employed during development. Other, more recent versions of these may operate correctly, however only the specified versions were tested. 
+
+Other libraries employed are defined within the *requirements.txt* file included in this repository. Project dependencies can be installed directly through:
+```
+pip install -r requirements.txt
+```
+
+
 
 #FCIoU: A Focal Class-based Intersection over Union (IoU) Approach to Improving Minority Class Detection Performance for Off-road Segmentation Systems
 ## Abstract

@@ -3,7 +3,6 @@ import torch
 import torchvision.transforms as T 
 from torch.nn import functional as TF
 import dataloader
-import torchsummary
 from dataloader import DataLoader
 # from torch.nn.functional import normalize
 import tqdm
@@ -187,7 +186,7 @@ class TrainModel(object):
             temp = sys.stdout
             sys.stdout = o = SIO()
             # update the learning rate based on scheduler scheme (every epoch)
-            scheduler.step(loss)
+            scheduler.step(loss[0]) # use only one of the obtained loss values 
             sys.stdout = temp # restore original output 
 
             # get the result of the step update 
