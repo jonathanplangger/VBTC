@@ -23,7 +23,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import torchvision.transforms.functional as F
-import torchinfo
+import torchsummary
 from torch.nn import functional as TF
 
 from torch.utils.tensorboard import SummaryWriter
@@ -70,7 +70,7 @@ class ComparativeEvaluation():
         # Get model and place on GPU. 
         model = model_handler.load_model()
         model.eval()
-        model.to(self.device) # Place the model onto the GPU
+        model.to(self.device)
 
         # if the image size needs to be updated
         if self.cfg.EVAL.INPUT_SIZE.RESIZE_IMG:
@@ -79,9 +79,9 @@ class ComparativeEvaluation():
         else: 
             input_size = (db.height, db.width) # use the original input size values instead.
 
-        # Print a summary of the model structure
-        torchinfo.summary(model, input_size=(1, 3, input_size[0], input_size[1]))
-        
+        # Obtain the summary of the model architecture + memory requirements
+        torchsummary.summary(model, (3,input_size[0],input_size[1]))
+
         # Use the Dice score as the performance metric to assess model accuracy
         dice = torchmetrics.Dice().to(self.device)
 
@@ -93,12 +93,11 @@ class ComparativeEvaluation():
         # Count the n# of instances with this class in it
         count_c = torch.zeros(db.num_classes + 1).to(self.device)
 
-        # Create a blank confusion matrix to be input into 
-        confusionMatrix = torch.empty([TOTAL_NUM_TEST,db.num_classes, db.num_classes])
 
         from sklearn.metrics import confusion_matrix
 
         mean_dice = torch.tensor(0.).cuda() # used to calculate the mean Dice value for the model
+
 
         with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # iterate through all tests while using batches 
@@ -108,43 +107,49 @@ class ComparativeEvaluation():
                 # load the batch from the dataset
                 orig_images, images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, resize=input_size) # load images
                 
-                # orig_images = images # store this for later use
-                orig_ann = ann # store for later display
+                # Place the images and annotations on the GPU.
+                images = images.cuda()
+                ann = ann.cuda()
               
                 startTime = time.time() # used to measure prediction time for the model
 
                 # run model
                 with torch.no_grad(): # do not calculate gradients for this task
                     pred = model(images)
+
+                ############################################################################
+                # # Our way of calculating the IoU_score (REMOVE THIS LATER)
+                # npred = torch.softmax(pred, dim=1)
+
+                # # Create the onehot tensor for each class (gic)
+                # nann = torch.unsqueeze(ann,0)
+                # nann = nann.long() # convert to required variable type
+                # ann_onehot = torch.zeros(npred.shape) # obtain blank array w/ same shape as the prediction
+                # ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
+                # ann_onehot.scatter_(1, nann, 1) # create onehot vector
+
+                # num = npred * ann_onehot # numerator
+                # denom = npred + ann_onehot - num # denominator                
+
+                # num = torch.sum(num, dim=(2,3))
+                # denom = torch.sum(denom, dim=(2,3))
+
+                # iou_score = torch.div(num, denom)
+
+                ###########################################################################
                 
                 # Convert the prediction output to argmax labels representing each class predicted
                 pred = model_handler.handle_output(pred)
+
+                # Get the iou score for each of the classes individually
+                iou_score = iou(pred.cpu(), ann.long().cpu()).to(self.device)
 
                 # # Measure the performance of the model
                 dice_score = dice(pred, ann.long())
                 mean_dice += dice_score
 
                 
-
                 # ----------- Plot the Results ----------------------- #
-                # create a blank array
-                masks = torch.zeros(35,1200,1920, device=self.device, dtype=torch.bool)
-
-                # obtain a mask for each class
-                for classID in range(masks.shape[0]): 
-                    masks[classID] = (pred == classID)
-
-                # move the masks and the image onto the CPU
-                images = orig_images # restore original images
-                masks = masks.to('cpu')
-                del orig_images # no longer needed
-
-                # convert the image to uint8 type 
-                # images = images.to(torch.uint8)
-                masks = masks.to(torch.bool) # convert to boolean 
-
-                # Get the iou score for each of the classes individually
-                iou_score = iou(pred.cpu(), ann.long().cpu()).to(self.device)
 
                 unique_classes = ann.unique() # get unique classes that are represented in the annotation
 
@@ -154,18 +159,35 @@ class ComparativeEvaluation():
                     iou_c[c] += iou_score[c] #add to the final sum count for IoU
                     count_c[c] += 1 # increment the final count 
 
-                # Obtain and store the confusion matrix
-                # confusionMatrix[idx] = confMat(pred.cpu(), ann.long().cpu()) # Running this on CPU actually makes it considerably faster
-
                 # Log the results of the evaluation onto tensorboard
                 if not self.cfg.EVAL.DISPLAY_IMAGE:
                     writer.add_scalar("Metrics/Dice", dice_score.item(), idx) # record the dice score 
                     writer.add_scalar("Metrics/Time", time.time() - startTime, idx)
 
-
                 # -------------- Show the image output for the segmentation  ---------- #
                 if self.cfg.EVAL.DISPLAY_IMAGE:     
 
+                    # create a blank array
+                    masks = torch.zeros(35,1200,1920, device=self.device, dtype=torch.bool)
+
+                    # Re-map back to the 0-35 scheme before displaying the output 
+                    pred = db.map_labels(pred, True)
+                    ann = db.map_labels(ann,True)
+
+                    # obtain a mask for each class
+                    for classID in range(masks.shape[0]): 
+                        masks[classID] = (pred == classID)
+
+                    # move the masks and the image onto the CPU
+                    images = orig_images # restore original images
+                    masks = masks.to('cpu')
+                    del orig_images # no longer needed
+
+                    # convert to boolean 
+                    masks = masks.to(torch.bool) 
+
+                    # place the annotations back onto the cpu
+                    ann = ann.to('cpu')
                     # Create the output plot
                     fig, axs = plt.subplots(ncols=4, squeeze=False, gridspec_kw = {'wspace':0.05, 'hspace':0})
 
@@ -181,7 +203,7 @@ class ComparativeEvaluation():
                     axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
 
                     # Ground Truth Annotation masks 
-                    axs[0, 2].imshow(orig_ann[0].astype(int)[:,:,0], cmap='gray')
+                    axs[0, 2].imshow(ann[0], cmap='gray')
                     axs[0, 2].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Ground Truth Annotations")
 
                     # Output mask

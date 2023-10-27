@@ -52,12 +52,13 @@ class Model(object):
         exit()
 
     def handle_output_train(self, pred):
-        """
-        Default handling for the prediction during training. This can be overwritten in child classes if needed
-        -------------------------
-        Params: 
-        pred (tensor): prediction (logits) output originating from the model. 
-        """
+        """Default handling for the prediction during training. This class should be overwritten by child classes. 
+
+        :param pred: Prediction (logits) output of the network model 
+        :type pred: torch.tensor
+        :return: Handled output -> Convert to the desired output size
+        :rtype: torch.tensor
+        """        
         # If the image was re-sized, regenerate the original size
         if self.resize_img: 
             # retrieve the output size for the db.
@@ -203,6 +204,15 @@ class DeepLabV3Plus(Model):
     """DeepLabV3Plus: Model implementation for the model handler that implements the configured version of the deeplabv3plus model.\n
     Default configurations can be updated within the project configuration file.
     """
+    def __init__(self, cfg, mode): 
+        # run the initial configuration
+        super().__init__(cfg, mode) 
+
+        # Import the required libraries for the application of the model.
+        src_dir = self.cfg.MODELS.DEEPLABV3PLUS.SRC_DIR
+        sys.path.insert(0, src_dir) 
+        import network as net 
+
 
     def gen_model(self, num_classes):
         """Constructs the model using the methods provided in the source code. \n
@@ -212,13 +222,6 @@ class DeepLabV3Plus(Model):
         :return: Model file for the DeeplabV3+
         :rtype: network._deeplab.DeepLabV3
         """
-
-
-        # Genearte the model in the same manner that is being completed within the source main.py file.
-        src_dir = self.cfg.MODELS.DEEPLABV3PLUS.SRC_DIR
-        sys.path.insert(0, src_dir) 
-
-        import network as net 
         bbn = self.cfg.MODELS.DEEPLABV3PLUS.BACKBONE # retrieve the backbone used from config file 
         model = net.modeling.__dict__["deeplabv3plus_" + bbn](num_classes = self.cfg.DB.EFF_NUM_CLASSES, output_stride = 16, pretrained_backbone = False)
         if self.cfg.MODELS.DEEPLABV3PLUS.SEPARABLE_CONV: 
@@ -232,6 +235,9 @@ class DeepLabV3Plus(Model):
         ---------------------- <br />
         Backbone Structure: {} <br />
         """.format(self.cfg.MODELS.DEEPLABV3PLUS.BACKBONE) # Add more as necessary. 
+    
+    def load_model(self): 
+        return torch.load(self.cfg.MODELS.DEEPLABV3PLUS.MODEL_FILE)
 
 ### Old implementation of the model using the smp library instead of source code
 # class DeepLabV3Plus(Model): 

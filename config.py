@@ -59,7 +59,7 @@ _C.MODELS.DEEPLABV3PLUS = CN()
 _C.MODELS.DEEPLABV3PLUS.BACKBONE = "resnet101"
 _C.MODELS.DEEPLABV3PLUS.SEPARABLE_CONV = True # if separable convolution is being used by the model
 _C.MODELS.DEEPLABV3PLUS.SRC_DIR = "models/DeepLabV3Plus-Pytorch" # path to dir containing src code 
-
+_C.MODELS.DEEPLABV3PLUS.MODEL_FILE = "" # Model file being evaluated 
 # HRNet + OCR
 _C.MODELS.HRNET_OCR = CN()
 _C.MODELS.HRNET_OCR.CONFIG = "" # Config file path. Normally located in the HRNet directories
