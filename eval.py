@@ -62,8 +62,7 @@ class ComparativeEvaluation():
 
         TOTAL_NUM_TEST = len(db.test_meta)
         NUM_TEST = TOTAL_NUM_TEST
-        # NUM_TEST = 100 # For testing purposes ONLY
-
+        
         colors = db.get_colors()
 
         # Get model and place on GPU. 
@@ -210,8 +209,8 @@ class ComparativeEvaluation():
         iou_c = (iou_c/(count_c+EPS)).cpu() # obtain the average amount for each class 
 
         table = {}
-        ont = list(ont[0].values())
-
+        # Get the database colours for each class 
+        ont = db.get_colors()
 
         for c, _ in enumerate(iou_c): 
             if c == 1: 

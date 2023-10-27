@@ -1,7 +1,7 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
   MODEL_NAME: "deeplabv3plus"
-  DISPLAY_IMAGE: True 
+  DISPLAY_IMAGE: False 
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
     RESIZE_IMG: True # will only re-size the image to the dim below if True
