@@ -33,7 +33,7 @@ MODELS:
     KERNEL_SIZE: 5
   # --> deeplabv3plus
   DEEPLABV3PLUS: 
-    BACKBONE: 'resnet101'
+    BACKBONE: 'xception'
     MODEL_FILE: "../models/2_ModelEvaluation/001/model.pt"
   # --> hrnet_ocr
   HRNET_OCR:  

@@ -211,7 +211,7 @@ class DeepLabV3Plus(Model):
         # Import the required libraries for the application of the model.
         src_dir = self.cfg.MODELS.DEEPLABV3PLUS.SRC_DIR
         sys.path.insert(0, src_dir) 
-        import network as net 
+        
 
 
     def gen_model(self, num_classes):
@@ -222,6 +222,7 @@ class DeepLabV3Plus(Model):
         :return: Model file for the DeeplabV3+
         :rtype: network._deeplab.DeepLabV3
         """
+        import network as net 
         bbn = self.cfg.MODELS.DEEPLABV3PLUS.BACKBONE # retrieve the backbone used from config file 
         model = net.modeling.__dict__["deeplabv3plus_" + bbn](num_classes = self.cfg.DB.EFF_NUM_CLASSES, output_stride = 16, pretrained_backbone = False)
         if self.cfg.MODELS.DEEPLABV3PLUS.SEPARABLE_CONV: 
