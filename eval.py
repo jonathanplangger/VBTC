@@ -62,6 +62,7 @@ class ComparativeEvaluation():
 
         TOTAL_NUM_TEST = len(db.test_meta)
         NUM_TEST = TOTAL_NUM_TEST
+        # NUM_TEST = 20
         
         colors = db.get_colors()
 
@@ -87,9 +88,9 @@ class ComparativeEvaluation():
         iou = torchmetrics.JaccardIndex(task='multiclass', num_classes=db.num_classes, average='none')
 
         # Used to tally the final mean intersection over union score
-        iou_c = torch.zeros(db.num_classes + 1).to(self.device) # +1 since there are 20 classes and not 19
+        iou_c = torch.zeros(db.num_classes).to(self.device)
         # Count the n# of instances with this class in it
-        count_c = torch.zeros(db.num_classes + 1).to(self.device)
+        count_c = torch.zeros(db.num_classes).to(self.device)
 
 
         from sklearn.metrics import confusion_matrix
@@ -209,14 +210,19 @@ class ComparativeEvaluation():
         iou_c = (iou_c/(count_c+EPS)).cpu() # obtain the average amount for each class 
 
         table = {}
-        # Get the database colours for each class 
-        ont = db.get_colors()
 
+        # Obtain the class label strings & update to merge "void" and "dirt" classes as done in the model
+        class_labels = list(db.class_labels.values())
+        class_labels.remove("dirt")
+        class_labels.remove("void")
+        class_labels.insert(0, "void & dirt")
+
+        # Re-format and convert the IoU Object to a table entry
         for c, _ in enumerate(iou_c): 
-            table[ont[c]] =  round(float(iou_c[c-1]),4)
+            table[class_labels[c]] =  round(float(iou_c[c]),4)
         
         print("Mean Dice Value Obtained: {:.4f}".format(mean_dice))
-        print(list(table.values())) # print the raw prediction values for the table
+        print(table) # print the raw prediction values for the table
         print("End of Evaluation Program")  
 
 
