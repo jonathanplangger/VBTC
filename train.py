@@ -239,19 +239,19 @@ class TrainModel(object):
             self.criterion = loss.DiceTopk()
         elif criterion == "powerjaccard":
             self.criterion = loss.PowerJaccard()
-        # ------- CustomIoULoss Versions ---------- #
-        elif criterion == "customioulossv1":
-            self.criterion = loss.CustomIoULossV1()
-        elif criterion == "customioulossv2": 
-            self.criterion = loss.CustomIoULossV2() 
-        elif criterion == "customioulossv3": 
-            self.criterion = loss.CustomIoULossV3()
-        elif criterion == "customioulossv4": 
-            self.criterion = loss.CustomIoULossV4()
-        elif criterion == "customioulossv5":
-            self.criterion = loss.CustomIoULossV5()
-        elif criterion == "customioulossv6":
-            self.criterion = loss.CustomIoULossV6()
+        # ------- FCIoU Versions ---------- #
+        elif criterion == "fciouv1":
+            self.criterion = loss.FCIoUV1()
+        elif criterion == "fciouv2": 
+            self.criterion = loss.FCIoUV2() 
+        elif criterion == "fciouv3": 
+            self.criterion = loss.FCIoUV3()
+        elif criterion == "fciouv4": 
+            self.criterion = loss.FCIoUV4()
+        elif criterion == "fciouv5":
+            self.criterion = loss.FCIoUV5()
+        elif criterion == "fciouv6":
+            self.criterion = loss.FCIoUV6()
         else: 
             exit("Invalid loss function, please select a valid one")
 

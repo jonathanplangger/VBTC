@@ -6,14 +6,14 @@ import numpy as np # for debugging
 import loss_odyssey
 import focal_loss
 
-class CustomIoULossV1(nn.Module):
+class FCIoUV1(nn.Module):
     """
-    Base implementation of the CustomIoULoss. No Power Term 
+    Base implementation of the FCIoU. No Power Term 
     """
 
     def __init__(self): 
 
-        super(CustomIoULossV1, self).__init__()
+        super(FCIoUV1, self).__init__()
         self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
@@ -72,10 +72,10 @@ class CustomIoULossV1(nn.Module):
 
         return loss_iou
 
-class CustomIoULossV2(nn.Module):
+class FCIoUV2(nn.Module):
     def __init__(self): 
 
-        super(CustomIoULossV2, self).__init__()
+        super(FCIoUV2, self).__init__()
         self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
@@ -127,10 +127,10 @@ class CustomIoULossV2(nn.Module):
 
         return loss_iou
     
-class CustomIoULossV3(nn.Module):
+class FCIoUV3(nn.Module):
     def __init__(self): 
 
-        super(CustomIoULossV3, self).__init__()
+        super(FCIoUV3, self).__init__()
         self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
@@ -182,10 +182,10 @@ class CustomIoULossV3(nn.Module):
 
         return loss_iou    
     
-class CustomIoULossV4(nn.Module):
+class FCIoUV4(nn.Module):
     def __init__(self): 
 
-        super(CustomIoULossV4, self).__init__()
+        super(FCIoUV4, self).__init__()
         self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
@@ -237,10 +237,10 @@ class CustomIoULossV4(nn.Module):
 
         return loss_iou    
 
-class CustomIoULossV5(nn.Module):
+class FCIoUV5(nn.Module):
     def __init__(self): 
 
-        super(CustomIoULossV5, self).__init__()
+        super(FCIoUV5, self).__init__()
         self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
@@ -290,10 +290,10 @@ class CustomIoULossV5(nn.Module):
 
         return loss_iou    
 
-class CustomIoULossV6(nn.Module):
+class FCIoUV6(nn.Module):
     def __init__(self): 
 
-        super(CustomIoULossV6, self).__init__()
+        super(FCIoUV6, self).__init__()
         self.eps = 1e-10 # epsilon value -> used to avoid dividing by zero
 
     def forward(self, pred, ann):
@@ -528,9 +528,9 @@ class DiceTopk(nn.Module):
 
 # For testing out the loss function first 
 if __name__ == "__main__": 
-    # criterion = CustomIoULossV1()
+    # criterion = FCIoUV1()
     pred = torch.rand(size=(1,35,1200,1920)).cuda()
     ann = torch.randint(0,34,size = (1,1200,1920)).cuda()
-    handle_lossContribution(pred, ann)
+    # handle_lossContribution(pred, ann)
     # loss = criterion(pred, ann)
     
