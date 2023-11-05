@@ -106,10 +106,10 @@ class TrainModel(object):
 
         # # Obtain the summary of the model architecture + memory requirements
         ##TODO: Fix Summary not working with DLV3+, execution halts at same location
-        # from torchinfo import summary 
-        # model_summary = summary(self.model, input_size=(self.batch_size, 3, input_size[0], input_size[1]))
-        # # record the model parameters on tensorboard``
-        # writer.add_text("Model/", str(model_summary).replace("\n", " <br \>")) # Print the summary on tensorboard
+        from torchinfo import summary 
+        model_summary = summary(self.model, input_size=(self.batch_size, 3, input_size[0], input_size[1]))
+        # record the model parameters on tensorboard``
+        writer.add_text("Model/", str(model_summary).replace("\n", " <br \>")) # Print the summary on tensorboard
 
         # string used to log when each learning rate values are updated
         lr_str = ""
