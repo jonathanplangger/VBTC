@@ -34,7 +34,8 @@ class FCIoUV1(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
 
         # del ann # free up memory  # TODO, figure out another way to determine which classes are within the annotation file
 
@@ -203,7 +204,8 @@ class FCIoUV3(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
 
         num = pred * ann_onehot # numerator
         denom = torch.pow(pred,2) + ann_onehot - num # denominator
@@ -258,7 +260,9 @@ class FCIoUV4(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
 
         num = pred * ann_onehot # numerator
         denom = torch.pow(pred,2) + ann_onehot - num # denominator
@@ -313,7 +317,9 @@ class FCIoUV5(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
 
         num = pred * ann_onehot # numerator
         denom = torch.pow(pred,2) + ann_onehot - num # denominator
@@ -366,7 +372,9 @@ class FCIoUV6(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
 
         num = pred * ann_onehot # numerator
         denom = torch.pow(pred,2) + ann_onehot - num # denominator
@@ -416,7 +424,9 @@ class PowerJaccard(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
 
         num = pred * ann_onehot  # numerator
         denom = torch.pow(pred,2) + torch.pow(ann_onehot,2) - num + self.eps # denominator
@@ -446,7 +456,9 @@ class IoULoss(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
 
         # Obtain the numerator and denominator for the IoU
         num = pred * ann_onehot
@@ -477,7 +489,9 @@ class TopKLoss(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
 
         # Get the CE loss value 
         loss = ann_onehot * torch.log(pred)
@@ -524,7 +538,9 @@ class DiceLoss(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
         
         # Calculate the dice loss 
         num = 2 * torch.sum(pred*ann_onehot, dim=(1,2,3))
@@ -549,7 +565,9 @@ class TverskyLoss(nn.Module):
         ann = ann.long() # convert to required variable type
         ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
         ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-        ann_onehot.scatter_(1, ann, 1) # create onehot vector
+        for i, _ in enumerate(ann_onehot): 
+            ann_onehot[i].scatter_(0,ann[:,i],1)
+
         
         # Calculate the numerator and denominator for the ratio
         num = torch.sum(pred*ann_onehot, dim=(1,2,3))
