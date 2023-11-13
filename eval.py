@@ -8,7 +8,7 @@ import os
 import sys
 import torch 
 import dataloader
-from torchvision.utils import draw_segmentation_masks, save_image
+from torchvision.utils import draw_segmentation_masks
 torch.cuda.empty_cache() # liberate the resources 
 import numpy as np
 import matplotlib.pyplot as plt

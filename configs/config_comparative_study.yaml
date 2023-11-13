@@ -1,18 +1,18 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
-  MODEL_NAME: "deeplabv3plus"
-  MODEL_FILE: "../models/2_ModelEvaluation/003/model.pt"
-  DISPLAY_IMAGE: False 
+  MODEL_NAME: "unet"
+  MODEL_FILE: "../models/1_LF Research Data/014/model.pt"
+  DISPLAY_IMAGE: True 
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
-    RESIZE_IMG: True # will only re-size the image to the dim below if True
+    RESIZE_IMG: False # will only re-size the image to the dim below if True
     HEIGHT: 500
     WIDTH: 800
 
 TRAIN:
   MODEL_NAME: 'deeplabv3plus'
-  CRITERION: 'crossentropyloss'
-  BATCH_SIZE: 2
+  CRITERION: 'fciouv2'
+  BATCH_SIZE: 1
   TOTAL_EPOCHS: 10
   LR: 1.0e-5 # learning rate (1e-4 is base for most learning)
   FINAL_LR: 1.0e-10
@@ -20,11 +20,12 @@ TRAIN:
   INPUT_NORM: True
   INPUT_SIZE:
     RESIZE_IMG: True
-    # HEIGHT: 300
-    # WIDTH: 480
-    ### Deeplabv3+ Sizing Below
-    HEIGHT: 500
-    WIDTH: 800
+    HEIGHT: 900 
+    WIDTH: 1440
+
+    # Sizing Employed in previous iterations of the code  
+    # HEIGHT: 500
+    # WIDTH: 800
     
 MODELS: 
   UNET: # --> unet

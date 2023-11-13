@@ -4,6 +4,7 @@
 # File contains useful tools for development                    #
 #################################################################
 import torch
+import numpy as np
 
 def get_memory_allocated():
     """
@@ -31,6 +32,25 @@ def convTorch2Onnx(model_path):
     torch.onnx.export(torch_model, x, 'test.onnx', input_names=["input"], output_names=['output'])
 
 
+def getPossibleResolutions(): 
+    ar = 1.6 # aspect-ratio for the source images 
+
+    heights = np.arange(0,1200,1) # go through all values 
+    widths = ar * heights # obtain all corresponding heights 
+
+    for i,w in enumerate(widths): 
+        if w.is_integer(): 
+            print("{} , {}".format(heights[i], w))
+
+
+
+
 
 if __name__ == "__main__": 
-    convTorch2Onnx("saves/epoch1.pt")
+    getPossibleResolutions()
+    pass 
+
+
+
+
+    # convTorch2Onnx("saves/epoch1.pt")

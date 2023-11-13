@@ -148,7 +148,7 @@ class UNet(Model):
 
            
 # --------------------------------------------------------------------------------------------------------------- #    
-class HRNet_OCR(Model):
+class HRNetV2_OCR(Model):
 
     def load_model(self): 
         # model source code directory
@@ -170,6 +170,11 @@ class HRNet_OCR(Model):
         pred = pred.argmax(dim=1) # obtain the predictions for each layer
         pred = map_labels(label=pred, inverse = True) # convert to 0->34
         return pred
+    
+    def gen_model(self, num_classes): 
+            
+        
+        pass
 # --------------------------------------------------------------------------------------------------------------- #
 class GSCNN(Model):
 
@@ -286,8 +291,8 @@ class ModelHandler(object):
             return UNet(self.cfg, self.mode)
         elif model_name == "deeplabv3plus": 
             return DeepLabV3Plus(self.cfg, self.mode)
-        elif model_name == "hrnet_ocr": 
-            return HRNet_OCR(self.cfg, self.mode)
+        elif model_name == "hrnetv2_ocr": 
+            return HRNetV2_OCR(self.cfg, self.mode)
         elif model_name == "gscnn": 
             return GSCNN(self.cfg, self.mode)
         else: 

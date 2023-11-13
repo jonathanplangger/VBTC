@@ -41,7 +41,7 @@ class FigResults():
         data = np.array(data, dtype=float)
 
         # Create the figure 
-        fig, axs = plt.subplots(1,len(results))
+        fig, axs = plt.subplots(1,len(results), dpi=400)
         fig.set_figheight(8)
         fig.set_figwidth(16)
         fig.subplots_adjust(wspace=0, hspace=0)
@@ -72,13 +72,13 @@ class FigResults():
 
         plt.legend()
 
-        plt.savefig("figures/ResultsPerformanceComparison.png")
-        plt.show()   
+        plt.savefig("figures/ResultsPerformanceComparison.svg")
+        #plt.show()   
 
 class FigLossShaping():
     # Plots the function on construction call
     def __init__(self): 
-        fig = plt.figure()
+        fig = plt.figure(dpi=400)
        
         # Plot the two fuunctions 
         x = np.linspace(-0.1, 1.5, 1000) # X-values for the plot
@@ -96,8 +96,8 @@ class FigLossShaping():
         ax.margins(x=0,y=0)
 
 
-        plt.savefig("figures/LossShapingFunction.png")
-        plt.show()
+        plt.savefig("figures/LossShapingFunction.svg")
+        #plt.show()
 
     def f_lossShaping(self, x): # Loss shaping function base implementation 
         return -np.log10(pow(x,0.5))
@@ -106,7 +106,7 @@ class FigLossShaping():
 
 class FigPowerTerm(): 
     def __init__(self): 
-        fig = plt.figure()
+        fig = plt.figure(dpi=400)
         x = np.linspace(-0.1,1.5,1000)
         plt.plot(x, self.f_powerJaccard(x), color="red", label="Power Term")
         plt.plot(x, self.f_IoU(x), color="blue", label="IoU")
@@ -122,8 +122,8 @@ class FigPowerTerm():
 
 
 
-        plt.savefig("figures/PowerTermFunction.png")
-        plt.show()
+        plt.savefig("figures/PowerTermFunction.svg")
+        #plt.show()
         
     def f_powerJaccard(self, x): 
         return x/(pow(x,2) + 1 - x)
@@ -155,7 +155,7 @@ class FigDBDistribution():
         
         plt.rcParams.update({"font.size":11.5})
         # Plot the figure 
-        fig, main = plt.subplots()
+        fig, main = plt.subplots(dpi=400)
         plt.xticks(rotation=75)
         
 
@@ -186,8 +186,8 @@ class FigDBDistribution():
         
 
         plt.tight_layout()
-        plt.savefig("figures/rellis3dDistribution.png")
-        plt.show()
+        plt.savefig("figures/rellis3dDistribution.svg")
+        #plt.show()
 
 
 class QualitativeResults(): 
@@ -200,7 +200,7 @@ class QualitativeResults():
     def __init__(self): 
         from matplotlib.figure import SubplotParams
 
-        fig, axs = plt.subplots(2,6, tight_layout=True)
+        fig, axs = plt.subplots(2,6, tight_layout=True, dpi=400)
         fig.set_figheight(4)
         fig.set_figwidth(16)
         #Save description to make overall formatting a lot easier 
@@ -235,8 +235,8 @@ class QualitativeResults():
         
         # Update the subplot format
         fig.subplots_adjust(wspace=0, hspace=0)
-        plt.savefig("figures/QualitativeResults.png")
-        plt.show()
+        plt.savefig("figures/QualitativeResults.svg")
+        #plt.show()
         pass
 
 
@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
 
     FigResults()
-    # FigLossShaping()
-    # FigPowerTerm()
-    # FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=[0,1], colors=colors[1:])
-    # QualitativeResults()
+    FigLossShaping()
+    FigPowerTerm()
+    FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=[0,1], colors=colors[1:])
+    QualitativeResults()
