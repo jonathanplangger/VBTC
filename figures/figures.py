@@ -235,7 +235,7 @@ class QualitativeResults():
         
         # Update the subplot format
         fig.subplots_adjust(wspace=0, hspace=0)
-        plt.savefig("figures/QualitativeResults.svg")
+        plt.savefig("figures/QualitativeResults.svg", dpi=400)
         #plt.show()
         pass
 
@@ -278,8 +278,8 @@ if __name__ == "__main__":
     colors = db.get_colors(remap_labels=True)
 
 
-    FigResults()
-    FigLossShaping()
-    FigPowerTerm()
-    FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=[0,1], colors=colors[1:])
+    # FigResults()
+    # FigLossShaping()
+    # FigPowerTerm()
+    # FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=[0,1], colors=colors[1:])
     QualitativeResults()
