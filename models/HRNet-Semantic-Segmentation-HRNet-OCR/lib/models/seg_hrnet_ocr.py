@@ -679,6 +679,6 @@ class HighResolutionNet(nn.Module):
 
 def get_seg_model(cfg, **kwargs):
     model = HighResolutionNet(cfg, **kwargs)
-    model.init_weights(cfg.MODEL.PRETRAINED)
+    # model.init_weights(cfg.MODEL.PRETRAINED) # not using any pre-training for the model. 
 
     return model

@@ -172,6 +172,11 @@ class HRNet_OCR(Model):
         pred = map_labels(label=pred, inverse = True) # convert to 0->34
         return pred
     
+    def handle_output_train(self, pred):
+        # Use only one of the outputs from the model for the segmentation.
+        pred = super().handle_output_train(pred[1])  
+        return pred
+    
     def gen_model(self, num_classes): 
         src_dir = self.cfg.MODELS.HRNET_OCR.SRC_DIR
         sys.path.insert(0, src_dir) # add to path to allow for import 
@@ -184,6 +189,15 @@ class HRNet_OCR(Model):
         model = eval('models.' + self.cfg.MODELS.HRNET_OCR.MODEL_NAME + '.get_seg_model')(config)
 
         return model
+    
+    def logTrainParams(self): # ensures that the right configuration is being logged for review
+        return """
+        ------------------ <br />
+        HRNet & OCR Parameters: <br />
+        ------------------ <br />
+        Configuration Model Name: {}
+        ------------------ <br />
+        """.format(self.cfg.MODELS.HRNET_OCR.MODEL_NAME)
 # --------------------------------------------------------------------------------------------------------------- #
 class GSCNN(Model):
 
