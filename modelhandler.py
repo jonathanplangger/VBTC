@@ -148,7 +148,8 @@ class UNet(Model):
 
            
 # --------------------------------------------------------------------------------------------------------------- #    
-class HRNetV2_OCR(Model):
+class HRNet_OCR(Model): 
+    # HRNetv2 Model
 
     def load_model(self): 
         # model source code directory
@@ -172,9 +173,17 @@ class HRNetV2_OCR(Model):
         return pred
     
     def gen_model(self, num_classes): 
-            
-        
-        pass
+        src_dir = self.cfg.MODELS.HRNET_OCR.SRC_DIR
+        sys.path.insert(0, src_dir) # add to path to allow for import 
+        # from . import config
+        # from config import update_config
+        from hrnet_config import config, update_config # import the default config and update_config f'n
+        import models # add the modelling code 
+        args = argparse.Namespace(cfg = self.cfg.MODELS.HRNET_OCR.CONFIG, opts="")
+        update_config(config, args)  #update the configuration file to use the right config 
+        model = eval('models.' + self.cfg.MODELS.HRNET_OCR.MODEL_NAME + '.get_seg_model')(config)
+
+        return model
 # --------------------------------------------------------------------------------------------------------------- #
 class GSCNN(Model):
 
@@ -291,8 +300,8 @@ class ModelHandler(object):
             return UNet(self.cfg, self.mode)
         elif model_name == "deeplabv3plus": 
             return DeepLabV3Plus(self.cfg, self.mode)
-        elif model_name == "hrnetv2_ocr": 
-            return HRNetV2_OCR(self.cfg, self.mode)
+        elif model_name == "hrnet_ocr": 
+            return HRNet_OCR(self.cfg, self.mode)
         elif model_name == "gscnn": 
             return GSCNN(self.cfg, self.mode)
         else: 

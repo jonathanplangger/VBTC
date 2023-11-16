@@ -46,11 +46,13 @@ Selection of loss function for training can be configured through the *CRITERION
 </i>
 
 Selecting a specific loss function in the *CRITERION* field results in the use of the corresponding loss function class. 
-
-
-
-
-
-
 </div>
+
+#Model Comparative Study
+This repository contains the source code for the models employed wihtin the comparative study. The links for the repositories are as follows: 
+
+HRNetv2 + OCR: https://github.com/HRNet/HRNet-Semantic-Segmentation
+
+
+
 

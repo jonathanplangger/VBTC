@@ -66,6 +66,7 @@ _C.MODELS.HRNET_OCR = CN()
 _C.MODELS.HRNET_OCR.CONFIG = "" # Config file path. Normally located in the HRNet directories
 _C.MODELS.HRNET_OCR.MODEL_FILE="" # Model file being tested by the program
 _C.MODELS.HRNET_OCR.SRC_DIR="" # Directory that holds all the source code for the model 
+_C.MODELS.HRNET_OCR.MODEL_NAME=""
 # GSCNN
 _C.MODELS.GSCNN = CN()
 _C.MODELS.GSCNN.CONFIG = "" # Config file path
