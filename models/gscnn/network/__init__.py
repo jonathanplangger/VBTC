@@ -14,8 +14,8 @@ def get_net(args, criterion):
     logging.info('Model params = {:2.1f}M'.format(num_params / 1000000))
 
     #net = net
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    net = torch.nn.DataParallel(net).to(device)
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu') # if being implemented on the CPU
+    net = torch.nn.DataParallel(net).to(device) # place on parallel devices 
     if args.checkpoint_path:
         print(f"Loading state_dict from {args.checkpoint_path}")
         net.load_state_dict(torch.load(args.checkpoint_path)["state_dict"])

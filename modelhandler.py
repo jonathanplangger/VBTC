@@ -227,6 +227,25 @@ class GSCNN(Model):
         pred = pred.argmax(dim=1) # convert into label mask 
         pred = map_labels(label=pred, inverse=True) # convert the labels to 0->34 scheme
         return pred
+    
+    def gen_model(self, num_classes):
+        src_dir = self.cfg.MODELS.MODELS_DIR # get the source file directory
+        sys.path.append(src_dir) 
+        import gscnn.network as network
+
+        # TODO, update to select LF based on the training setting rather than default value
+        criterion = torch.nn.CrossEntropyLoss() 
+
+        # Set the arguments here
+        args = argparse.Namespace(
+            arch = "network.gscnn.GSCNN", 
+
+        ) 
+        model = network.get_net(args, criterion)
+        
+        
+        
+        return model
 # --------------------------------------------------------------------------------------------------------------- #    
 class DeepLabV3Plus(Model): 
     """DeepLabV3Plus: Model implementation for the model handler that implements the configured version of the deeplabv3plus model.\n

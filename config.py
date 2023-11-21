@@ -49,6 +49,8 @@ _C.TRAIN.INPUT_SIZE.WIDTH = None # new width
 
 # ----------------- Comparative Study Model Parameters ---------------------------- #
 _C.MODELS = CN()
+# Base models configuration
+_C.MODELS.MODELS_DIR = "models" # location of the Models source code 
 # Modified UNet 
 _C.MODELS.UNET = CN()
 _C.MODELS.UNET.MODEL_FILE = "" # Path to model file 

@@ -1,16 +1,16 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
-  MODEL_NAME: "unet"
-  MODEL_FILE: "../models/1_LF Research Data/014/model.pt"
+  MODEL_NAME: "hrnet_ocr"
+  MODEL_FILE: "model.pt"
   DISPLAY_IMAGE: True 
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
-    RESIZE_IMG: False # will only re-size the image to the dim below if True
+    RESIZE_IMG: True # will only re-size the image to the dim below if True
     HEIGHT: 500
     WIDTH: 800
 
 TRAIN:
-  MODEL_NAME: 'hrnet_ocr'
+  MODEL_NAME: 'gscnn'
   CRITERION: 'crossentropyloss'
   BATCH_SIZE: 1
   TOTAL_EPOCHS: 10
@@ -20,14 +20,14 @@ TRAIN:
   INPUT_NORM: True
   INPUT_SIZE:
     RESIZE_IMG: True
-    # HEIGHT: 900 
-    # WIDTH: 1440
+    HEIGHT: 650
+    WIDTH: 1040   
 
-    # Sizing Employed in previous iterations of the code  
-    HEIGHT: 500
-    WIDTH: 800
+    # # Sizing Employed in previous iterations of the code  
+    # HEIGHT: 500
+    # WIDTH: 800
     
-MODELS: 
+MODELS:
   UNET: # --> unet
     MODEL_FILE: "../models/1_LF Research Data/014/model.pt"
     BASE: 32 #40 # base channel amount for the U-Net, increases in further layers
@@ -39,13 +39,13 @@ MODELS:
   # --> hrnet_ocr
   HRNET_OCR:  
     CONFIG: "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"
-    MODEL_FILE: "/home/jplangger/Documents/Dev/VBTC/temp/hrnet_best/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484/best.pth"
+    MODEL_FILE: "model.pt"
     # "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/output/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484/final_state.pth"
     SRC_DIR: "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/lib"  
     MODEL_NAME: "seg_hrnet_ocr"  # OCR is being used alongside the HRNet for testing
   # --> gscnn
   GSCNN: 
-    MODEL_FILE: "/home/jplangger/Documents/Dev/VBTC/models/GSCNN-master/output/gscnn_best.pth"
-    SRC_DIR: "/home/jplangger/Documents/Dev/VBTC/models/GSCNN-master"
+    MODEL_FILE: "/home/jplangger/Documents/Dev/VBTC/models/gscnn/output/gscnn_best.pth"
+    
 
 
