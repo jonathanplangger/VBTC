@@ -236,11 +236,17 @@ class GSCNN(Model):
         # TODO, update to select LF based on the training setting rather than default value
         criterion = torch.nn.CrossEntropyLoss() 
 
-        # Set the arguments here
+        # Create the base configuration variables. 
+        dataset_cls = argparse.Namespace(num_classes=19, ignore_label=0)
+
+        # Set up the default arguments for the arguments
         args = argparse.Namespace(
             arch = "network.gscnn.GSCNN", 
-
+            dataset_cls = dataset_cls, 
+            trunk = 'resnet101',
+            img_wt_loss=False, joint_edgeseg_loss=False, wt_bound=1.0, edge_weight=1.0, seg_weight=1.0,
         ) 
+
         model = network.get_net(args, criterion)
         
         
