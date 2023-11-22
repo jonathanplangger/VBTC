@@ -2,6 +2,7 @@
 This file contains the code implementation for the figures presented in the research paper. 
 """
 from matplotlib import pyplot as plt 
+import matplotlib.ticker as mticker
 import matplotlib
 import numpy as np
 import os 
@@ -83,7 +84,7 @@ class FigLossShaping():
         # Plot the two fuunctions 
         x = np.linspace(-0.1, 1.5, 1000) # X-values for the plot
         plt.plot(x, self.f_lossShaping(x), color="red", label="Loss Shaping Function")
-        plt.plot(x, self.f_LIoU(x), color="blue", label= "1 - IoU")
+        plt.plot(x, self.f_LIoU(x), color="blue", label= "1 − IoU")
         plt.grid()
         plt.xticks(np.arange(0,1.1,0.1))
         plt.xlim(-0.05,1.05)
@@ -152,13 +153,11 @@ class FigDBDistribution():
         df = df.sort_values(by="distribution", ascending=False) # sort the values based on size
         df_lower = df[6:] # Get the lowest values to display them on a separate plot
 
-        
         plt.rcParams.update({"font.size":11.5})
         # Plot the figure 
         fig, main = plt.subplots(dpi=400)
         plt.xticks(rotation=75)
         
-
         fig.set_figheight(6)
         fig.set_figwidth(10)
         # Add the subplot axes 
@@ -183,11 +182,15 @@ class FigDBDistribution():
         main.margins(x=0)
         sub.margins(x=0)
         main.set_ylabel("Number of Pixels")
-        
-
         plt.tight_layout()
+
+        # Update formatting to use literature scientific notation
+        f = mticker.ScalarFormatter(useOffset=False, useMathText=True)
+        sub.yaxis.set_major_formatter(f)
+        main.yaxis.set_major_formatter(f)
+
         plt.savefig("figures/rellis3dDistribution.svg")
-        #plt.show()
+        # plt.show() # display the results
 
 
 class QualitativeResults(): 
@@ -281,5 +284,5 @@ if __name__ == "__main__":
     # FigResults()
     # FigLossShaping()
     # FigPowerTerm()
-    # FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=[0,1], colors=colors[1:])
-    QualitativeResults()
+    FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=[0,1], colors=colors[1:])
+    # QualitativeResults()
