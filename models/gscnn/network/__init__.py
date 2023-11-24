@@ -7,6 +7,15 @@ import importlib
 import torch
 import logging
 
+def get_model(network, num_classes, criterion, trunk):
+    
+    module = network[:network.rfind('.')]
+    model = network[network.rfind('.')+1:]
+    mod = importlib.import_module(module)
+    net_func = getattr(mod, model)
+    net = net_func(num_classes=num_classes, trunk=trunk, criterion=criterion)
+    return net
+
 def get_net(args, criterion):
     net = get_model(network=args.arch, num_classes=args.dataset_cls.num_classes,
                     criterion=criterion, trunk=args.trunk)
@@ -20,15 +29,4 @@ def get_net(args, criterion):
         print(f"Loading state_dict from {args.checkpoint_path}")
         net.load_state_dict(torch.load(args.checkpoint_path)["state_dict"])
     return net
-
-
-def get_model(network, num_classes, criterion, trunk):
-    
-    module = network[:network.rfind('.')]
-    model = network[network.rfind('.')+1:]
-    mod = importlib.import_module(module)
-    net_func = getattr(mod, model)
-    net = net_func(num_classes=num_classes, trunk=trunk, criterion=criterion)
-    return net
-
 

@@ -230,8 +230,10 @@ class GSCNN(Model):
     
     def gen_model(self, num_classes):
         src_dir = self.cfg.MODELS.MODELS_DIR # get the source file directory
-        sys.path.append(src_dir) 
-        import gscnn.network as network
+        # sys.path.append(os.path.abspath(src_dir))
+        sys.path.append(os.path.abspath(src_dir + "/gscnn")) # add the path to the gscnn directory 
+
+        import network
 
         # TODO, update to select LF based on the training setting rather than default value
         criterion = torch.nn.CrossEntropyLoss() 
@@ -244,6 +246,7 @@ class GSCNN(Model):
             arch = "network.gscnn.GSCNN", 
             dataset_cls = dataset_cls, 
             trunk = 'resnet101',
+            checkpoint_path = False, # no checkpoint is being used when training the model.
             img_wt_loss=False, joint_edgeseg_loss=False, wt_bound=1.0, edge_weight=1.0, seg_weight=1.0,
         ) 
 

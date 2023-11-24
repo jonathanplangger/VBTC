@@ -47,10 +47,20 @@ def getPossibleResolutions():
 
 
 if __name__ == "__main__": 
-    getPossibleResolutions()
+    # getPossibleResolutions()
+    import torchvision 
+    from torchinfo import summary
+    
+    model = torchvision.models.resnet50()
+    
+    model_summary = summary(model, input_size=(1, 3, 1200, 1920))
+        
+
+    
+    
+    
+    
     pass 
 
 
 
-
-    # convTorch2Onnx("saves/epoch1.pt")

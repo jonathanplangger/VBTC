@@ -12,7 +12,7 @@ EVAL:
 TRAIN:
   MODEL_NAME: 'gscnn'
   CRITERION: 'crossentropyloss'
-  BATCH_SIZE: 1
+  BATCH_SIZE: 2
   TOTAL_EPOCHS: 10
   LR: 1.0e-5 # learning rate (1e-4 is base for most learning)
   FINAL_LR: 1.0e-10
