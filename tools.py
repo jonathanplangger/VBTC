@@ -51,7 +51,7 @@ if __name__ == "__main__":
     import torchvision 
     from torchinfo import summary
     
-    model = torchvision.models.resnet50()
+    model = torchvision.models.resnet34()
     
     model_summary = summary(model, input_size=(1, 3, 1200, 1920))
         

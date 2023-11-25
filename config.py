@@ -22,6 +22,7 @@ _C.EVAL = CN()
 _C.EVAL.MODEL_NAME = "" # Name of the model being used. Options displayed above.
 _C.EVAL.MODEL_FILE = "" # File path for the model file. Specify this prior to training
 _C.EVAL.DISPLAY_IMAGE = False # Toggle the display of each prediction alongside the annotations 
+_C.EVAL.PRED_CERTAINTY = False # display the prediction certainty for each class for the given input image
 _C.EVAL.BATCH_SIZE = 1 # Image batch size input to the model
 # Re-size the input image to model the set size. Annotation and output image size remains the same as the dataset
 _C.EVAL.INPUT_SIZE = CN()

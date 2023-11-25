@@ -1,25 +1,26 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
-  MODEL_NAME: "hrnet_ocr"
+  MODEL_NAME: "unet"
   MODEL_FILE: "model.pt"
-  DISPLAY_IMAGE: True 
+  DISPLAY_IMAGE: False 
+  PRED_CERTAINTY: True
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
-    RESIZE_IMG: True # will only re-size the image to the dim below if True
+    RESIZE_IMG: False # will only re-size the image to the dim below if True
     HEIGHT: 500
     WIDTH: 800
 
 TRAIN:
-  MODEL_NAME: 'gscnn'
+  MODEL_NAME: 'unet'
   CRITERION: 'crossentropyloss'
-  BATCH_SIZE: 2
+  BATCH_SIZE: 1
   TOTAL_EPOCHS: 10
   LR: 1.0e-5 # learning rate (1e-4 is base for most learning)
   FINAL_LR: 1.0e-10
   PRETRAINED: False
   INPUT_NORM: True
   INPUT_SIZE:
-    RESIZE_IMG: True
+    RESIZE_IMG: False
     HEIGHT: 650
     WIDTH: 1040   
 
@@ -29,8 +30,10 @@ TRAIN:
     
 MODELS:
   UNET: # --> unet
-    MODEL_FILE: "../models/1_LF Research Data/014/model.pt"
-    BASE: 32 #40 # base channel amount for the U-Net, increases in further layers
+    # MODEL_FILE: "../models/1_LF Research Data/014/model.pt"
+    MODEL_FILE: "model.pt"
+    # BASE: 32 # Base value used in paper = 32
+    BASE: 16 # Base value used in paper = 32
     KERNEL_SIZE: 5
   # --> deeplabv3plus
   DEEPLABV3PLUS: 

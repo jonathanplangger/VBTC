@@ -18,6 +18,7 @@ import torchmetrics
 from tqdm import tqdm
 import time 
 import argparse
+from figures.figures import FigPredictionCertainty
 
 # Display masks
 import numpy as np
@@ -116,6 +117,10 @@ class ComparativeEvaluation():
                 with torch.no_grad(): # do not calculate gradients for this task
                     pred = model(images)
                 
+                # save the old version of pred (before argmax)
+                if self.cfg.EVAL.PRED_CERTAINTY: # if enabled in config 
+                    pred_raw = pred 
+
                 # Convert the prediction output to argmax labels representing each class predicted
                 pred = model_handler.handle_output(pred)
 
@@ -189,6 +194,11 @@ class ComparativeEvaluation():
                     axs[0, 3].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Output Mask")
 
                     plt.show()
+
+                # display the figure 
+                if self.cfg.EVAL.PRED_CERTAINTY: 
+                    FigPredictionCertainty(torch.softmax(pred_raw, dim=1), pred, ann, class_labels = db.class_labels, color_map=colors)
+
 
 
                 # Update the progress bar

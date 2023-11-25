@@ -4,6 +4,7 @@ This file contains the code implementation for the figures presented in the rese
 from matplotlib import pyplot as plt 
 import matplotlib.ticker as mticker
 import matplotlib
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import os 
 import csv   
@@ -242,7 +243,90 @@ class QualitativeResults():
         #plt.show()
         pass
 
+class FigPredictionCertainty(): 
+    def __init__(self, pred, pred_map, ann, class_labels=[], color_map = None): 
+        # Remove the batching wrapper -> only use one of the image (if >1 present)
+        pred = pred[0].cpu()
+        ann = ann[0]
 
+        # Convert the labels into a list
+        class_labels = list(class_labels.values())
+        class_labels = class_labels[1:] # remove the void class since it is the same as the dirt class
+
+        # Configure the n# of rows and cols in the figure
+        rows, cols = 4, 5
+        fig = plt.figure(tight_layout = True, dpi = 300) # TODO -> Update to create a slot for each class.
+        gs = fig.add_gridspec(nrows=rows, ncols=cols, wspace= 0.00, hspace = 0.4)
+
+        # # place the annotation map on the figure. 
+        # if color_map is None: 
+        # annotation map image
+        ax = fig.add_subplot(gs[0,0])
+        ax.imshow(ann.cpu(), cmap="gray")
+        ax.set_xticks([])
+        ax.set_yticks([])        
+        ax.set_xlabel("Ann Map", fontsize = "xx-small", va="top")   
+        # Prediction output map
+        ax = fig.add_subplot(gs[0,1])
+        ax.imshow(pred_map.cpu()[0], cmap="gray")
+        ax.set_xticks([])
+        ax.set_yticks([])        
+        ax.set_xlabel("Pred Map", fontsize = "xx-small", va="top")               
+
+
+        i = 0
+        for row in range(rows): 
+            for col in range(cols):
+
+                # Start on the 2nd plot for the first cycle only
+                if col < 2 and row == 0: 
+                    col = col + 1 
+                else:  # ONly complete in the next slots
+                    ax = fig.add_subplot(gs[row,col]) # add the new subplot to the figure
+
+                    # r,g,b = self.__conv_color_map(color_map[i]) # rgb colours
+                    # cdict ={
+                    #     'red':((0,1,r), (1,r,r)),
+                    #     'green':((0,1,g), (1,g,g)),
+                    #     'blue':((0,b,b), (1,b,b)),
+                    # }
+                    # cmap = LinearSegmentedColormap(class_labels[i], cdict, N = 256)
+
+                    ax.imshow(1 - pred[i], cmap = "gray")
+                    ax.set_xticks([])
+                    ax.set_yticks([])
+                    ax.set_xlabel("{}: {}".format(i, class_labels[i]), fontsize = "xx-small", va="top") # Add labels for each class
+                    ax.margins(x = 0)
+
+
+                    i = i + 1 # increase the index for pred
+                    if i > 18: 
+                        break
+
+
+        ax = plt.gca()
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        
+        # # Create a figure for each class 
+        # for c in pred:
+         
+        plt.show()
+        exit() # TODO -  Remove this line later -> ONLY for testing
+
+    def __dispfunc(self, pred): 
+        """This function is applied to the logit output prediction from the model to display the desired output 
+        The function will depend on which relationship we want to investigate in the figure. 
+
+        :param pred: Prediction (logit) output from the model
+        :type pred: torch.tensor
+        :return: Updated tensor for desired format
+        :rtype: torch.tensor
+        """        
+        return 1 - pred
+
+    def __conv_color_map(self,color): 
+        return (color[0]/255.0, color[1]/255.0, color[2]/255.0)
 
 if __name__ == "__main__": 
 
