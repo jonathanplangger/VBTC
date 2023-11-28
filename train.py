@@ -31,6 +31,9 @@ import time
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
 
+# Set to increase the performance
+torch.backends.cudnn.benchmark = True
+
 # http://localhost:6006/?darkMode=true#timeseries
 # tensorboard --logdir=runs
 
@@ -113,7 +116,7 @@ class TrainModel(object):
         # # Obtain the summary of the model architecture + memory requirements
         ##TODO: Fix Summary not working with DLV3+, execution halts at same location
         from torchinfo import summary 
-        model_summary = summary(self.model, input_size=(self.batch_size, 3, input_size[0], input_size[1]))
+        model_summary = summary(self.model, input_size=(1, 3, input_size[0], input_size[1]))
         # record the model parameters on tensorboard``
         writer.add_text("Model/", str(model_summary).replace("\n", " <br \>")) # Print the summary on tensorboard
 
@@ -134,54 +137,57 @@ class TrainModel(object):
             self.db.randomizeOrder()
             # create/wipe the array recording the loss values
 
+            # TODO -  Turn this into a configurable parameter
+            load_size = 10
             
             with tqdm.tqdm(total=3302, unit="Batch") as pbar:
-
+                
                 for i in range(3302): 
-                    startTime = time.time()
+                             
+                
                     # load the image batch
-                    _, images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size, resize = input_size)
+                    _, images, ann, idx = self.db.load_batch(idx, batch_size=load_size, resize = input_size)
                     
                     # Create autogradient variables for training
                     images = torch.autograd.Variable(images, requires_grad = False).to(device)
                     ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
 
-                    # forward pass
-                    pred = self.model(images)
 
-                    del images # release images from mem -> no longer needed
-                    pred = self.model_handler.handle_output(pred) # handle output based on the model
+                    for i, img in enumerate(images): 
 
-                
-                # dice_score = dice(pred, ann.long())
-                # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
-                    
-                    print("Total Time: {}s".format(time.time()-startTime))   
-                    loss = self.criterion(pred, ann.long()) # calculate the loss
-                    del ann, pred # release, no longer needed. 
-
-                # for l in loss: 
-                #     writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss 
-                #     # pbar.set_postfix(l = l.item(),lr = optim.param_groups[0]['lr'])
-
-                    torch.sum(loss).backward()
-                    
-
-                    pbar.update()
-
-                    # Zero the gradients for the function
-                    optim.zero_grad()
-                    optim.step() # apply gradient descent to the weights
-
-                    # # Measure the total amount of memory that is being reserved training (for optimization purposes)
-                    # if step == 2: 
-                    #     print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
+                        # Zero the gradients in the optimizer
+                        optim.zero_grad()
                         
-                    # step += 1 # increment the counter
+                        # regenerate the 4th dimension input
+                        img = torch.reshape(img, (1,img.shape[0], img.shape[1], img.shape[2]))
+                        
+                        # forward pass
+                        pred = self.model(img)
+                        pred = self.model_handler.handle_output(pred) # handle output based on the model
 
-                    # print(prof.key_averages(group_by_stack_n=3).table(sort_by="self_cpu_time_total", row_limit=6))
-                    
+                        # dice_score = dice(pred, ann.long())
+                        # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
 
+
+                        loss = self.criterion(pred, ann[i:i+1].long()) # calculate the loss
+                        
+                        # for l in loss: 
+                        #     writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss 
+                        #     # pbar.set_postfix(l = l.item(),lr = optim.param_groups[0]['lr'])
+
+                        torch.sum(loss).backward()
+                        optim.step() # apply gradient descent to the weights
+
+                        # # Measure the total amount of memory that is being reserved training (for optimization purposes)
+                        # if step == 2: 
+                        #     print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
+                            
+                        # step += 1 # increment the counter
+
+                        # print(prof.key_averages(group_by_stack_n=3).table(sort_by="self_cpu_time_total", row_limit=6))
+
+
+                        pbar.update()
             ############# Output LR update to Tensorboard ############################
             
             # Update the std out to save to a string 

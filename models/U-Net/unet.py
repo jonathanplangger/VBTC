@@ -88,17 +88,44 @@ class UNet(nn.Module):
             out = F.interpolate(out, self.out_sz)
         return out
 
-#used to test the model
-if __name__ == "__main__":
-    img_h = 1920
-    img_w = 1200
+# #used to test the model
+# if __name__ == "__main__":
+#     img_h = 1920
+#     img_w = 1200
 
-    base = 44
-    model = UNet(
-        enc_chs=(3,base, base*2, base*4, base*8, base*16),
-        dec_chs=(base*16, base*8, base*4, base*2, base), 
-        out_sz=(img_h,img_w), retain_dim=True, num_class=35, kernel_size = 3
-        )
-    device = torch.device("cuda")
-    model = model.to(device)
-    torchsummary.summary(model, (3,1920,1200))
+#     base = 44
+#     model = UNet(
+#         enc_chs=(3,base, base*2, base*4, base*8, base*16),
+#         dec_chs=(base*16, base*8, base*4, base*2, base), 
+#         out_sz=(img_h,img_w), retain_dim=True, num_class=35, kernel_size = 3
+#         )
+#     device = torch.device("cuda")
+#     model = model.to(device)
+#     torchsummary.summary(model, (3,1920,1200))
+
+
+if __name__ == "__main__": 
+    # Used for testing the models themselves
+    import torch.autograd.profiler as profiler
+    from torchinfo import summary
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    # model = NewModel().to(device)
+    model = UNet().to(device)
+
+    # Run the model summary to estimate the size for the model.
+    model_summary = summary(model, input_size=(1, 3, 1200, 1920))
+
+    # Fake input to be used in benchmarking
+    input = torch.rand(1,3,1200,1920).to(device)
+
+    with profiler.profile(with_stack=True, profile_memory=True) as prof: 
+        import time
+        startTime = time.time()
+        pred = model(input)
+        torch.cuda.synchronize()
+        print("Time:{}".format(time.time()-startTime))
+        pred = model(input)
+
+    torch.cuda.synchronize()
+    print(prof.key_averages(group_by_stack_n=3).table(sort_by="self_cpu_time_total", row_limit=6))

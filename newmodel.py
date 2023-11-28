@@ -5,6 +5,8 @@ from torchinfo import summary
 import unet
 import torch.autograd.profiler as profiler 
 
+# Set to increase the performance
+torch.backends.cudnn.benchmark = True
 
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -78,7 +80,7 @@ class CentralUnit(nn.Module):
 class PeripheralUnit(nn.Module): 
     def __init__(self): 
         super().__init__()
-        base = 10
+        base = 16
         kernel_size = 5
         num_class = 19
         self.topk = 10
@@ -106,7 +108,7 @@ class PeripheralUnit(nn.Module):
         mask.scatter_(0, topk, 1.)
         mask = torch.reshape(mask, (1,prob.shape[2],prob.shape[3])) # reshape into the original dimensions
     
-        return prob, mask
+        return pred, mask
     
 
 
@@ -126,8 +128,7 @@ if __name__ == "__main__":
     # Fake input to be used in benchmarking
     input = torch.rand(1,3,1200,1920).to(device)
 
-    with profiler.profile(with_stack=True, profile_memory=True) as prof: 
-        pred = model(input)
+    with profiler.profile(with_stack=True, profile_memory=True, use_cuda = True) as prof:     
         pred = model(input)
 
-    print(prof.key_averages(group_by_stack_n=3).table(sort_by="self_cpu_time_total", row_limit=6))
+    print(prof.key_averages(group_by_stack_n=3).table(sort_by="cuda_time", row_limit=6))
