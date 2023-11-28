@@ -24,8 +24,13 @@ from io import StringIO as SIO
 import sys
 sys.path.insert(1,"/home/jplangger/Documents/Dev/VBTC/loss_odyssey")
 
+# for optimization testing & updates 
+import torch.autograd.profiler as profiler
+import time
+
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter() 
+
 # http://localhost:6006/?darkMode=true#timeseries
 # tensorboard --logdir=runs
 
@@ -86,7 +91,8 @@ class TrainModel(object):
         # Set the model to training mode and place onto GPU
         self.model.train()
         self.model.to(device)
-
+        # place the criterion on the GPU
+        self.criterion.to(device)
         # optimizer for the model 
         optim = torch.optim.Adam(params=self.model.parameters(), lr = self.cfg.TRAIN.LR)
         # scheduler for the learning rate 
@@ -128,10 +134,11 @@ class TrainModel(object):
             self.db.randomizeOrder()
             # create/wipe the array recording the loss values
 
-            with tqdm.tqdm(total=int(self.steps_per_epoch), unit="Batch") as pbar:
+            
+            with tqdm.tqdm(total=3302, unit="Batch") as pbar:
 
-                for i in range(self.steps_per_epoch): 
-                    
+                for i in range(3302): 
+                    startTime = time.time()
                     # load the image batch
                     _, images, ann, idx = self.db.load_batch(idx, batch_size=self.batch_size, resize = input_size)
                     
@@ -141,41 +148,39 @@ class TrainModel(object):
 
                     # forward pass
                     pred = self.model(images)
+
                     del images # release images from mem -> no longer needed
                     pred = self.model_handler.handle_output(pred) # handle output based on the model
 
-                    # Zero the gradients for the function
-                    optim.zero_grad()
-
-                    dice_score = dice(pred, ann.long())
-                    writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
-
+                
+                # dice_score = dice(pred, ann.long())
+                # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
+                    
+                    print("Total Time: {}s".format(time.time()-startTime))   
                     loss = self.criterion(pred, ann.long()) # calculate the loss
                     del ann, pred # release, no longer needed. 
 
-                    # Add a list wrapper if only 1 loss value is obtained as output (due to reduction scheme of LF )
-                    if loss.numel() == 1: 
-                        loss = [loss] 
-                    for l in loss: 
-                        writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss 
-                        pbar.set_postfix(l = l.item(),lr = optim.param_groups[0]['lr'])
+                # for l in loss: 
+                #     writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss 
+                #     # pbar.set_postfix(l = l.item(),lr = optim.param_groups[0]['lr'])
+
+                    torch.sum(loss).backward()
                     
-                    sum(loss).backward()
-
-                    # loss.backward() # backpropagation for loss 
-
 
                     pbar.update()
 
-                    # del loss # release memory 
-                    optim.step() # apply gradient descent to the weights
+                    # Zero the gradients for the function
                     optim.zero_grad()
+                    optim.step() # apply gradient descent to the weights
 
-                    # Measure the total amount of memory that is being reserved training (for optimization purposes)
-                    if step == 2: 
-                        print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
+                    # # Measure the total amount of memory that is being reserved training (for optimization purposes)
+                    # if step == 2: 
+                    #     print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
                         
-                    step += 1 # increment the counter
+                    # step += 1 # increment the counter
+
+                    # print(prof.key_averages(group_by_stack_n=3).table(sort_by="self_cpu_time_total", row_limit=6))
+                    
 
             ############# Output LR update to Tensorboard ############################
             
@@ -253,6 +258,7 @@ class TrainModel(object):
             exit("Invalid loss function, please select a valid one")
 
 
+
     # this function is only used during testing to allow for the visual validation of results, no need for it 
     # for the training of the network
     def showTensor(self, image): 
@@ -261,4 +267,5 @@ class TrainModel(object):
 # Main program calling 
 if __name__ == "__main__": 
     train = TrainModel()
+
     train.train_model() # train the model

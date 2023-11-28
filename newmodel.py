@@ -3,7 +3,11 @@ import torch.nn as nn
 import sys, os
 from torchinfo import summary
 import unet
+import torch.autograd.profiler as profiler 
 
+
+
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 
 class Encoder(nn.Module): 
@@ -98,7 +102,7 @@ class PeripheralUnit(nn.Module):
         _, topk = torch.topk(max_vals, dim = 0, k = int(num_k), largest=False)
 
         # Create the mask based on the topk indexes. 
-        mask = torch.zeros(max_vals.shape).cuda()
+        mask = torch.zeros(max_vals.shape, device=device)
         mask.scatter_(0, topk, 1.)
         mask = torch.reshape(mask, (1,prob.shape[2],prob.shape[3])) # reshape into the original dimensions
     
@@ -110,11 +114,20 @@ class PeripheralUnit(nn.Module):
 
 
 if __name__ == "__main__": 
-
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    # Use for testing the memory requirements for the new model
+    # Used for testing the models themselves
+    import torch.autograd.profiler as profiler
+ 
     # model = NewModel().to(device)
-    model = TestLayer().to(device)
+    model = NewModel().to(device)
 
     # Run the model summary to estimate the size for the model.
     model_summary = summary(model, input_size=(1, 3, 1200, 1920))
+
+    # Fake input to be used in benchmarking
+    input = torch.rand(1,3,1200,1920).to(device)
+
+    with profiler.profile(with_stack=True, profile_memory=True) as prof: 
+        pred = model(input)
+        pred = model(input)
+
+    print(prof.key_averages(group_by_stack_n=3).table(sort_by="self_cpu_time_total", row_limit=6))
