@@ -4,6 +4,8 @@ from torch.nn import functional as TF
 import torch
 from dataloader import map_labels
 import sys, os, argparse
+import newmodel
+
 
 class Model(object): 
     """
@@ -302,6 +304,14 @@ class DeepLabV3Plus(Model):
         return torch.argmax(pred,dim=1) # get the argmax representation for the output 
 
 
+class NewModel(Model): 
+    def gen_model(self, num_classes): 
+        return newmodel.NewModel()
+    
+    def handle_output_train(self, pred):
+        return pred
+
+
 # -------------------------------------------------------------------------------------------------------------------------- #
 #                                                  Model Handler
 # -------------------------------------------------------------------------------------------------------------------------- #
@@ -346,6 +356,8 @@ class ModelHandler(object):
             return HRNet_OCR(self.cfg, self.mode)
         elif model_name == "gscnn": 
             return GSCNN(self.cfg, self.mode)
+        elif model_name == "newmodel": 
+            return NewModel(self.cfg, self.mode) # TODO - Add configuration through config file instead of preset
         else: 
             exit("Invalid model_name specified. Please configure a valid model_name in config file.")
         ######################################################

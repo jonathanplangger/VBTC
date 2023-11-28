@@ -1,7 +1,7 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
   MODEL_NAME: "unet"
-  MODEL_FILE: "model.pt"
+  MODEL_FILE: "../models/1_LF Research Data/018/model.pt"
   DISPLAY_IMAGE: False 
   PRED_CERTAINTY: True
   BATCH_SIZE: 1
@@ -11,7 +11,7 @@ EVAL:
     WIDTH: 800
 
 TRAIN:
-  MODEL_NAME: 'unet'
+  MODEL_NAME: 'newmodel'
   CRITERION: 'crossentropyloss'
   BATCH_SIZE: 1
   TOTAL_EPOCHS: 10
@@ -30,14 +30,14 @@ TRAIN:
     
 MODELS:
   UNET: # --> unet
-    # MODEL_FILE: "../models/1_LF Research Data/014/model.pt"
-    MODEL_FILE: "model.pt"
+    MODEL_FILE: "../models/1_LF Research Data/018/model.pt"
+    # MODEL_FILE: "model.pt"
     # BASE: 32 # Base value used in paper = 32
-    BASE: 16 # Base value used in paper = 32
+    BASE: 12 # Base value used in paper = 32
     KERNEL_SIZE: 5
   # --> deeplabv3plus
   DEEPLABV3PLUS: 
-    BACKBONE: 'xception' # xception, resnet101, resnet50
+    BACKBONE: 'resnet50' # xception, resnet101, resnet50
     MODEL_FILE: "../models/2_ModelEvaluation/001/model.pt"
   # --> hrnet_ocr
   HRNET_OCR:  

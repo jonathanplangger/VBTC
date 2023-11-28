@@ -312,7 +312,6 @@ class FigPredictionCertainty():
         # for c in pred:
          
         plt.show()
-        exit() # TODO -  Remove this line later -> ONLY for testing
 
     def __dispfunc(self, pred): 
         """This function is applied to the logit output prediction from the model to display the desired output 

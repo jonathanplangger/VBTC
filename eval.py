@@ -198,6 +198,7 @@ class ComparativeEvaluation():
                 # display the figure 
                 if self.cfg.EVAL.PRED_CERTAINTY: 
                     FigPredictionCertainty(torch.softmax(pred_raw, dim=1), pred, ann, class_labels = db.class_labels, color_map=colors)
+                    # FigPredictionCertainty(torch.nn.functional.normalize(pred_raw, dim=1), pred, ann, class_labels = db.class_labels, color_map=colors)
 
 
 
