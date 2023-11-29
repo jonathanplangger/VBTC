@@ -43,24 +43,12 @@ def getPossibleResolutions():
             print("{} , {}".format(heights[i], w))
 
 
+def getPaddingReq(H, d, k, s): 
+    return float(((H - 1)*s - H + d*(k - 1) - 1))/2
 
 
 
 if __name__ == "__main__": 
-    # getPossibleResolutions()
-    import torchvision 
-    from torchinfo import summary
-    
-    model = torchvision.models.resnet34()
-    
-    model_summary = summary(model, input_size=(1, 3, 1200, 1920))
-        
-
-    
-    
-    
-    
-    pass 
-
+    print(getPaddingReq(H = 1200, d = 5, k = 7, s=1))
 
 

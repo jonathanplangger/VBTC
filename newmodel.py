@@ -46,34 +46,49 @@ class NewModel(nn.Module):
         return conv1 # remove the extra dimension
 
         
-
+class CentralBlock(nn.Module): 
+    def __init__(self, in_channels, out_channels): 
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=3, dilation = 1)
+        self.conv2 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=6, dilation = 2)
+        self.conv3 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=9, dilation = 3)
+        self.conv4 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=12, dilation = 4)
+        self.conv5 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=15, dilation = 5)
+    
+    def forward(self, x): 
+        conv1 = self.conv1(x)
+        conv2 = self.conv2(x)
+        conv3 = self.conv3(x)
+        conv4 = self.conv4(x)
+        conv5 = self.conv5(x)
+        # Stack the resulting convolutions together into one stack layer
+        return torch.cat((conv1, conv2, conv3, conv4, conv5), 1)
 
 class CentralUnit(nn.Module):
     # TODO: Update the names of each layer to be more fitting a variable (set) amount of channels 
     def __init__(self, depth = 6, num_classes=19): 
         super().__init__()
         self.num_classes = num_classes # set the n# of classes which will be featured on output
-        self.conv3 = nn.Conv2d(in_channels=3, out_channels=depth, kernel_size=3, padding=1)
-        self.conv5 = nn.Conv2d(in_channels=3, out_channels=depth, kernel_size=5, padding=2)
-        self.conv11 = nn.Conv2d(in_channels=3, out_channels=depth, kernel_size=11, padding=5)
-        self.conv31 = nn.Conv2d(in_channels=3, out_channels=depth, kernel_size=31, padding=15)
-        self.conv101 = nn.Conv2d(in_channels=3, out_channels=depth, kernel_size=101, padding=50)
-        self.conv1 = nn.Conv2d(in_channels=depth*5, out_channels=num_classes, kernel_size=1)
+        self.cb1 = CentralBlock(3, depth)
+        self.cb2 = CentralBlock(20, depth)
+        self.conv1d1 = nn.Conv2d(in_channels=depth*5, out_channels=20, kernel_size=1) #intermediary layer convolutions
+        self.conv1d2 = nn.Conv2d(in_channels=depth*5, out_channels=num_classes, kernel_size=1)
+
 
     def forward(self, x, mask=torch.zeros(19,1200,1920)): 
-        conv3 = self.conv3(x)
-        conv5 = self.conv5(x)
-        conv11 = self.conv11(x)
-        conv31 = self.conv31(x)
-        conv101 = self.conv101(x)
-        # Stack the resulting convolutions together into one stack layer
-        stack = torch.cat((conv3, conv5, conv11, conv31, conv101), 1)
+        # expand the tensor to include mask for all classes. 
+        mask = mask.repeat(self.num_classes,1,1) 
+        
+        #First stack calculation
+        s1 = self.cb1(x)
         # apply k=1 convolution to obtain a single resulting map
-        conv1 = self.conv1(stack)
-        conv1 = conv1 # remove "c" dimension since it is no longer required
-        mask = mask.repeat(self.num_classes,1,1) # expand the tensor to include mask for all classes. 
-        out = conv1 * mask # apply the mask to the output. 
-        return out
+        c1 = self.conv1d1(s1)
+        s2 = self.cb2(c1)
+        c2 = self.conv1d2(s2)
+
+        # Apply the mask to the convolution and return output
+        return c2 * mask
+
 
 
 

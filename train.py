@@ -138,7 +138,7 @@ class TrainModel(object):
             # create/wipe the array recording the loss values
 
             # TODO -  Turn this into a configurable parameter
-            load_size = 10
+            load_size = 1
             
             with tqdm.tqdm(total=3302, unit="Batch") as pbar:
                 
@@ -148,12 +148,16 @@ class TrainModel(object):
                     # load the image batch
                     _, images, ann, idx = self.db.load_batch(idx, batch_size=load_size, resize = input_size)
                     
-                    # Create autogradient variables for training
-                    images = torch.autograd.Variable(images, requires_grad = False).to(device)
-                    ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
+                    # # Create autogradient variables for training
+                    # images = torch.autograd.Variable(images, requires_grad = False).to(device)
+                    # ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
 
 
                     for i, img in enumerate(images): 
+                        
+                        # Load onto the GPU
+                        an = torch.autograd.Variable(ann[i:i+1], requires_grad = False).to(device)
+                        img = torch.autograd.Variable(images[i], requires_grad = False).to(device)
 
                         # Zero the gradients in the optimizer
                         optim.zero_grad()
@@ -169,7 +173,7 @@ class TrainModel(object):
                         # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
 
 
-                        loss = self.criterion(pred, ann[i:i+1].long()) # calculate the loss
+                        loss = self.criterion(pred, an.long()) # calculate the loss
                         
                         # for l in loss: 
                         #     writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss 
