@@ -1,7 +1,7 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 EVAL:
-  MODEL_NAME: "unet"
-  MODEL_FILE: "../models/1_LF Research Data/018/model.pt"
+  MODEL_NAME: "newmodel"
+  MODEL_FILE: "model.pt"
   DISPLAY_IMAGE: False 
   PRED_CERTAINTY: True
   BATCH_SIZE: 1
@@ -33,7 +33,7 @@ MODELS:
     MODEL_FILE: "../models/1_LF Research Data/018/model.pt"
     # MODEL_FILE: "model.pt"
     # BASE: 32 # Base value used in paper = 32
-    BASE: 12 # Base value used in paper = 32
+    BASE: 32 # Base value used in paper = 32
     KERNEL_SIZE: 5
   # --> deeplabv3plus
   DEEPLABV3PLUS: 

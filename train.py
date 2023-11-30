@@ -174,10 +174,9 @@ class TrainModel(object):
 
 
                         loss = self.criterion(pred, an.long()) # calculate the loss
-                        
-                        # for l in loss: 
-                        #     writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss 
-                        #     # pbar.set_postfix(l = l.item(),lr = optim.param_groups[0]['lr'])
+                    
+                        pbar.set_postfix(loss = loss.item(),lr = optim.param_groups[0]['lr'])
+                        #   writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss
 
                         torch.sum(loss).backward()
                         optim.step() # apply gradient descent to the weights

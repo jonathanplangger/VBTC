@@ -311,6 +311,12 @@ class NewModel(Model):
     def handle_output_train(self, pred):
         return pred
 
+    def load_model(self):
+        return torch.load(self.cfg.EVAL.MODEL_FILE)
+
+    def handle_output_eval(self, pred):
+        pred = super().handle_output_eval(pred)
+        return pred.argmax(dim=1)
 
 # -------------------------------------------------------------------------------------------------------------------------- #
 #                                                  Model Handler

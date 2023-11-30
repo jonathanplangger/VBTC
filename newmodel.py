@@ -5,12 +5,7 @@ from torchinfo import summary
 import unet
 import torch.autograd.profiler as profiler 
 
-# Set to increase the performance
-torch.backends.cudnn.benchmark = True
-
-
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
 
 class Encoder(nn.Module): 
     def __init__(self):
@@ -95,7 +90,7 @@ class CentralUnit(nn.Module):
 class PeripheralUnit(nn.Module): 
     def __init__(self): 
         super().__init__()
-        base = 16
+        base = 10
         kernel_size = 5
         num_class = 19
         self.topk = 10
