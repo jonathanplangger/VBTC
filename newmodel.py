@@ -4,6 +4,7 @@ import sys, os
 from torchinfo import summary
 import unet
 import torch.autograd.profiler as profiler 
+from lib.partialconv.models.partialconv2d import PartialConv2d # import the partial convolutions
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -65,8 +66,8 @@ class CentralUnit(nn.Module):
         super().__init__()
         self.num_classes = num_classes # set the n# of classes which will be featured on output
         self.cb1 = CentralBlock(3, depth)
-        self.cb2 = CentralBlock(20, depth)
         self.conv1d1 = nn.Conv2d(in_channels=depth*5, out_channels=20, kernel_size=1) #intermediary layer convolutions
+        self.cb2 = CentralBlock(20, depth)
         self.conv1d2 = nn.Conv2d(in_channels=depth*5, out_channels=num_classes, kernel_size=1)
 
 
@@ -79,11 +80,11 @@ class CentralUnit(nn.Module):
         # apply k=1 convolution to obtain a single resulting map
         c1 = self.conv1d1(s1)
         s2 = self.cb2(c1)
+        # c2 = self.conv1d2(s2, mask_in = mask)
         c2 = self.conv1d2(s2)
 
         # Apply the mask to the convolution and return output
-        return c2 * mask
-
+        return torch.mul(c2, mask)
 
 
 
@@ -138,7 +139,7 @@ if __name__ == "__main__":
     # Fake input to be used in benchmarking
     input = torch.rand(1,3,1200,1920).to(device)
 
-    with profiler.profile(with_stack=True, profile_memory=True, use_cuda = True) as prof:     
+    with profiler.profile(with_stack=True, profile_memory=True, use_cuda = True, record_shapes=True) as prof:     
         pred = model(input)
 
-    print(prof.key_averages(group_by_stack_n=3).table(sort_by="cuda_time", row_limit=6))
+    print(prof.key_averages(group_by_input_shape=True).table(sort_by="cuda_time_total", row_limit=20))

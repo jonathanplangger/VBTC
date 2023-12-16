@@ -155,42 +155,40 @@ class TrainModel(object):
 
                     for i, img in enumerate(images): 
                         
-                        # Load onto the GPU
-                        an = torch.autograd.Variable(ann[i:i+1], requires_grad = False).to(device)
-                        img = torch.autograd.Variable(images[i], requires_grad = False).to(device)
+                            # Load onto the GPU
+                            an = torch.autograd.Variable(ann[i:i+1], requires_grad = False).to(device)
+                            img = torch.autograd.Variable(images[i], requires_grad = False).to(device)
 
-                        # Zero the gradients in the optimizer
-                        optim.zero_grad()
-                        
-                        # regenerate the 4th dimension input
-                        img = torch.reshape(img, (1,img.shape[0], img.shape[1], img.shape[2]))
-                        
-                        # forward pass
-                        pred = self.model(img)
-                        pred = self.model_handler.handle_output(pred) # handle output based on the model
-
-                        # dice_score = dice(pred, ann.long())
-                        # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
-
-
-                        loss = self.criterion(pred, an.long()) # calculate the loss
-                    
-                        pbar.set_postfix(loss = loss.item(),lr = optim.param_groups[0]['lr'])
-                        #   writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss
-
-                        torch.sum(loss).backward()
-                        optim.step() # apply gradient descent to the weights
-
-                        # # Measure the total amount of memory that is being reserved training (for optimization purposes)
-                        # if step == 2: 
-                        #     print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
+                            # Zero the gradients in the optimizer
+                            optim.zero_grad()
                             
-                        # step += 1 # increment the counter
+                            # regenerate the 4th dimension input
+                            img = torch.reshape(img, (1,img.shape[0], img.shape[1], img.shape[2]))
+                            
+                            # forward pass
+                            pred = self.model(img)
+                            pred = self.model_handler.handle_output(pred) # handle output based on the model
 
-                        # print(prof.key_averages(group_by_stack_n=3).table(sort_by="self_cpu_time_total", row_limit=6))
+                            # dice_score = dice(pred, ann.long())
+                            # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
 
 
-                        pbar.update()
+                            loss = self.criterion(pred, an.long()) # calculate the loss
+                        
+                            # pbar.set_postfix(loss = loss.item(),lr = optim.param_groups[0]['lr'])
+                            # #   writer.add_scalar("Loss/train", l, epoch*self.steps_per_epoch + i) # record current loss
+
+                            torch.sum(loss).backward()
+                            optim.step() # apply gradient descent to the weights
+
+                            # Measure the total amount of memory that is being reserved training (for optimization purposes)
+                            if step == 2: 
+                                print("Memory Reserved for Training: {}MB".format(tools.get_memory_reserved()))
+                                
+                            step += 1 # increment the counter
+
+                            
+                    pbar.update()
             ############# Output LR update to Tensorboard ############################
             
             # Update the std out to save to a string 
