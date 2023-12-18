@@ -29,17 +29,19 @@ def get_dataloader( cfg, setType = "train"):
         return Rellis(cfg.DB.PATH, setType=setType) # Using the old version of the Rellis-3D config (no need to fix what aint broke)
     elif db_name == "rugd":  # RUGD dataset
         cfg.DB = cfg.DB.RUGD  # overwrite
-        return RUGD(setType)
+        return RUGD(cfg, setType)
     else: 
         exit("DB_NAME not properly configured, please review options and update the configuration file. ")
 
 class DataLoader(object): 
-    def __init__(self, setType = "train"): 
+    def __init__(self, cfg, setType = "train"): 
+        self.cfg = cfg
+        self.setType = setType
+    
+    def setup_data(self): 
         self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
-        self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
-        
 
     def __reg_db(self): 
         """__reg_db() is implemented to register the desired database. This must be overwritten for each dataset to function properly
@@ -395,15 +397,79 @@ class Rellis(DataLoader):
 
 class RUGD(DataLoader): 
 
-    def __init__(self, setType="train"): 
+    def __init__(self, cfg, setType="train"): 
+        # Base implementation
+        super().__init__(cfg, setType=setType)
         # Complete the registration of the dataset -> obtain the list of images in each set
         self.train_meta, self.test_meta, self.class_labels = self.__reg_db()
-        super().__init__(setType=setType) # complete the same steps as the DataLoader class
-        pass
+        super().setup_data() # complete the same steps as the DataLoader class
 
     def __reg_db(self): 
-        print("Test")
-        return 1,1,1
+        """
+            Provides the dataloader with the required format used in detectron2 for  the Rellis 3D Dataset.\n 
+            Current iteration employs filepath tied directly to the current file structure of the VM. This may need to be updated in future versions\n
+            Parameters: \n
+            -----------------------------------------\n
+            Returns: List[dict] - Metadata regarding each data file 
+        """
+        class_labels = {
+            0:"void",
+            1: "dirt",
+            2: "sand",
+            3: "grass",
+            4: "tree",
+            5: "pole",
+            6: "water",
+            7: "sky",
+            8: "vehicle",
+            9: "container/generic-object",
+            10: "asphalt",
+            11: "gravel",
+            12: "building",
+            13: "mulch", 
+            14: "rock-bed", 
+            15: "log",
+            16: "bicycle",
+            17: "person",
+            18: "fence",
+            19: "bush",
+            20: "sign", 
+            21: "rock", 
+            22: "bridge",
+            23: "concrete",
+            24: "picnic-table"
+        }
+
+        train_meta, test_meta = [], []
+
+        train_lst = open(self.cfg.DB.PATH + "train.lst", "r")
+        test_lst = open(self.cfg.DB.PATH + "test.lst", "r") 
+        lsts = [train_lst, test_lst] # 
+        
+        for i, lst in enumerate(lsts): 
+
+            for line in lst.readlines():
+                # obtain the image file name as well as the associated segmentation mask
+                [img_name, seg_name] = line.split(' ')
+                seg_name = seg_name[:-1] # remove the eol character
+                img_id = img_name.split("/")[-1] # get the image file name from this
+                # Create the new dictionary
+                meta = dict(
+                    file_name = self.cfg.DB.PATH + img_name, # path for image file
+                    height=self.cfg.DB.IMG_SIZE.HEIGHT,
+                    width=self.cfg.DB.IMG_SIZE.WIDTH, 
+                    image_id=img_id, 
+                    sem_seg_file_name= self.cfg.DB.PATH + seg_name # paht for segmentation map
+                )
+                
+                if i == 0: 
+                    # add the file to the list
+                    train_meta.append(meta)
+                elif i == 1: 
+                    test_meta.append(meta)
+            
+
+        return train_meta, test_meta, class_labels
 
 ##################################################################################################################
 # Functions Available to import into other programs
