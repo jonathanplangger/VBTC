@@ -41,15 +41,22 @@ class NewModel(nn.Module):
         conv1 = torch.permute(conv1, (1,0,2,3)) # shift the positions back to original location. 
         return conv1 # remove the extra dimension
 
-        
+class Lense(nn.Module): 
+    def __init__(self, in_channels, out_channels, kernel_size, padding, dilation): 
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, padding = padding, dilation = dilation)
+
+    def forward(self, x): 
+        return self.conv(x) 
+
 class CentralBlock(nn.Module): 
     def __init__(self, in_channels, out_channels): 
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=3, dilation = 1)
-        self.conv2 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=6, dilation = 2)
-        self.conv3 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=9, dilation = 3)
-        self.conv4 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=12, dilation = 4)
-        self.conv5 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=15, dilation = 5)
+        self.conv1 = Lense(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=3, dilation = 1)
+        self.conv2 = Lense(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=6, dilation = 2)
+        self.conv3 = Lense(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=9, dilation = 3)
+        self.conv4 = Lense(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=12, dilation = 4)
+        self.conv5 = Lense(in_channels=in_channels, out_channels=out_channels, kernel_size=7, padding=15, dilation = 5)
     
     def forward(self, x): 
         conv1 = self.conv1(x)

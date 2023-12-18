@@ -3,7 +3,6 @@ import torch
 import torchvision.transforms as T 
 from torch.nn import functional as TF
 import dataloader
-from dataloader import DataLoader
 # from torch.nn.functional import normalize
 import tqdm
 import torchmetrics
@@ -19,6 +18,7 @@ import datetime
 from patchify import patchify
 import modelhandler
 import tools 
+from torchinfo import summary 
 from io import StringIO as SIO
 # Add the loss odyssey loss functions to the implementation
 import sys
@@ -53,7 +53,7 @@ class TrainModel(object):
         # initialize configuration and update using config file
         self.cfg = get_cfg_defaults()
         self.cfg.merge_from_file("configs/config_comparative_study.yaml")
-        self.cfg.freeze()
+        # self.cfg.freeze()
 
         # obtain the model-specific operations
         self.model_handler = modelhandler.ModelHandler(self.cfg, "train")
@@ -62,7 +62,9 @@ class TrainModel(object):
         preprocess_input = False 
    
         # Dataloader initialization
-        self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input, remap = True)
+        # self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input, remap = True)
+
+        self.db = db = dataloader.get_dataloader(self.cfg, setType="train")
 
         # Training Parameters
         self.batch_size = self.cfg.TRAIN.BATCH_SIZE #3
@@ -115,7 +117,6 @@ class TrainModel(object):
 
         # # Obtain the summary of the model architecture + memory requirements
         ##TODO: Fix Summary not working with DLV3+, execution halts at same location
-        from torchinfo import summary 
         model_summary = summary(self.model, input_size=(1, 3, input_size[0], input_size[1]))
         # record the model parameters on tensorboard``
         writer.add_text("Model/", str(model_summary).replace("\n", " <br \>")) # Print the summary on tensorboard

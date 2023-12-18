@@ -8,8 +8,143 @@ import albumentations as album
 import torch
 import yaml
 
+
+def get_dataloader( cfg, setType = "train"): 
+    """_summary_
+
+    :param cfg: Configuration file object. Contains the configuration information for the project
+    :type cfg: argparse.Namespace
+    :param setType: Type of action to be taken (train, test). Default setting = "train" 
+    :type setType: str, optional
+    :return: Dataloader object providing the necessary functions for the loading of data
+    :rtype: Dataloader
+    """    
+    # Get the name of the database being examined. 
+    db_name = cfg.DB.DB_NAME
+    
+    # Return the correct dataloader based on the configuration options 
+    if db_name == "rellis": # Rellis-3D dataset
+        # Overwrite the default configuration to use the desired one 
+        cfg.DB = cfg.DB.RELLIS
+        return Rellis(cfg.DB.PATH, setType=setType) # Using the old version of the Rellis-3D config (no need to fix what aint broke)
+    elif db_name == "rugd":  # RUGD dataset
+        cfg.DB = cfg.DB.RUGD  # overwrite
+        return RUGD(setType)
+    else: 
+        exit("DB_NAME not properly configured, please review options and update the configuration file. ")
+
+class DataLoader(object): 
+    def __init__(self, setType = "train"): 
+        self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
+        self.height = int(self.train_meta[0]["height"])
+        self.width = int(self.train_meta[0]["width"])
+        self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
+        
+
+    def __reg_db(self): 
+        """__reg_db() is implemented to register the desired database. This must be overwritten for each dataset to function properly
+        """
+        exit("No implementation for __reg_db() is provided for this dataset. Please update before continuing...")
+    
+    def load_frame(self, img_path, mask_path): 
+        """
+            Loads the given image alongside its segmentation mask. \n
+            ---------------------------\n
+            parameters:\n
+            img_path(str) = Path to the image 
+            mask_path(str) = Path to the mask file 
+            transform = transformation function to be applied to the incoming data
+        """
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # convert the color code to use RGB
+        mask = cv2.imread(mask_path)
+        return img, mask
+
+    def load_batch(self, idx:int=None, batch_size:int = 1, resize = None):
+        """
+            Load a batch of size "batch_size". Returns the images, annotation maps, and the newly updated index value
+            ----------------\n
+            Parameters: \n 
+            idx (int): the index of the image in the list, this function iterates this index and returns the value later \n
+            batch_size (int): size of batch being retrieved by the program \n
+            --------\n
+            Returns: (images, annMap, idx)
+            - images: list of images in the given batch 
+            - annMap: list of annotation maps in the given batch
+            - idx: new index of the iamge on the list.
+            - resize (h,w): new size to be applied to ONLY the image. Annotation will be left alone. 
+        """
+
+        if self.setType == "train": 
+            metadata = self.train_meta
+        elif self.setType == "test":
+            metadata = self.test_meta 
+        elif self.setType == "val": 
+            metadata = None # TODO - > Update this set type to work
+        else: # incorrect version used
+            raise Exception("Invalid set type. Please select either train/test/val.")
+
+        #initialize the index
+        if idx == None: 
+            idx = 1
+
+        # If no new size is requested, employ the original dimensions
+        if resize == None: 
+            resize = (self.height, self.width)
+            
+        orig_images = np.empty((batch_size, self.height, self.width, 3)) # stores the original images
+        annMap = np.empty((batch_size, self.height, self.width, 3))
+
+        # load image and mask files
+        for i in range(batch_size): 
+            orig_images[i], annMap[i] = self.load_frame(metadata[i + idx]["file_name"], metadata[i + idx]["sem_seg_file_name"])
+
+        # update the index value 
+        idx += batch_size
+
+        # pre-process the image input if defined in the class
+        if self.preprocessing:
+            sample = self.preprocessing(image = orig_images, mask = annMap)
+            images, annMap = sample['image'], sample['mask']
+        else: # set the images to simply be the original images
+            images = orig_images
+
+        if resize != None:
+            resized_img = np.empty((batch_size, resize[0], resize[1], 3)) # create a temporary container variable
+            for i, img in enumerate(images): # re-size the images to the desired size 
+                # re-size the image to the desired sizes
+                resized_img[i] = cv2.resize(img, (resize[1], resize[0]), interpolation=cv2.INTER_LINEAR)
+            images = resized_img # override the images with the newly resized images
+
+        # Convert the numpy ndarray into useful tensor form
+        images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2))
+        annMap = (torch.from_numpy(annMap)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
+
+        # Re-map the annotation labels to match the other scale
+        if self.remap == True: 
+            annMap = self.map_labels(annMap)
+
+        # Normalize the input image 
+        if self.input_norm: 
+            images = self.norm(images) 
+        else: # perform a simple division to reduce the overall distribution
+            images = images/255.0
+
+        return orig_images, images, annMap, idx
+
+    def randomizeOrder(self):
+        """
+            Randomizes the order of the metadata object. This will shuffle the elements in the dict in a random order
+            \n This will update the object metadata parameter and is NON reversable. Only use for training.
+        """    
+        random.shuffle(self.train_meta) # shuffle the current order of the list
+        random.shuffle(self.test_meta) # shuffle the testing set 
+
+    def get_colors(self, remap_labels = False): 
+        exit("No specific implementation provided for the get_colors function. Please update the code")
+        
 # ------------- Dataloader for the new dataset ------------- #
-class DataLoader(object):
+class Rellis(DataLoader):
     """
         Provides the dataloading capabilities for outsides datasets.\n
         --------------------\n
@@ -156,101 +291,6 @@ class DataLoader(object):
 
         return train_meta, test_meta, class_labels
 
-    def randomizeOrder(self):
-        """
-            Randomizes the order of the metadata object. This will shuffle the elements in the dict in a random order
-            \n This will update the object metadata parameter and is NON reversable. Only use for training.
-        """    
-        random.shuffle(self.train_meta) # shuffle the current order of the list
-        random.shuffle(self.test_meta) # shuffle the testing set 
-
-    def load_frame(self, img_path, mask_path): 
-        """
-            Loads the given image alongside its segmentation mask. \n
-            ---------------------------\n
-            parameters:\n
-            img_path(str) = Path to the image 
-            mask_path(str) = Path to the mask file 
-            transform = transformation function to be applied to the incoming data
-        """
-        img = cv2.imread(img_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # convert the color code to use RGB
-        mask = cv2.imread(mask_path)
-        return img, mask
-
-
-    def load_batch(self, idx:int=None, batch_size:int = 1, resize = None):
-        """
-            Load a batch of size "batch_size". Returns the images, annotation maps, and the newly updated index value
-            ----------------\n
-            Parameters: \n 
-            idx (int): the index of the image in the list, this function iterates this index and returns the value later \n
-            batch_size (int): size of batch being retrieved by the program \n
-            --------\n
-            Returns: (images, annMap, idx)
-            - images: list of images in the given batch 
-            - annMap: list of annotation maps in the given batch
-            - idx: new index of the iamge on the list.
-            - resize (h,w): new size to be applied to ONLY the image. Annotation will be left alone. 
-        """
-
-        if self.setType == "train": 
-            metadata = self.train_meta
-        elif self.setType == "test":
-            metadata = self.test_meta 
-        elif self.setType == "val": 
-            metadata = None # TODO - > Update this set type to work
-        else: # incorrect version used
-            raise Exception("Invalid set type. Please select either train/test/val.")
-
-        #initialize the index
-        if idx == None: 
-            idx = 1
-
-        # If no new size is requested, employ the original dimensions
-        if resize == None: 
-            resize = (self.height, self.width)
-            
-        orig_images = np.empty((batch_size, self.height, self.width, 3)) # stores the original images
-        annMap = np.empty((batch_size, self.height, self.width, 3))
-
-        # load image and mask files
-        for i in range(batch_size): 
-            orig_images[i], annMap[i] = self.load_frame(metadata[i + idx]["file_name"], metadata[i + idx]["sem_seg_file_name"])
-
-        # update the index value 
-        idx += batch_size
-
-        # pre-process the image input if defined in the class
-        if self.preprocessing:
-            sample = self.preprocessing(image = orig_images, mask = annMap)
-            images, annMap = sample['image'], sample['mask']
-        else: # set the images to simply be the original images
-            images = orig_images
-
-        if resize != None:
-            resized_img = np.empty((batch_size, resize[0], resize[1], 3)) # create a temporary container variable
-            for i, img in enumerate(images): # re-size the images to the desired size 
-                # re-size the image to the desired sizes
-                resized_img[i] = cv2.resize(img, (resize[1], resize[0]), interpolation=cv2.INTER_LINEAR)
-            images = resized_img # override the images with the newly resized images
-
-        # Convert the numpy ndarray into useful tensor form
-        images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2))
-        annMap = (torch.from_numpy(annMap)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
-
-        # Re-map the annotation labels to match the other scale
-        if self.remap == True: 
-            annMap = self.map_labels(annMap)
-
-        # Normalize the input image 
-        if self.input_norm: 
-            images = self.norm(images) 
-        else: # perform a simple division to reduce the overall distribution
-            images = images/255.0
-
-        return orig_images, images, annMap, idx
-
     def getPatches(self, img: np.ndarray, patch_size, stride=[1,1], padding=[0,0]): 
         """
             Converts the image/annotation into smaller configurable patches. 
@@ -352,6 +392,18 @@ class DataLoader(object):
             colors[0] = (0,0,0)
 
         return colors
+
+class RUGD(DataLoader): 
+
+    def __init__(self, setType="train"): 
+        # Complete the registration of the dataset -> obtain the list of images in each set
+        self.train_meta, self.test_meta, self.class_labels = self.__reg_db()
+        super().__init__(setType=setType) # complete the same steps as the DataLoader class
+        pass
+
+    def __reg_db(self): 
+        print("Test")
+        return 1,1,1
 
 ##################################################################################################################
 # Functions Available to import into other programs
