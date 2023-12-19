@@ -55,16 +55,16 @@ class TrainModel(object):
         self.cfg.merge_from_file("configs/config_comparative_study.yaml")
         # self.cfg.freeze()
 
+        # Dataloader initialization
+        self.db = db = dataloader.get_dataloader(self.cfg, setType="train")
+
         # obtain the model-specific operations
         self.model_handler = modelhandler.ModelHandler(self.cfg, "train")
     
         # default to not preprocessing the input to the model
         preprocess_input = False 
    
-        # Dataloader initialization
-        # self.db = db = dataloader.DataLoader(self.cfg.DB.PATH, preprocessing=preprocess_input, remap = True)
 
-        self.db = db = dataloader.get_dataloader(self.cfg, setType="train")
 
         # Training Parameters
         self.batch_size = self.cfg.TRAIN.BATCH_SIZE #3

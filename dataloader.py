@@ -37,11 +37,17 @@ class DataLoader(object):
     def __init__(self, cfg, setType = "train"): 
         self.cfg = cfg
         self.setType = setType
+        # Base settings, should be overwriten  by the child classif desired
+        self.preprocessing = False
+        self.remap = False
+        self.input_norm = False
     
     def setup_data(self): 
         self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
+
+    
 
     def __reg_db(self): 
         """__reg_db() is implemented to register the desired database. This must be overwritten for each dataset to function properly
@@ -439,6 +445,8 @@ class RUGD(DataLoader):
             23: "concrete",
             24: "picnic-table"
         }
+
+        self.num_classes = len(class_labels)
 
         train_meta, test_meta = [], []
 
