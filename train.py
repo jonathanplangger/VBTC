@@ -63,8 +63,6 @@ class TrainModel(object):
     
         # default to not preprocessing the input to the model
         preprocess_input = False 
-   
-
 
         # Training Parameters
         self.batch_size = self.cfg.TRAIN.BATCH_SIZE #3

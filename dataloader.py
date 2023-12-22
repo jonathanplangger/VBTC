@@ -47,8 +47,6 @@ class DataLoader(object):
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
 
-    
-
     def __reg_db(self): 
         """__reg_db() is implemented to register the desired database. This must be overwritten for each dataset to function properly
         """
@@ -66,7 +64,7 @@ class DataLoader(object):
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # convert the color code to use RGB
         mask = cv2.imread(mask_path)
-        return img, mask
+        return img, mask[:,:,0] # keep only the first dimension (since the other 3 are the same thing) 
 
     def load_batch(self, idx:int=None, batch_size:int = 1, resize = None):
         """
@@ -101,7 +99,7 @@ class DataLoader(object):
             resize = (self.height, self.width)
             
         orig_images = np.empty((batch_size, self.height, self.width, 3)) # stores the original images
-        annMap = np.empty((batch_size, self.height, self.width, 3))
+        annMap = np.empty((batch_size, self.height, self.width))
 
         # load image and mask files
         for i in range(batch_size): 
@@ -126,7 +124,7 @@ class DataLoader(object):
 
         # Convert the numpy ndarray into useful tensor form
         images = ((torch.from_numpy(images)).to(torch.float32).permute(0,3,1,2))
-        annMap = (torch.from_numpy(annMap)).to(torch.float32).permute(0,3,1,2)[:,0,:,:]
+        annMap = (torch.from_numpy(annMap)).to(torch.float32).permute(0,1,2)
 
         # Re-map the annotation labels to match the other scale
         if self.remap == True: 
@@ -361,7 +359,6 @@ class Rellis(DataLoader):
     
         return album.Compose(_transform)
     
-
     def map_results(self, results):
         """
             Converts the 0->19 results into 0->34 tensor(Using the original numbering scheme) 
@@ -479,6 +476,52 @@ class RUGD(DataLoader):
 
         return train_meta, test_meta, class_labels
 
+    # TODO - This should be implemented in the original datasets directory instead. 
+
+    # def load_frame(self, img_path, mask_path): 
+    #     # Run the parent code and apply the colour variation
+    #     img, mask = super().load_frame(img_path, mask_path) 
+        
+    #     # Apply the conversion into single int annotation mask
+    #     return img, self.convert_ann(mask)
+
+    # def get_colors(self): 
+    #     # return a list of color tuples
+    #     f_colors = open("{}/RUGD_annotations/RUGD_annotation-colormap.txt".format(self.cfg.DB.PATH))
+    #     classes = f_colors.readlines() # read the files
+    #     f_colors.close() # file no longer required 
+
+    #     colors = [] # hold all the colours per class assignment
+    #     for c in classes: 
+    #         color = c.split(' ')[-3:]
+    #         color[2] = color[2].replace("\n", "") # remove the EOL characters of the final character
+    #         color = [int(x) for x in color] # convert them all into int values
+    #         color = tuple(color)
+
+    #         # place the color tuple onto the array
+    #         colors.append(color)
+        
+    #     return colors 
+
+    # def convert_ann(self, mask):
+    #     # get the color mapping for the classes 
+    #     colors = self.get_colors()
+        
+    #     # Re-order the array for simplicity
+    #     mask = np.transpose(mask, (2,0,1))
+        
+    #     ann_mask = np.zeros(mask.shape[1:]) # Create a new mask (index-based) of the same size as the image
+
+    #     # For each pixel within the ann_mask
+    #     for i in range(ann_mask.shape[0]): 
+    #         for j in range(ann_mask.shape[1]): 
+    #             for c,rgb in enumerate(colors):
+    #                 if all(mask[:,i,j] == list(rgb)): # if they match the correct selection, map them
+    #                     ann_mask[i,j] = c # set the value to the right class label
+
+    #     ann_mask = np.expand_dims(ann_mask, axis=0) # add a 1 buffer to the class element for the array. 
+    #     return ann_mask
+
 ##################################################################################################################
 # Functions Available to import into other programs
 ##################################################################################################################
@@ -526,10 +569,7 @@ def map_labels (label, inverse = False):
         for k, v in label_mapping.items():
             label[temp == k] = v
     return label
-
-
-
-        
+      
 # --------- Testing the class above, REMOVE later ------------ #
 if __name__ == "__main__": 
     rellis_path = "../../datasets/Rellis-3D/" #path ot the dataset directory

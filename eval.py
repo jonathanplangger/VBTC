@@ -41,7 +41,6 @@ class ComparativeEvaluation():
         # Load and update the configuration file. Serves as the main point of configuration for the testing. 
         self.cfg = get_cfg_defaults()
         self.cfg.merge_from_file("configs/config_comparative_study.yaml")
-        self.cfg.freeze()
 
         # Set up the device where the program is going to be run -> gpu if available
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -49,14 +48,14 @@ class ComparativeEvaluation():
 
     def eval(self):
 
+        # Dataloader initialization
+        self.db = db = dataloader.get_dataloader(self.cfg, setType="train")
+        db.randomizeOrder()
+
         # Obtain the model handler -> used to generate model-specific features 
         model_handler = modelhandler.ModelHandler(self.cfg, "eval")
 
         writer = SummaryWriter() 
-
-        # obtain the data
-        db = dataloader.DataLoader(setType="test", remap = True) 
-        db.randomizeOrder()
 
         # Empty the cache prior to training the network
         torch.cuda.empty_cache()

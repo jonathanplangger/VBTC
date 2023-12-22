@@ -1,7 +1,7 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 
 DB: # configure which database is being used during training / test
-  DB_NAME: "rellis" # currently only rugd & rellis
+  DB_NAME: "rugd" # currently only rugd & rellis
    
 EVAL:
   MODEL_NAME: "newmodel"
@@ -22,7 +22,7 @@ TRAIN:
   LR: 1.0e-5 # learning rate (1e-4 is base for most learning)
   FINAL_LR: 1.0e-10
   PRETRAINED: False
-  INPUT_NORM: True
+  INPUT_NORM: False
   INPUT_SIZE:
     RESIZE_IMG: False
     HEIGHT: 650
