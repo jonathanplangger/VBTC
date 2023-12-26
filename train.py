@@ -141,9 +141,9 @@ class TrainModel(object):
             # TODO -  Turn this into a configurable parameter
             load_size = 1
             
-            with tqdm.tqdm(total=3302, unit="Batch") as pbar:
+            with tqdm.tqdm(total=len(self.db.train_meta), unit="Batch") as pbar:
                 
-                for i in range(3302): 
+                for i in range(len(self.db.train_meta)): 
                              
                 
                     # load the image batch

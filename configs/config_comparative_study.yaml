@@ -25,8 +25,8 @@ TRAIN:
   INPUT_NORM: False
   INPUT_SIZE:
     RESIZE_IMG: False
-    HEIGHT: 650
-    WIDTH: 1040   
+    HEIGHT: 1100
+    WIDTH: 1760  
 
     # # Sizing Employed in previous iterations of the code  
     # HEIGHT: 500
