@@ -83,6 +83,8 @@ class TrainModel(object):
             self.model = self.model_handler.load_model()
         else: # Generate a new model based on configuration file
             self.model = self.model_handler.gen_model(self.db.num_classes)
+            
+        pass
 
     def train_model(self): 
         # Use the GPU as the main device if present 
