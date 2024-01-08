@@ -4,9 +4,9 @@ DB: # configure which database is being used during training / test
   DB_NAME: "rellis" # currently only rugd & rellis
    
 EVAL:
-  MODEL_NAME: "newmodel"
-  MODEL_FILE: "model.pt"
-  DISPLAY_IMAGE: False 
+  MODEL_NAME: "deeplabv3plus"
+  MODEL_FILE: "../models/1_Winter2024_TrainingResults/012/epoch5.pt"
+  DISPLAY_IMAGE: True 
   PRED_CERTAINTY: True
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
@@ -16,12 +16,12 @@ EVAL:
 
 TRAIN:
   MODEL_NAME: 'deeplabv3plus'
-  CRITERION: 'crossentropyloss'
+  CRITERION: 'fciouv2'
   BATCH_SIZE: 1
   TOTAL_EPOCHS: 10
-  LR: 1.0e-5 # learning rate (1e-4 is base for most learning)
+  LR: 1.0e-6 # learning rate (1e-4 is base for most learning)
   FINAL_LR: 1.0e-10
-  PRETRAINED: False
+  PRETRAINED: True
   INPUT_NORM: False
   INPUT_SIZE:
     RESIZE_IMG: False
@@ -34,7 +34,7 @@ TRAIN:
     
 MODELS:
   UNET: # --> unet
-    MODEL_FILE: "../models/1_LF Research Data/018/model.pt"
+    MODEL_FILE: "../models/1_Winter2024_TrainingResults/012/model.pt"
     # MODEL_FILE: "model.pt"
     # BASE: 32 # Base value used in paper = 32
     BASE: 32 # Base value used in paper = 32
@@ -42,7 +42,7 @@ MODELS:
   # --> deeplabv3plus
   DEEPLABV3PLUS: 
     BACKBONE: 'resnet50' # xception, resnet101, resnet50
-    MODEL_FILE: "../models/2_ModelEvaluation/001/model.pt"
+    MODEL_FILE: "../models/1_Winter2024_TrainingResults/012/epoch5.pt"
   # --> hrnet_ocr
   HRNET_OCR:  
     CONFIG: "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"

@@ -145,7 +145,6 @@ class TrainModel(object):
                 
                 for i in range(len(self.db.train_meta)): 
                              
-                
                     # load the image batch
                     _, images, ann, idx = self.db.load_batch(idx, batch_size=load_size, resize = input_size)
                     
@@ -196,7 +195,7 @@ class TrainModel(object):
             temp = sys.stdout
             sys.stdout = o = SIO()
             # update the learning rate based on scheduler scheme (every epoch)
-            scheduler.step(loss[0]) # use only one of the obtained loss values 
+            scheduler.step(loss) # use only one of the obtained loss values 
             sys.stdout = temp # restore original output 
 
             # get the result of the step update 

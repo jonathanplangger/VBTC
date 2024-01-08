@@ -265,12 +265,12 @@ class DeepLabV3Plus(Model):
     def __init__(self, cfg, mode): 
         # run the initial configuration
         super().__init__(cfg, mode) 
+        self.mode = mode
 
         # Import the required libraries for the application of the model.
         src_dir = self.cfg.MODELS.DEEPLABV3PLUS.SRC_DIR
         sys.path.insert(0, src_dir) 
         
-
 
     def gen_model(self, num_classes):
         """Constructs the model using the methods provided in the source code. \n
@@ -295,9 +295,13 @@ class DeepLabV3Plus(Model):
         Backbone Structure: {} <br />
         """.format(self.cfg.MODELS.DEEPLABV3PLUS.BACKBONE) # Add more as necessary. 
     
-    def load_model(self): 
-        return torch.load(self.cfg.EVAL.MODEL_FILE)
-    
+    def load_model(self):
+        if self.mode == "train": # load the desired model 
+            return torch.load(self.cfg.MODELS.DEEPLABV3PLUS.MODEL_FILE)
+        elif self.mode == "eval": 
+            return torch.load(self.cfg.EVAL.MODEL_FILE)
+
+
     def handle_output_eval(self, pred):
         # Complete the default resizing
         pred = super().handle_output_eval(pred)

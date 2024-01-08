@@ -130,56 +130,6 @@ class FCIoUV2(nn.Module):
 
         return loss_iou
 
-    # BACKUP Implementation, keep to restore later
-    # def forward(self, pred, ann):
-    #     """
-    #         Params: \n
-    #         ann (tensor) = annotation (b,h,w)\n
-    #         pred (tensor) = logit output prediction (b,c,h,w) \n
-    #     """
-
-    #     # Retrieve the n# of classes based on the n# of classes within the prediction channel
-    #     num_classes = pred.shape[1]
-
-    #     # Get the softmax output ([0,1]) for the prediction
-    #     pred = torch.softmax(pred, dim=1) + self.eps
-
-    #     # Create the onehot tensor for each class (gic)
-    #     ann = torch.unsqueeze(ann,0)
-    #     ann = ann.long() # convert to required variable type
-    #     ann_onehot = torch.zeros(pred.shape) # obtain blank array w/ same shape as the prediction
-    #     ann_onehot = ann_onehot.cuda() # TODO update to use the device instead. 
-    #     ann_onehot.scatter_(1, ann, 1) # create onehot vector
-
-    #     num = pred * ann_onehot # numerator
-    #     denom = torch.pow(pred,2) + ann_onehot - num # denominator
-
-    #     # sum up all the values on a per-class basis
-    #     num = torch.sum(num, dim=(2,3))
-    #     denom = torch.sum(denom, dim=(2,3)) 
-        
-    #     # get the IoU score for each class 
-    #     loss_iou = 2*torch.div(num, denom) 
-
-    #     # fit the iou values to a more suitable weighted loss value
-    #     loss_iou = -torch.log10(torch.pow(loss_iou + self.eps,0.5) + self.eps)
-
-    #     # turn off contribution to loss by any classes not within the annotation file        
-    #     num_active = 0
-    #     for c in range(num_classes): 
-    #         if c not in ann: 
-    #             loss_iou[0,c] = 0
-    #         else: 
-    #             num_active += 1 # increase the count
-
-    #     #sum up the final loss amount 
-    #     loss_iou = torch.sum(loss_iou, dim=1)
-    #     # Average the iou loss based on the currently active classes within the annotations
-    #     # loss_iou = loss_iou/num_active
-        
-
-    #     return loss_iou
-    
 class FCIoUV3(nn.Module):
     def __init__(self): 
 
