@@ -147,11 +147,6 @@ class TrainModel(object):
                              
                     # load the image batch
                     _, images, ann, idx = self.db.load_batch(idx, batch_size=load_size, resize = input_size)
-                    
-                    # # Create autogradient variables for training
-                    # images = torch.autograd.Variable(images, requires_grad = False).to(device)
-                    # ann = torch.autograd.Variable(ann, requires_grad = False).to(device)
-
 
                     for i, img in enumerate(images): 
                         
@@ -169,8 +164,8 @@ class TrainModel(object):
                             pred = self.model(img)
                             pred = self.model_handler.handle_output(pred) # handle output based on the model
 
-                            # dice_score = dice(pred, ann.long())
-                            # writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
+                            dice_score = dice(pred, an.long())
+                            writer.add_scalar("Metric/Dice", dice_score, epoch*self.steps_per_epoch + i)
 
 
                             loss = self.criterion(pred, an.long()) # calculate the loss

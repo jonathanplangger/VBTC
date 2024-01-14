@@ -233,6 +233,7 @@ class ComparativeEvaluation():
         
         print("Mean Dice Value Obtained: {:.4f}".format(mean_dice))
         print(table) # print the raw prediction values for the table
+        print(list(table.values()))
         print("End of Evaluation Program")  
 
 

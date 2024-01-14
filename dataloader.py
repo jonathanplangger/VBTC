@@ -371,6 +371,13 @@ class Rellis(DataLoader):
         return temp 
 
     def get_colors(self, remap_labels=False): 
+        """get_colors()
+
+        :param remap_labels: Configure whether the label remapping is being used. Defaults to False
+        :type remap_labels: bool, optional
+        :return: _description_
+        :rtype: _type_
+        """        
         # open the ontology file for rellis and obtain the colours for them
         # ---- TODO -- This needs to be handled by the dataloader and NOT the eval.py
         with open("Rellis_3D_ontology/ontology.yaml", "r") as stream: 
@@ -476,52 +483,24 @@ class RUGD(DataLoader):
 
         return train_meta, test_meta, class_labels
 
-    # TODO - This should be implemented in the original datasets directory instead. 
+    def get_colors(self):  
+        """get_colors
 
-    # def load_frame(self, img_path, mask_path): 
-    #     # Run the parent code and apply the colour variation
-    #     img, mask = super().load_frame(img_path, mask_path) 
-        
-    #     # Apply the conversion into single int annotation mask
-    #     return img, self.convert_ann(mask)
+        :return: colors -> Colours for each fo the classes of the RUGD dataset. Colour is associated to classes through index value of the array. Employable in visualization of the semantic classes
+        :rtype: List(int): List of set of 3 int values (RGB) for the colours. 
+        """        
+        # open the colour map file for RUGD
+        with open("{}/RUGD_annotations/RUGD_annotation-colormap.txt".format(self.cfg.DB.PATH)) as f: 
+            classes = f.readlines()
 
-    # def get_colors(self): 
-    #     # return a list of color tuples
-    #     f_colors = open("{}/RUGD_annotations/RUGD_annotation-colormap.txt".format(self.cfg.DB.PATH))
-    #     classes = f_colors.readlines() # read the files
-    #     f_colors.close() # file no longer required 
-
-    #     colors = [] # hold all the colours per class assignment
-    #     for c in classes: 
-    #         color = c.split(' ')[-3:]
-    #         color[2] = color[2].replace("\n", "") # remove the EOL characters of the final character
-    #         color = [int(x) for x in color] # convert them all into int values
-    #         color = tuple(color)
-
-    #         # place the color tuple onto the array
-    #         colors.append(color)
-        
-    #     return colors 
-
-    # def convert_ann(self, mask):
-    #     # get the color mapping for the classes 
-    #     colors = self.get_colors()
-        
-    #     # Re-order the array for simplicity
-    #     mask = np.transpose(mask, (2,0,1))
-        
-    #     ann_mask = np.zeros(mask.shape[1:]) # Create a new mask (index-based) of the same size as the image
-
-    #     # For each pixel within the ann_mask
-    #     for i in range(ann_mask.shape[0]): 
-    #         for j in range(ann_mask.shape[1]): 
-    #             for c,rgb in enumerate(colors):
-    #                 if all(mask[:,i,j] == list(rgb)): # if they match the correct selection, map them
-    #                     ann_mask[i,j] = c # set the value to the right class label
-
-    #     ann_mask = np.expand_dims(ann_mask, axis=0) # add a 1 buffer to the class element for the array. 
-    #     return ann_mask
-
+            colors = []
+            for i, c in enumerate(classes): 
+                classes[i] = c.replace("\n", "") # remove the EOL characters
+                colors.append([int(x) for x in classes[i].split()[-3:]]) # convert all the values in the list to int
+                
+        # Return the color mapping for the dataset
+        return colors
+    
 ##################################################################################################################
 # Functions Available to import into other programs
 ##################################################################################################################
