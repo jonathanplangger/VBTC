@@ -62,7 +62,7 @@ class ComparativeEvaluation():
 
         TOTAL_NUM_TEST = len(db.test_meta)
         NUM_TEST = TOTAL_NUM_TEST
-        # NUM_TEST = 20
+        # NUM_TEST = 20 # for quickly testing the eval program
         
         colors = db.get_colors()
 
@@ -221,11 +221,15 @@ class ComparativeEvaluation():
 
         table = {}
 
-        # Obtain the class label strings & update to merge "void" and "dirt" classes as done in the model
+
+            # Obtain the class label strings & update to merge "void" and "dirt" classes as done in the model
         class_labels = list(db.class_labels.values())
-        class_labels.remove("dirt")
-        class_labels.remove("void")
-        class_labels.insert(0, "void & dirt")
+
+        # ONLY perform these steps if the rellis dataset is being used here
+        if self.cfg.DB.DB_NAME == 'rellis':         
+            class_labels.remove("dirt")
+            class_labels.remove("void")
+            class_labels.insert(0, "void & dirt")
 
         # Re-format and convert the IoU Object to a table entry
         for c, _ in enumerate(iou_c): 

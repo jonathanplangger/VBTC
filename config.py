@@ -16,6 +16,7 @@ _C.DB.IMG_SIZE.WIDTH = None
 
 # --------- Rellis-3D (rellis) --------- #
 _C.DB.RELLIS = CN()
+_C.DB.RELLIS.DB_NAME = 'rellis'
 _C.DB.RELLIS.PATH = "../datasets/Rellis-3D/"
 _C.DB.RELLIS.NUM_CLASSES = 35
 _C.DB.RELLIS.EFF_NUM_CLASSES = 19 # effective n# of classes, some of the 35 classes are not used at all 
@@ -25,6 +26,7 @@ _C.DB.RELLIS.IMG_SIZE.WIDTH = 1920
 
 # -------- RUGD Dataset (rellis) ---------- #
 _C.DB.RUGD = CN()
+_C.DB.RUGD.DB_NAME = 'rugd'
 _C.DB.RUGD.PATH = "../datasets/RUGD/"
 _C.DB.RUGD.NUM_CLASSES = 24 # ? How many are there? 
 _C.DB.RUGD.EFF_NUM_CLASSES = 24 # effective n# of classes, some of the 35 classes are not used at all 
