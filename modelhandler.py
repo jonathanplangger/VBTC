@@ -153,16 +153,16 @@ class UNet(Model):
 class HRNet_OCR(Model): 
     # HRNetv2 Model
 
+    def __init__(self, cfg, mode): 
+        # run the initial configuration
+        super().__init__(cfg, mode) 
+        self.mode = mode
+
     def load_model(self): 
-        # model source code directory
-        src_dir = self.cfg.MODELS.HRNET_OCR.SRC_DIR
-        # add the source code tools directory to re-use their code
-        sys.path.insert(0,os.path.join(src_dir,"tools/"))
-        sys.path.insert(0,os.path.join(src_dir,"lib/"))
-        from tools import load_model
-        model = load_model("/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml", 
-                            model_file = self.cfg.MODELS.EVAL.MODEL_FILE)
-        return model
+        if self.mode == "train": # load the desired model 
+            return torch.load(self.cfg.MODELS.HRNET_OCR.MODEL_FILE)
+        elif self.mode == "eval": 
+            return torch.load(self.cfg.EVAL.MODEL_FILE)
         
     def handle_output_eval(self, pred):
         img_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
@@ -175,8 +175,12 @@ class HRNet_OCR(Model):
         return pred
     
     def handle_output_train(self, pred):
-        # Use only one of the outputs from the model for the segmentation.
-        pred = super().handle_output_train(pred[1])  
+        # Linear upsampling re-sizing should always occur at the output (even when the full size is being used)
+        # This is due to how the output of the HRNEt is 1/4 the original size of the image
+        # retrieve the output size for the db.
+        output_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
+        # interpolate to regenerate the original output size. 
+        pred = TF.interpolate(input=pred[1], size=output_size, mode="bilinear", align_corners=False)
         return pred
     
     def gen_model(self, num_classes): 
@@ -191,6 +195,11 @@ class HRNet_OCR(Model):
 
         args = argparse.Namespace(cfg = self.cfg.MODELS.HRNET_OCR.CONFIG, opts="")
         update_config(config, args)  #update the configuration file to use the right config 
+
+        # add in our own custom overwrites for the configuration file
+        config.defrost()
+        config.DATASET.NUM_CLASSES = self.cfg.DB.NUM_CLASSES # update the n# of classes
+        config.freeze() # freeze the configuration in place
         model = hrnet_model.get_seg_model(config)
 
         return model

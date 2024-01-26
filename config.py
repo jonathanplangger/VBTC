@@ -24,7 +24,7 @@ _C.DB.RELLIS.IMG_SIZE = CN()
 _C.DB.RELLIS.IMG_SIZE.HEIGHT = 1200 
 _C.DB.RELLIS.IMG_SIZE.WIDTH = 1920
 
-# -------- RUGD Dataset (rellis) ---------- #
+# -------- RUGD Dataset (rugd) ---------- #
 _C.DB.RUGD = CN()
 _C.DB.RUGD.DB_NAME = 'rugd'
 _C.DB.RUGD.PATH = "../datasets/RUGD/"

@@ -1,11 +1,11 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 
 DB: # configure which database is being used during training / test
-  DB_NAME: "rellis" # currently only rugd & rellis
+  DB_NAME: "unet" # currently only rugd & rellis
    
 EVAL:
-  MODEL_NAME: "deeplabv3plus"
-  MODEL_FILE: "../models/1_Winter2024_TrainingResults/041/model.pt"
+  MODEL_NAME: "hrnet_ocr"
+  MODEL_FILE: "../models/1_Winter2024_TrainingResults/036/epoch2.pt"
   DISPLAY_IMAGE: True 
   PRED_CERTAINTY: False
   BATCH_SIZE: 1
