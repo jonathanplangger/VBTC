@@ -181,14 +181,17 @@ class HRNet_OCR(Model):
     
     def gen_model(self, num_classes): 
         src_dir = self.cfg.MODELS.HRNET_OCR.SRC_DIR
-        sys.path.insert(0, src_dir) # add to path to allow for import 
+        sys.path.insert(0, src_dir + "/lib") # add to path to allow for import 
         # from . import config
         # from config import update_config
         from hrnet_config import config, update_config # import the default config and update_config f'n
-        import models # add the modelling code 
+
+        # import the model library
+        import models.hrnet_ocr.lib.models.seg_hrnet_ocr as hrnet_model
+
         args = argparse.Namespace(cfg = self.cfg.MODELS.HRNET_OCR.CONFIG, opts="")
         update_config(config, args)  #update the configuration file to use the right config 
-        model = eval('models.' + self.cfg.MODELS.HRNET_OCR.MODEL_NAME + '.get_seg_model')(config)
+        model = hrnet_model.get_seg_model(config)
 
         return model
     

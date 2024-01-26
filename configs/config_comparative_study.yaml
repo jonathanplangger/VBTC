@@ -1,12 +1,12 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 
 DB: # configure which database is being used during training / test
-  DB_NAME: "rugd" # currently only rugd & rellis
+  DB_NAME: "rellis" # currently only rugd & rellis
    
 EVAL:
   MODEL_NAME: "deeplabv3plus"
   MODEL_FILE: "../models/1_Winter2024_TrainingResults/041/model.pt"
-  DISPLAY_IMAGE: False 
+  DISPLAY_IMAGE: True 
   PRED_CERTAINTY: False
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
@@ -15,13 +15,13 @@ EVAL:
     WIDTH: 800
 
 TRAIN:
-  MODEL_NAME: 'deeplabv3plus'
-  CRITERION: 'diceloss'
+  MODEL_NAME: 'hrnet_ocr'
+  CRITERION: 'crossentropyloss'
   BATCH_SIZE: 1
   TOTAL_EPOCHS: 10
-  LR: 1.0e-6 # learning rate (1e-4 is base for most learning)
+  LR: 1.0e-5 # learning rate (1e-4 is base for most learning)
   FINAL_LR: 1.0e-10
-  PRETRAINED: True
+  PRETRAINED: False
   INPUT_NORM: False
   INPUT_SIZE:
     RESIZE_IMG: False
@@ -42,13 +42,13 @@ MODELS:
   # --> deeplabv3plus
   DEEPLABV3PLUS: 
     BACKBONE: 'resnet50' # xception, resnet101, resnet50
-    MODEL_FILE: "../models/1_Winter2024_TrainingResults/014/epoch6.pt"
+    MODEL_FILE: "../models/1_Winter2024_TrainingResults/013/epoch8.pt"
   # --> hrnet_ocr
   HRNET_OCR:  
-    CONFIG: "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"
+    CONFIG: "/home/jplangger/Documents/Dev/VBTC/models/hrnet_ocr/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"
     MODEL_FILE: "model.pt"
     # "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/output/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484/final_state.pth"
-    SRC_DIR: "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/lib"  
+    SRC_DIR: "/home/jplangger/Documents/Dev/VBTC/models/hrnet_ocr"  
     MODEL_NAME: "seg_hrnet_ocr"  # OCR is being used alongside the HRNet for testing
   # --> gscnn
   GSCNN: 

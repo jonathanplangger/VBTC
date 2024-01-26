@@ -496,7 +496,7 @@ class RUGD(DataLoader):
             colors = []
             for i, c in enumerate(classes): 
                 classes[i] = c.replace("\n", "") # remove the EOL characters
-                colors.append([int(x) for x in classes[i].split()[-3:]]) # convert all the values in the list to int
+                colors.append(tuple([int(x) for x in classes[i].split()[-3:]])) # convert all the values in the list to int
                 
         # Return the color mapping for the dataset
         return colors

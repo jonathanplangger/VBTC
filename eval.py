@@ -96,7 +96,18 @@ class ComparativeEvaluation():
         from sklearn.metrics import confusion_matrix
 
         mean_dice = torch.tensor(0.).cuda() # used to calculate the mean Dice value for the model
+        # init loggers for model time measurement
+        starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+        timings = torch.zeros((NUM_TEST+1, 1)) # prep array to store all the values for time
 
+        # Dummy input tensors employed during the warm-up cycle for the model
+        dummy_input = torch.randn(1,3,input_size[0], input_size[1], dtype=torch.float).cuda()
+
+        # Warm-up the execution of the GPU by running a few cycles prior to time measurements
+        for _ in range(10):
+            _ = model(dummy_input)
+
+        del dummy_input # no longer required for training (free memory)
 
         with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # iterate through all tests while using batches 
@@ -114,8 +125,13 @@ class ComparativeEvaluation():
 
                 # run model
                 with torch.no_grad(): # do not calculate gradients for this task
+                    starter.record() # measure the starting time
                     pred = model(images)
-                
+                    ender.record() # measure the finish time
+
+                torch.cuda.synchronize() # re-synchronize the model prior to continuing (for time meas.)
+                timings[idx] = starter.elapsed_time(ender) # measure the total time taken
+
                 # save the old version of pred (before argmax)
                 if self.cfg.EVAL.PRED_CERTAINTY: # if enabled in config 
                     pred_raw = pred 
@@ -150,11 +166,12 @@ class ComparativeEvaluation():
                 if self.cfg.EVAL.DISPLAY_IMAGE:     
 
                     # create a blank array
-                    masks = torch.zeros(35,1200,1920, device=self.device, dtype=torch.bool)
+                    masks = torch.zeros(self.cfg.DB.NUM_CLASSES,input_size[0],input_size[1], device=self.device, dtype=torch.bool)
 
-                    # Re-map back to the 0-35 scheme before displaying the output 
-                    pred = db.map_labels(pred, True)
-                    ann = db.map_labels(ann,True)
+                    if self.cfg.DB.DB_NAME == "rellis":
+                        # Re-map back to the 0-35 scheme before displaying the output 
+                        pred = db.map_labels(pred, True)
+                        ann = db.map_labels(ann,True)
 
                     # obtain a mask for each class
                     for classID in range(masks.shape[0]): 
@@ -221,7 +238,6 @@ class ComparativeEvaluation():
 
         table = {}
 
-
             # Obtain the class label strings & update to merge "void" and "dirt" classes as done in the model
         class_labels = list(db.class_labels.values())
 
@@ -235,6 +251,13 @@ class ComparativeEvaluation():
         for c, _ in enumerate(iou_c): 
             table[class_labels[c]] =  round(float(iou_c[c]),4)
         
+
+        # Calculate and output the mean and std dev time.
+        mean_time = torch.sum(timings)/NUM_TEST # get the mean time 
+        std_time = torch.std(timings)/NUM_TEST
+        print("Mean Execution Time: {:.4f} ms".format(mean_time))
+        print("Std. Dev. Execution Time: {:.4f} ms".format(std_time))
+
         print("Mean Dice Value Obtained: {:.4f}".format(mean_dice))
         print(table) # print the raw prediction values for the table
         print(list(table.values()))
