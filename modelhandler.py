@@ -166,12 +166,12 @@ class HRNet_OCR(Model):
         
     def handle_output_eval(self, pred):
         img_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
-        pred = pred[1] # hrnet has 2 outputs, whilst only one is used... 
+        pred = pred[0] # hrnet has 2 outputs, whilst only one is used... 
         pred = pred.exp()
         # Use the same interpolation scheme as is used in the source code.
         pred = TF.interpolate(input=pred, size=img_size, mode='bilinear', align_corners=False)
         pred = pred.argmax(dim=1) # obtain the predictions for each layer
-        pred = map_labels(label=pred, inverse = True) # convert to 0->34
+        # pred = map_labels(label=pred, inverse = True) # convert to 0->34
         return pred
     
     def handle_output_train(self, pred):
@@ -180,7 +180,7 @@ class HRNet_OCR(Model):
         # retrieve the output size for the db.
         output_size = (self.cfg.DB.IMG_SIZE.HEIGHT, self.cfg.DB.IMG_SIZE.WIDTH)
         # interpolate to regenerate the original output size. 
-        pred = TF.interpolate(input=pred[1], size=output_size, mode="bilinear", align_corners=False)
+        pred = TF.interpolate(input=pred[0], size=output_size, mode="bilinear", align_corners=False)
         return pred
     
     def gen_model(self, num_classes): 
@@ -222,7 +222,7 @@ class GSCNN(Model):
         sys.path.insert(0,os.path.join(src_dir, "network/"))
         
         # Prep the args to be passed to the model loader (bypass command line handling on their end)
-        dataset_cls = argparse.Namespace(num_classes=19, ignore_label=0)
+        dataset_cls = argparse.Namespace(num_classes=self.cfg.DB.EFF_NUM_CLASSES) # update based on the configuration file
         args = argparse.Namespace(arch = "network.gscnn.GSCNN", dataset_cls = dataset_cls, trunk='resnet101',
                                     checkpoint_path = self.cfg.EVAL.MODEL_FILE,  
                                     img_wt_loss=False, joint_edgeseg_loss=False, wt_bound=1.0, edge_weight=1.0, 
@@ -253,13 +253,13 @@ class GSCNN(Model):
         criterion = torch.nn.CrossEntropyLoss() 
 
         # Create the base configuration variables. 
-        dataset_cls = argparse.Namespace(num_classes=19, ignore_label=0)
+        dataset_cls = argparse.Namespace(num_classes=self.cfg.DB.EFF_NUM_CLASSES)
 
         # Set up the default arguments for the arguments
         args = argparse.Namespace(
             arch = "network.gscnn.GSCNN", 
             dataset_cls = dataset_cls, 
-            trunk = 'resnet101',
+            trunk = 'resnet50',
             checkpoint_path = False, # no checkpoint is being used when training the model.
             img_wt_loss=False, joint_edgeseg_loss=False, wt_bound=1.0, edge_weight=1.0, seg_weight=1.0,
         ) 

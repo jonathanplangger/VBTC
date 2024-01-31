@@ -88,6 +88,7 @@ class Cityscapes(BaseDataset):
         return files
         
     def convert_label(self, label, inverse=False):
+        return label
         temp = label.copy()
         if inverse:
             for v, k in self.label_mapping.items():
@@ -112,7 +113,7 @@ class Cityscapes(BaseDataset):
 
         label = cv2.imread(os.path.join(self.root,'cityscapes',item["label"]),
                            cv2.IMREAD_GRAYSCALE)
-        label = self.convert_label(label)
+        # label = self.convert_label(label)
 
         image, label = self.gen_sample(image, label, 
                                 self.multi_scale, self.flip)

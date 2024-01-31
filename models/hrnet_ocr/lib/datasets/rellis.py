@@ -101,6 +101,7 @@ class Rellis(BaseDataset):
         return files
 
     def convert_label(self, label, inverse=False):
+        return label # updated to do nothing (since this is handeled by the overhead code)
         temp = label.copy()
         if inverse:
             for v, k in self.label_mapping.items():

@@ -227,7 +227,7 @@ def main():
                     os.makedirs(seg_path)
 
                 seg_arg = np.argmax(seg_predictions[i],axis=0).astype(np.uint8)
-                seg_arg = convert_label(seg_arg,True)
+                # seg_arg = convert_label(seg_arg,True)
 
                 seg_img = np.stack((seg_arg,seg_arg,seg_arg),axis=2)
                 seg_img = Image.fromarray(seg_img)

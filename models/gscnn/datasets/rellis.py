@@ -130,7 +130,7 @@ class Rellis(data.Dataset):
         return files
 
     def convert_label(self, label, inverse=False):
-        
+        return label
         temp = label.copy()
         if inverse:
             for v, k in self.label_mapping.items():
@@ -152,7 +152,8 @@ class Rellis(data.Dataset):
         mask = mask[:, :]
         
 
-        mask_copy = self.convert_label(mask)
+        # mask_copy = self.convert_label(mask)
+        mask_copy = mask
 
         if self.eval_mode:
             return self._eval_get_item(img, mask_copy, self.eval_scales, self.eval_flip), img_name

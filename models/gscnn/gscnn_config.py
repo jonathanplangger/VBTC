@@ -68,7 +68,7 @@ __C.DATASET.CV_SPLITS=3
 
 __C.MODEL = AttrDict()
 __C.MODEL.BN = 'regularnorm'
-__C.MODEL.BNFUNC = torch.nn.BatchNorm2d
+__C.MODEL.BNFUNC = torch.nn.InstanceNorm2d
 __C.MODEL.BIGMEMORY = False
 
 def assert_and_infer_cfg(args, make_immutable=True):
@@ -86,9 +86,9 @@ def assert_and_infer_cfg(args, make_immutable=True):
     if args.syncbn:
         # import encoding # removed encoding due to the issue 
         __C.MODEL.BN = 'syncnorm'
-        __C.MODEL.BNFUNC = torch.nn.BatchNorm2d
+        __C.MODEL.BNFUNC = torch.nn.InstanceNorm2d
     else:
-        __C.MODEL.BNFUNC = torch.nn.BatchNorm2d
+        __C.MODEL.BNFUNC = torch.nn.InstanceNorm2d
         print('Using regular batch norm')
 
     if make_immutable:

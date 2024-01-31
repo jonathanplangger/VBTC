@@ -25,6 +25,7 @@ from PIL import Image
 
 
 def convert_label(label, inverse=False):
+    return label
     label_mapping = {0: 0,
                      1: 0,
                      3: 1,
@@ -207,7 +208,7 @@ def testval(config, test_dataset, testloader, model,
                 image,
                 scales=config.TEST.SCALE_LIST,
                 flip=config.TEST.FLIP_TEST)
-            pred = convert_label(pred, True)
+            # pred = convert_label(pred, True)
             if len(border_padding) > 0:
                 border_padding = border_padding[0]
                 pred = pred[:, :, 0:pred.size(2) - border_padding[0], 0:pred.size(3) - border_padding[1]]
@@ -270,7 +271,7 @@ def test(config, test_dataset, testloader, model,
                 file_name = file_name.replace("jpg","png")
                 data_path = os.path.join(sv_path,file_name)
                 pred_arg = np.argmax(pred_np[i],axis=0).astype(np.uint8)
-                pred_arg = convert_label(pred_arg, True)
+                # pred_arg = convert_label(pred_arg, True)
                 pred_img = np.stack((pred_arg,pred_arg,pred_arg),axis=2)
                 pred_img = Image.fromarray(pred_img)
                 pred_img.save(data_path)

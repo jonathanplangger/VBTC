@@ -166,7 +166,7 @@ class ComparativeEvaluation():
                 if self.cfg.EVAL.DISPLAY_IMAGE:     
 
                     # create a blank array
-                    masks = torch.zeros(self.cfg.DB.NUM_CLASSES,input_size[0],input_size[1], device=self.device, dtype=torch.bool)
+                    masks = torch.zeros(self.cfg.DB.NUM_CLASSES, self.cfg.DB.IMG_SIZE.HEIGHT , self.cfg.DB.IMG_SIZE.WIDTH, device=self.device, dtype=torch.bool)
 
                     if self.cfg.DB.DB_NAME == "rellis":
                         # Re-map back to the 0-35 scheme before displaying the output 
