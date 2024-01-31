@@ -242,6 +242,10 @@ class GSCNN(Model):
         pred = map_labels(label=pred, inverse=True) # convert the labels to 0->34 scheme
         return pred
     
+    def handle_output_train(self, pred):
+        return super().handle_output_train(pred)
+    
+
     def gen_model(self, num_classes):
         src_dir = self.cfg.MODELS.MODELS_DIR # get the source file directory
         # sys.path.append(os.path.abspath(src_dir))
@@ -266,9 +270,9 @@ class GSCNN(Model):
 
         model = network.get_net(args, criterion)
         
-        
-        
         return model
+    
+
 # --------------------------------------------------------------------------------------------------------------- #    
 class DeepLabV3Plus(Model): 
     """DeepLabV3Plus: Model implementation for the model handler that implements the configured version of the deeplabv3plus model.\n

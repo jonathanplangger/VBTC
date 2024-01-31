@@ -154,7 +154,11 @@ class _AtrousSpatialPyramidPoolingModule(nn.Module):
         self.img_pooling = nn.AdaptiveAvgPool2d(1)
         self.img_conv = nn.Sequential(
             nn.Conv2d(in_dim, reduction_dim, kernel_size=1, bias=False),
-            Norm2d(reduction_dim), nn.ReLU(inplace=True))
+            nn.ReLU(inplace=True))
+        ## Original implementation (not working)
+        # self.img_conv = nn.Sequential(
+        #     nn.Conv2d(in_dim, reduction_dim, kernel_size=1, bias=False),
+        #     Norm2d(reduction_dim), nn.ReLU(inplace=True))
         self.edge_conv = nn.Sequential(
             nn.Conv2d(1, reduction_dim, kernel_size=1, bias=False),
             Norm2d(reduction_dim), nn.ReLU(inplace=True))
@@ -320,7 +324,7 @@ class GSCNN(nn.Module):
         acts = self.sigmoid(acts)
 
         # aspp
-        x = self.aspp(m7, acts)
+        x = self.aspp(m7, acts)  #fails here -> issue with aspp layer
         dec0_up = self.bot_aspp(x)
 
         dec0_fine = self.bot_fine(m2)
@@ -331,8 +335,11 @@ class GSCNN(nn.Module):
         dec1 = self.final_seg(dec0)  
         seg_out = self.interpolate(dec1, x_size[2:], mode='bilinear')      
        
-        if self.training:
-            return self.criterion((seg_out, edge_out), gts)              
-        else:
-            return seg_out, edge_out
+        # if self.training:
+        #     return self.criterion((seg_out, edge_out), gts)              
+        # else:
+        #     return seg_out, edge_out
+        
+        # Only the seg_out will be used in the comparative study.
+        return seg_out
 
