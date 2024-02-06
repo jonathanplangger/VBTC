@@ -5,7 +5,7 @@ DB: # configure which database is being used during training / test
    
 EVAL:
   MODEL_NAME: "unet"
-  MODEL_FILE: "../models/1_Winter2024_TrainingResults/033/model.pt"
+  MODEL_FILE: "../models/1_Winter2024_TrainingResults/034/model.pt"
   DISPLAY_IMAGE: False 
   PRED_CERTAINTY: False
   BATCH_SIZE: 1

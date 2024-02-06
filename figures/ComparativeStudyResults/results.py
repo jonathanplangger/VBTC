@@ -50,7 +50,7 @@ def get_maj_mapping(db_name):
 
     return maj
 
-def fig_maj_min_performance_comparison(df, maj): 
+def fig_maj_min_performance_comparison(df, maj, figsize = (7.2,4.8)): 
     """fig_maj_min_performance_comparison: Creates the figure comparing the majority and minority class performance 
     by the models / Loss function. 
 
@@ -60,9 +60,7 @@ def fig_maj_min_performance_comparison(df, maj):
     """    
 
     ################ Overwrite these values ########################
-    figwidth = 7.2 # in inches
-    figheight = 4.8 # in inches
-
+    figwidth, figheight = figsize # get the params for the figure dimensions
     ##########################################################
 
     # Get the overall values for dice and mIoU scores
@@ -81,7 +79,7 @@ def fig_maj_min_performance_comparison(df, maj):
     fig, axs = plt.subplots(1, len(models))
     fig.set_size_inches(figwidth, figheight)
     fig.subplots_adjust(wspace = 0)
-    fig.suptitle("Comparison of Majority, Minority, and Mean Class Performance", fontweight = 'bold', variant = 'small-caps')
+    fig.suptitle("Comparison of Majority, Minority, and Mean Class Performance")
 
     
     for i, model in enumerate(models): 
@@ -100,35 +98,41 @@ def fig_maj_min_performance_comparison(df, maj):
         #### Figure Formatting
         axs[i].set_yticks(np.arange(0,1.1,0.1)) # Set the common range for yticks
         axs[i].set_ylim(0,1) # Bind the limits of the plot to the [0,1] range
-        axs[i].set_xlim(-0.4, len(m_maj) - 0.4) # give some spacing between the different plots
+        axs[i].set_xlim(-0.6, len(m_maj) - 0.4) # give some spacing between the different plots
         axs[i].set_xticks(range(0,len(m_maj),1))
         axs[i].xaxis.set_ticklabels(m_maj["Loss Function"], rotation = 20)
         axs[i].set_xlabel(model, fontweight = "bold") # Set the label to the namne of the loss function
         axs[i].xaxis.set_label_position('top')
 
-        # For all the subsequent plots (not the first one)
-        if i == 0:
+        ### Formatting based on position of subplot ####
+        if i == 0: # for first plot
             axs[i].set_ylabel("mIoU", fontweight = 'bold') # set the ylabel 
-        else: 
+        else: # For all the subsequent plots (not the first one)
             axs[i].yaxis.set_ticklabels([]) # hide the yaxis (use the common axis instead)
+        if i == len(models) - 1: # if its the last element 
+            axs[i].legend(["Majority", "Minority", "Mean"], loc = "upper right")
+
 
         axs[i].grid(True, 'both')
 
+    return fig
     plt.show()
 
 
 
 if __name__ == "__main__":
 
-    # Set up the figure for the rellis-3d results
+    ## Rellis-3D
     maj = get_maj_mapping("rellis") 
     df = load_results("figures/ComparativeStudyResults/results.csv")
+    fig = fig_maj_min_performance_comparison(df, maj) # run the code 
 
-    fig_maj_min_performance_comparison(df, maj) # run the code 
-    
-    
+    ## RUGD    
+    # maj = get_maj_mapping('rugd')
+    # df = load_results('figures/ComparativeStudyResults/rugd_results.csv')
+    # fig = fig_maj_min_performance_comparison(df, maj, figsize = (11.2 ,4.8))
 
-
+    fig.savefig("figures/MajMinMeanComparison.png", dpi = 300) # save the figure
 
 
     
