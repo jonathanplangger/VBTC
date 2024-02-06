@@ -58,43 +58,63 @@ def fig_maj_min_performance_comparison(df, maj):
         df (pandas.DataFrame): Dataframe containing the data for the figure
         maj (List): Mapping (str) of all the majority classes for that specific dataset
     """    
+
+    ################ Overwrite these values ########################
+    figwidth = 7.2 # in inches
+    figheight = 4.8 # in inches
+
+    ##########################################################
+
     # Get the overall values for dice and mIoU scores
-    net_miou = df["mIoU"]
+    models = np.unique(df['Model']) # Get the number of unique models handeled by the program
+    net_miou = df[["Model", "Loss Function", "mIoU"]]
     net_dice = df["Dice"]
     df = df.drop(columns = ["mIoU", "Dice"])
     df_maj = df[["Loss Function", "Model"]].join(df[maj])
     df_min = df.drop(columns = maj) # get all minority class data
+
+    ### Calculate the mean values for min and maj classes
+    df_maj["mean"] = df_maj.iloc[:,2:].mean(axis = 1)
+    df_min["mean"] = df_min.iloc[:,2:].mean(axis = 1)
+
+    # Create the figure (subplots based on the amount of models being evaluated)
+    fig, axs = plt.subplots(1, len(models))
+    fig.set_size_inches(figwidth, figheight)
+    fig.subplots_adjust(wspace = 0)
+    fig.suptitle("Comparison of Majority, Minority, and Mean Class Performance", fontweight = 'bold', variant = 'small-caps')
+
     
-    # store the miou values for the majority classes
-    maj_miou = []
-    # Calculate the mean scores for majority
-    for row in df_maj.iterrows(): 
-        vals = row[1][-len(maj):]
-        maj_miou.append(np.mean(vals))
-    
-    # Minority class mIoU values
-    min_miou = []
-    for row in df_min.iterrows():
-        vals = row[1][2:]
-        min_miou.append(np.mean(vals))
+    for i, model in enumerate(models): 
+        
+        #### Data Plotting Functions
+        # get the subset tied to the specific model
+        m_maj = df_maj[df_maj["Model"] == model] 
+        m_min = df_min[df_min["Model"] == model]
+        m_miou = net_miou[net_miou["Model"] == model]
 
-    # Round all the values
-    min_miou = [np.round(e,4) for e in min_miou]
-
-    ##########################
-    # Create the figure 
-    fig = plt.figure(1, figsize = (3.2,1.8))
-    # 
-    plt.scatter(range(0,len(maj_miou)), maj_miou)
-    plt.scatter(range(0,len(min_miou)), min_miou)
-    plt.scatter(range(0,len(net_miou)), net_miou)
-    plt.xticks(range(0,len(maj_miou),1), df["Model"])
+        axs[i].scatter(range(0,len(m_maj),1), m_maj["mean"])
+        axs[i].scatter(range(0,len(m_min),1), m_min["mean"])
+        axs[i].scatter(range(0,len(m_miou),1), m_miou["mIoU"])
 
 
+        #### Figure Formatting
+        axs[i].set_yticks(np.arange(0,1.1,0.1)) # Set the common range for yticks
+        axs[i].set_ylim(0,1) # Bind the limits of the plot to the [0,1] range
+        axs[i].set_xlim(-0.4, len(m_maj) - 0.4) # give some spacing between the different plots
+        axs[i].set_xticks(range(0,len(m_maj),1))
+        axs[i].xaxis.set_ticklabels(m_maj["Loss Function"], rotation = 20)
+        axs[i].set_xlabel(model, fontweight = "bold") # Set the label to the namne of the loss function
+        axs[i].xaxis.set_label_position('top')
 
-    # display the image
+        # For all the subsequent plots (not the first one)
+        if i == 0:
+            axs[i].set_ylabel("mIoU", fontweight = 'bold') # set the ylabel 
+        else: 
+            axs[i].yaxis.set_ticklabels([]) # hide the yaxis (use the common axis instead)
+
+        axs[i].grid(True, 'both')
+
     plt.show()
-
 
 
 
