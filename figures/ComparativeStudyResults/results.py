@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     # Set up the figure for the rellis-3d results
     maj = get_maj_mapping("rellis") 
-    df = load_results("results.csv")
+    df = load_results("figures/ComparativeStudyResults/results.csv")
 
     fig_maj_min_performance_comparison(df, maj) # run the code 
     
