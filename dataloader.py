@@ -26,7 +26,7 @@ def get_dataloader(cfg, setType = "train"):
     if db_name == "rellis": # Rellis-3D dataset
         # Overwrite the default configuration to use the desired one 
         cfg.DB = cfg.DB.RELLIS
-        return Rellis(cfg.DB.PATH, setType=setType) # Using the old version of the Rellis-3D config (no need to fix what aint broke)
+        return Rellis(cfg.DB.PATH, setType=setType, cfg = cfg) # Using the old version of the Rellis-3D config (no need to fix what aint broke)
     elif db_name == "rugd":  # RUGD dataset
         cfg.DB = cfg.DB.RUGD  # overwrite
         return RUGD(cfg, setType)
@@ -159,7 +159,7 @@ class Rellis(DataLoader):
         metadata (List[dict]) = List of dictionnary elements containing information regarding image files\n
         num_classes = quantity of differentiable classes within the dataset\n
     """
-    def __init__(self, path="../datasets/Rellis-3D/", setType = "train", preprocessing=None, remap = True, input_norm = False):
+    def __init__(self, path="../datasets/Rellis-3D/", setType = "train", preprocessing=None, remap = True, input_norm = False, cfg = None):
         """
             Dataloader provides an easy interface for loading data for training and testing of new models.\n
             ----------------------------\n
@@ -170,6 +170,7 @@ class Rellis(DataLoader):
             remap (bool)=  selects whether the annotation files must be remapped to a new range of value (to limit the class label range)\n
             input_norm(bool) = True -> Normalization of the input will occur. 
         """
+        self.cfg = cfg # save the configuration inputs (useful for later steps)
         self.path = path
         self.label_mapping = False # updated during database registration
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
