@@ -1,7 +1,7 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 
 DB: # configure which database is being used during training / test
-  DB_NAME: "rellis" # currently only rugd & rellis
+  DB_NAME: "rugd" # currently only rugd & rellis
    
 EVAL:
   MODEL_NAME: "deeplabv3plus"

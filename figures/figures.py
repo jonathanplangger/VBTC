@@ -135,27 +135,29 @@ class FigPowerTerm():
 
 class FigDBDistribution(): 
 
-    def __init__(self, fpath="", class_labels={}, ignore=[], colors=None, db = ""):
+    def __init__(self, class_labels={}, ignore=[], colors=None, db = ""):
         self.figcfg = self.get_figcfg(db) # get the configuration 
-        self.gen_fig(fpath, class_labels, ignore, colors) # generate the figure 
+        self.gen_fig(self.figcfg["fpath"], class_labels, ignore, colors) # generate the figure 
 
     def get_figcfg(self, db): # get the pre-set configuration for the figure 
         # Configuration based on the dataset being used
         if db == "rellis": # Rellis-3D dataset
             return {
                 "figheight": 6, 
-                "figwidth": 10
+                "figwidth": 10, 
+                "fpath": "figures/Distributions/rellis_distributions.csv"
             } 
         elif db == "rugd":  # RUGD dataset
             return {
                 "figheight": 8, 
-                "figwidth": 12
+                "figwidth": 12, 
+                "fpath" : "figures/Distributions/rugd_distributions.csv"
             }
         else: 
             exit("Please specify a valid dataset for proper figure configuration to be provided.")
 
     def gen_fig(self, fpath ="", class_labels={}, ignore=[], colors=None):    
-        with open ("figures/distributions.csv", 'r') as file: 
+        with open (fpath, 'r') as file: 
             csvreader = csv.reader(file)
             for i, row in enumerate(csvreader):
 
@@ -398,5 +400,5 @@ if __name__ == "__main__":
     # FigResults()
     # FigLossShaping()
     # FigPowerTerm()
-    FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=ignore, colors=colors, db = "rugd")
+    FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = "rugd")
     # QualitativeResults()

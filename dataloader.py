@@ -86,7 +86,7 @@ class DataLoader(object):
         elif self.setType == "test":
             metadata = self.test_meta 
         elif self.setType == "val": 
-            metadata = None # TODO - > Update this set type to work
+            metadata = self.val_meta # TODO - > Update this set type to work
         else: # incorrect version used
             raise Exception("Invalid set type. Please select either train/test/val.")
 
@@ -174,8 +174,8 @@ class Rellis(DataLoader):
         self.path = path
         self.label_mapping = False # updated during database registration
         # only configured for the rellis dataset as of right now, would be good to add some configuration for multiple datasets
-        self.train_meta, self.test_meta, self.class_labels = self.__reg_rellis() # register training and test dataset
-        self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
+        self.train_meta, self.test_meta, self.val_meta, self.class_labels = self.__reg_rellis() # register training and test dataset
+        self.size = [len(self.train_meta), len(self.test_meta), len(self.val_meta)] # n# of elements in the entire dataset
         self.height = int(self.train_meta[0]["height"])
         self.width = int(self.train_meta[0]["width"])
         self.setType = setType # sets the data type (train,test,val) loaded by the dataloader
@@ -296,7 +296,26 @@ class Rellis(DataLoader):
             # add the file to the list
             test_meta.append(meta)
 
-        return train_meta, test_meta, class_labels
+        val_meta = []
+        # get the list file 
+        val_lst = open(path + "val.lst", 'r')
+        for line in val_lst.readlines(): 
+            [img_name, seg_name] = line.split(' ')
+            seg_name = seg_name[:-1] # remove the eol character
+            img_id = img_name.split("frame")[1][0:6]
+            # Create the new dictionary
+            meta = dict(
+                file_name = self.path + img_name, # path for image file
+                height="1200",
+                width="1920", 
+                image_id=img_id, 
+                sem_seg_file_name= self.path + seg_name # paht for segmentation map
+            )
+            # add the file to the list
+            val_meta.append(meta)
+
+
+        return train_meta, test_meta, val_meta, class_labels
 
     def getPatches(self, img: np.ndarray, patch_size, stride=[1,1], padding=[0,0]): 
         """
@@ -351,7 +370,7 @@ class Rellis(DataLoader):
             inverse (bool): sets the direction that the conversion is being made, inverse = True converts 0->19 to 0->34\n
         """
         return map_labels(label, inverse)
-    
+   
     # Complete the pre-processing step for the image
     def get_preprocessing(self): 
         _transform = []
@@ -412,7 +431,7 @@ class RUGD(DataLoader):
         # Base implementation
         super().__init__(cfg, setType=setType)
         # Complete the registration of the dataset -> obtain the list of images in each set
-        self.train_meta, self.test_meta, self.class_labels = self.__reg_db()
+        self.train_meta, self.test_meta, self.val_meta,self.class_labels = self.__reg_db()
         super().setup_data() # complete the same steps as the DataLoader class
 
     def __reg_db(self): 
@@ -453,11 +472,12 @@ class RUGD(DataLoader):
 
         self.num_classes = len(class_labels)
 
-        train_meta, test_meta = [], []
+        train_meta, test_meta, val_meta = [], [], []
 
         train_lst = open(self.cfg.DB.PATH + "train.lst", "r")
-        test_lst = open(self.cfg.DB.PATH + "test.lst", "r") 
-        lsts = [train_lst, test_lst] # 
+        test_lst = open(self.cfg.DB.PATH + "test.lst", "r")
+        val_lst = open(self.cfg.DB.PATH + "val.lst", 'r')  
+        lsts = [train_lst, test_lst, val_lst] # 
         
         for i, lst in enumerate(lsts): 
 
@@ -480,9 +500,11 @@ class RUGD(DataLoader):
                     train_meta.append(meta)
                 elif i == 1: 
                     test_meta.append(meta)
+                elif i == 2: 
+                    val_meta.append(meta)
             
 
-        return train_meta, test_meta, class_labels
+        return train_meta, test_meta, val_meta, class_labels
 
     def get_colors(self, remap_labels = False):  
         """get_colors
