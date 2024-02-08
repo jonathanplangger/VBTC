@@ -119,23 +119,67 @@ def fig_maj_min_performance_comparison(df, maj, figsize = (7.2,4.8)):
     plt.show()
     return fig
 
+def get_fig_min_improvement(df, db_name = ""):
+    # Pick 6 of the worst performing classes to be plotted based on performance. (6 chosen for legibility.)
+    if db_name == "rellis": 
+        classes = ['5: pole', '18: fence', '12: building', '15: log', '8: vehicle', '27: barrier']
+    elif db_name == "rugd": 
+        classes = ["bicycle","sign","person","pole","container/generic object","log"]
+    else: 
+        exit("Please select a valid DB name for the figure (rellis/rugd)")
+
+    # Preset order to use when displaying the results on the figure
+    # lf_order = ["DiceLoss", "CE", "PowerJaccard", "FocalLoss", "FCIoUV2"] # just did this manually
+
+    models = np.unique(df['Model'])# get the unique model names
+
+    fig, axs = plt.subplots(1, len(models))
+    fig.subplots_adjust(wspace = 0) # remove the space between subplots
+
+    # Create a plot for each model (subplots in the figure)
+    for i, model in enumerate(models): 
+        ## Prep and plot the data
+        df_model = df[df['Model'] == model] # results for the specific model
+        lf = df_model["Loss Function"] # get the loss function names
+        df_classes = df_model[classes] # retrieve only the scores for each class
+
+        axs[i].set_xlabel(model, fontweight="bold")
+        axs[i].xaxis.set_label_position('top')
+
+        for c in df_classes:
+            axs[i].scatter(range(0,len(df_model["Loss Function"]),1), df_classes[c].values)
+            axs[i].plot(range(0,len(df_model["Loss Function"]),1), df_classes[c].values)
+
+        ## - Format the figure - ##
+        axs[i].set_yticks(np.arange(0,1.1,0.1)) # set the axis to [0,1]
+        axs[i].set_ylim(0,1)       
+        axs[i].set_xlim(-0.3,len(lf) - 0.5)
+        axs[i].set_xticks(range(0,len(lf),1))
+        axs[i].xaxis.set_ticklabels(lf, rotation = 20) # show the loss functions on the x-axis 
+
+        if i > 0: # for all subsequent plots 
+            axs[i].yaxis.set_ticklabels([]) # remove the ticks for the nex plots
+
+        axs[i].grid(True, 'both')
+
+    plt.show()
 
 if __name__ == "__main__":
 
-    ## Rellis-3D
-    maj = get_maj_mapping("rellis") 
-    df = load_results("figures/ComparativeStudyResults/results.csv")
-    fig = fig_maj_min_performance_comparison(df, maj) # run the code 
+    # ## Rellis-3D
+    # maj = get_maj_mapping("rellis") 
+    # df = load_results("figures/ComparativeStudyResults/results.csv")
+    # fig = fig_maj_min_performance_comparison(df, maj) # run the code 
 
-    ## RUGD    
-    # maj = get_maj_mapping('rugd')
-    # df = load_results('figures/ComparativeStudyResults/rugd_results.csv')
-    # fig = fig_maj_min_performance_comparison(df, maj, figsize = (11.2 ,4.8))
+    # ## RUGD    
+    # # maj = get_maj_mapping('rugd')
+    # # df = load_results('figures/ComparativeStudyResults/rugd_results.csv')
+    # # fig = fig_maj_min_performance_comparison(df, maj, figsize = (11.2 ,4.8))
 
-    fig.savefig("figures/MajMinMeanComparison.png", dpi = 300) # save the figure
+    # fig.savefig("figures/MajMinMeanComparison.png", dpi = 300) # save the figure
 
-
-    
+    df = load_results("figures/ComparativeStudyResults/rellis_results.csv")
+    fig = get_fig_min_improvement(df, db_name = "rellis")
 
 
 

@@ -376,7 +376,7 @@ if __name__ == "__main__":
         19: "rubble",
     }
 
-    db_name = "rugd"
+    db_name = "rellis"
 
     # # Add to path to allow access to the dataloader
     import sys
@@ -400,5 +400,5 @@ if __name__ == "__main__":
     # FigResults()
     # FigLossShaping()
     # FigPowerTerm()
-    FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = "rugd")
+    FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = db_name)
     # QualitativeResults()
