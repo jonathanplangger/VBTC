@@ -134,8 +134,27 @@ class FigPowerTerm():
         return x/(x + 1 - x) # IoU score (same as 1/x)
 
 class FigDBDistribution(): 
-    def __init__(self, fpath="", class_labels={}, ignore=[], colors=None): 
-        
+
+    def __init__(self, fpath="", class_labels={}, ignore=[], colors=None, db = ""):
+        self.figcfg = self.get_figcfg(db) # get the configuration 
+        self.gen_fig(fpath, class_labels, ignore, colors) # generate the figure 
+
+    def get_figcfg(self, db): # get the pre-set configuration for the figure 
+        # Configuration based on the dataset being used
+        if db == "rellis": # Rellis-3D dataset
+            return {
+                "figheight": 6, 
+                "figwidth": 10
+            } 
+        elif db == "rugd":  # RUGD dataset
+            return {
+                "figheight": 8, 
+                "figwidth": 12
+            }
+        else: 
+            exit("Please specify a valid dataset for proper figure configuration to be provided.")
+
+    def gen_fig(self, fpath ="", class_labels={}, ignore=[], colors=None):    
         with open ("figures/distributions.csv", 'r') as file: 
             csvreader = csv.reader(file)
             for i, row in enumerate(csvreader):
@@ -156,11 +175,11 @@ class FigDBDistribution():
 
         plt.rcParams.update({"font.size":11.5})
         # Plot the figure 
-        fig, main = plt.subplots(dpi=400)
+        fig, main = plt.subplots()
         plt.xticks(rotation=75)
         
-        fig.set_figheight(6)
-        fig.set_figwidth(10)
+        fig.set_figheight(self.figcfg["figheight"]) 
+        fig.set_figwidth(self.figcfg['figwidth']) 
         # Add the subplot axes 
         sub = fig.add_axes([0.35,0.3, 0.6, 0.6])
         plt.xticks(rotation=75)
@@ -173,7 +192,7 @@ class FigDBDistribution():
             df.colors = np.asarray(df.colors)
             for i,color in enumerate(df.colors): 
                 df["colors"][i] = np.divide(df["colors"][i], 255.0)
-                df.colors[i] = np.around(df.colors[i],2)
+                df["colors"][i] = np.around(df.colors[i],2)
 
             # Plot the main plot and subplot 
             main.bar(df["class_labels"], df["distribution"], color=df.colors)
@@ -190,8 +209,8 @@ class FigDBDistribution():
         sub.yaxis.set_major_formatter(f)
         main.yaxis.set_major_formatter(f)
 
-        plt.savefig("figures/rellis3dDistribution.svg")
-        # plt.show() # display the results
+        plt.savefig("figures/rellis3dDistribution.png", dpi = 400)
+        plt.show() # display the results
 
 
 class QualitativeResults(): 
@@ -371,10 +390,13 @@ if __name__ == "__main__":
 
     
     colors = db.get_colors(remap_labels=True)
-
+    ignore = []
+    if db_name == "rellis": 
+        colors = colors[1:] # special case (remove one class)
+        ignore = [0,1] # do not represent the void and dirt classes in the figure
 
     # FigResults()
     # FigLossShaping()
     # FigPowerTerm()
-    FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=[0,1], colors=colors[1:])
+    FigDBDistribution(fpath="figures/distributions.csv", class_labels=class_labels, ignore=ignore, colors=colors, db = "rugd")
     # QualitativeResults()

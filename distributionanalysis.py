@@ -62,5 +62,5 @@ if __name__ == "__main__":
     cfg.merge_from_file("configs/config_comparative_study.yaml") 
 
     # Which train/test/val split to evaluate the data from.
-    split_type = "train"
+    split_type = "test"
     DistributionAnalysis(show=True, cfg = cfg, batch_size=1, split_type=split_type)
