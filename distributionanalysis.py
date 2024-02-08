@@ -7,10 +7,9 @@ import pandas as pd
 
 class DistributionAnalysis(): 
 
-    def __init__(self, show=False, db_path = "", batch_size=1): 
+    def __init__(self, show=False, cfg = None, batch_size=1): 
         self.show = show # define if the output is being plotted when analysis completed 
-        self.db = dataloader.DataLoader(db_path, "train", remap=True)
-        self.db.randomizeOrder()
+        self.db = dataloader.get_dataloader(cfg, setType = "test")
         self.batch_size = batch_size
         self.class_labels = np.array(list(self.db.class_labels.values())) # Retrieve a list containing each class labels
         
@@ -39,10 +38,19 @@ class DistributionAnalysis():
         
         # Save the output to a csv file
         pxs = pxs.cpu().numpy() # convert the tensor to a numpy array
-        df = pd.DataFrame({"classNames":self.class_labels[1:], "distribution": pxs }).transpose()
+        if self.db.cfg.DB.DB_NAME == "rellis": # special case in the rellis dataset
+            df = pd.DataFrame({"classNames":self.class_labels[1:], "distribution": pxs }).transpose()
+        else: # for all other cases 
+            df = pd.DataFrame({"classNames":self.class_labels, "distribution": pxs }).transpose()
+
         df.to_csv("figures/distributions.csv", index=False)
 
         print(df)
 
 if __name__ == "__main__": 
-    DistributionAnalysis(show=True, db_path="../../datasets/Rellis-3D/", batch_size=1)
+    from config import get_cfg_defaults
+    cfg = get_cfg_defaults()
+    # Uses eval configuration for the inputs to this function. 
+    cfg.merge_from_file("configs/config_comparative_study.yaml") 
+
+    DistributionAnalysis(show=True, cfg = cfg, batch_size=1)

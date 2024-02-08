@@ -9,7 +9,7 @@ import torch
 import yaml
 
 
-def get_dataloader( cfg, setType = "train"): 
+def get_dataloader(cfg, setType = "train"): 
     """_summary_
 
     :param cfg: Configuration file object. Contains the configuration information for the project
@@ -483,12 +483,15 @@ class RUGD(DataLoader):
 
         return train_meta, test_meta, class_labels
 
-    def get_colors(self):  
+    def get_colors(self, remap_labels = False):  
         """get_colors
 
+        :param remap_labels: Does nothing, used to allow for compatibility with other functions., defaults to False
+        :type remap_labels: List, optional
         :return: colors -> Colours for each fo the classes of the RUGD dataset. Colour is associated to classes through index value of the array. Employable in visualization of the semantic classes
         :rtype: List(int): List of set of 3 int values (RGB) for the colours. 
-        """        
+
+        """            
         # open the colour map file for RUGD
         with open("{}/RUGD_annotations/RUGD_annotation-colormap.txt".format(self.cfg.DB.PATH)) as f: 
             classes = f.readlines()

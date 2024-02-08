@@ -355,12 +355,21 @@ if __name__ == "__main__":
         19: "rubble",
     }
 
+    db_name = "rugd"
+
     # # Add to path to allow access to the dataloader
     import sys
     import os
-    sys.path.append(os.getcwd())
+    sys.path.append(os.getcwd()) # allow to directly access the other source files
+    # Import and configure the data loader
     import dataloader 
-    db = dataloader.DataLoader()
+    from config import get_cfg_defaults
+    cfg = get_cfg_defaults() # get the default configuration
+    cfg.merge_from_file("configs/config_comparative_study.yaml") # update cfg based on file
+    cfg.DB.DB_NAME = db_name # update this to select the right DB 
+    db = dataloader.get_dataloader(cfg, setType = "eval")
+
+    
     colors = db.get_colors(remap_labels=True)
 
 

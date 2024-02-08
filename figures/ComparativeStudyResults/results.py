@@ -115,9 +115,9 @@ def fig_maj_min_performance_comparison(df, maj, figsize = (7.2,4.8)):
 
         axs[i].grid(True, 'both')
 
-    return fig
+    
     plt.show()
-
+    return fig
 
 
 if __name__ == "__main__":
