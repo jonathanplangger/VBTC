@@ -122,9 +122,12 @@ def fig_maj_min_performance_comparison(df, maj, figsize = (7.2,4.8)):
 def get_fig_min_improvement(df, db_name = ""):
     # Pick 6 of the worst performing classes to be plotted based on performance. (6 chosen for legibility.)
     if db_name == "rellis": 
-        classes = ['5: pole', '18: fence', '12: building', '15: log', '8: vehicle', '27: barrier']
+        # classes = ['5: pole', '18: fence', '12: building', '15: log', '8: vehicle', '27: barrier'] # 6 classes
+        classes = ['5: pole', '18: fence', '12: building', '15: log', '8: vehicle', '27: barrier', "17: person","33: mud"] # 8 classes
     elif db_name == "rugd": 
-        classes = ["bicycle","sign","person","pole","container/generic object","log"]
+        # classes = ["bicycle","sign","person","pole","object","log"] # 6 classes
+        # classes = ["bicycle","sign","person","pole","object","log","concrete","picnic-table","rock-bed","bush"] # 10 classes
+        classes = ["bicycle","sign","person","pole","object","log","concrete","picnic-table",] # 8 classes
     else: 
         exit("Please select a valid DB name for the figure (rellis/rugd)")
 
@@ -147,18 +150,23 @@ def get_fig_min_improvement(df, db_name = ""):
         axs[i].xaxis.set_label_position('top')
 
         for c in df_classes:
-            axs[i].scatter(range(0,len(df_model["Loss Function"]),1), df_classes[c].values)
-            axs[i].plot(range(0,len(df_model["Loss Function"]),1), df_classes[c].values)
+            axs[i].scatter(range(0,len(df_model["Loss Function"]),1), df_classes[c].values, label = df_classes.columns)
+            axs[i].plot(range(0,len(df_model["Loss Function"]),1), df_classes[c].values, label="_nolegend_")
 
         ## - Format the figure - ##
         axs[i].set_yticks(np.arange(0,1.1,0.1)) # set the axis to [0,1]
-        axs[i].set_ylim(0,1)       
+        axs[i].set_ylim(0,1.0)       
         axs[i].set_xlim(-0.3,len(lf) - 0.5)
         axs[i].set_xticks(range(0,len(lf),1))
         axs[i].xaxis.set_ticklabels(lf, rotation = 20) # show the loss functions on the x-axis 
 
         if i > 0: # for all subsequent plots 
             axs[i].yaxis.set_ticklabels([]) # remove the ticks for the nex plots
+
+        if i == len(models) - 1: # for the last subplot
+            # axs[i].legend(df_classes.columns,loc = "upper right")
+            axs[i].legend(df_classes.columns,loc = "upper right")
+
 
         axs[i].grid(True, 'both')
 
