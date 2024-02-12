@@ -616,6 +616,7 @@ class FigMemReqPerformance(FigResults):
             axs[i].set_xticks(np.arange(0,8,1.0))
             axs[i].grid(True, 'both')
             axs[i].set_title(pm)
+            axs[i].xaxis.set_label_text("GPU Memory Required (GB)")
 
             if i > 0: # no need to have these repeat between plots 
                 axs[i].yaxis.set_ticklabels([]) 
@@ -628,22 +629,29 @@ class FigMemReqPerformance(FigResults):
             # For each dataset being covered in the data
             for dataset in np.unique(memreq["Dataset"]):  # for each dataset
                 for model in np.unique(memreq["Model"]): # for each model
+                    label = "" # Preset the plot label to nothing
+
                     # Set up the x and y values for the plot
                     x = memreq[(memreq["Model"] == model) & (memreq["Dataset"] == dataset)]["MemoryReq"]
                     
                     if dataset == "Rellis": 
                         y = rellis_df[rellis_df["Model"] == model][pm] # i+1 to determine if mIoU or Dice is used 
+                        marker = "o" # diamond marker
                     elif dataset == "RUGD": 
                         y = rugd_df[rugd_df["Model"] == model][pm]
+                        marker = "D"
                     else: # need a specific implementation for the df used in the plotting (for future use of the code)
                         exit("No implementation provided for this dataset")
+
+                    if i == 0: 
+                        label = "{} & {}".format(model, dataset)
 
                     if not y.empty and not x.empty:  # make sure there are values available to plot
                         x = np.around(float(x)/1024, 2) # convert the MB values into GB
 
-                        axs[i].scatter(x,y)
+                        axs[i].scatter(x,y, marker = marker, label = label)
 
-
+        fig.legend(loc = "center right") # set up the legend for the figure 
 
         if self.show: 
             plt.show()
