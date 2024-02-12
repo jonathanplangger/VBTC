@@ -18,7 +18,7 @@ RUGD_RESULTS = "figures/ComparativeStudyResults/rugd_results.csv"
 MEMREQ = "figures/ComparativeStudyResults/memory_requirements.csv"
 
 #################################################################
-class FigResults(): 
+class FigLFResults(): 
     def __init__(self): 
         """
         Assumes the csv file format is as follows: 
@@ -570,6 +570,8 @@ class FigMinImprovement(FigResults):
 class FigMemReqPerformance(FigResults): 
     def __init__(self, results_file, db_name, show = False, memreq_file = None): 
         super().__init__(results_file, db_name, show) # run super function 
+        self.rugd_df = super().load_results(RUGD_RESULTS)# load the results
+        self.rellis_df = super().load_results(RELLIS_RESULTS) # rugd loading
         self.memreq = self.load_memreq(memreq_file) # save the memory required
         self.gen_fig() # generate the figure
 
@@ -590,13 +592,61 @@ class FigMemReqPerformance(FigResults):
         return pd.DataFrame(data, columns = header)
 
     def gen_fig(self): 
-        fig = plt.figure(1)
-        
+        fig, axs = plt.subplots(1,2)# subplot for dice & mIoU
+        fig.subplots_adjust(wspace = 0)
+        fig.suptitle("Comparison of Model Performance and Neural Network Memory Required", fontweight = "bold")
+
+        # Set the performance metrics evaluated in this figure 
+        pms = ["mIoU", "Dice"]
 
         #### Set up the data for plotting
-        
+        # Retrieve only the FCIoUV2 results -> simpler to show results 
+        rugd_df = self.rugd_df[self.rugd_df["Loss Function"] == "FCIoUV2"]
+        rellis_df = self.rellis_df[self.rellis_df["Loss Function"] == "FCIoUV2"]
+        # select the specific elements from the dataset
+        rugd_df = rugd_df[["Model", "mIoU", "Dice"]] 
+        rellis_df = rellis_df[["Model", "mIoU", "Dice"]]
+        memreq = self.memreq[["Model", "Dataset","MemoryReq"]]
 
-        pass
+        for i,pm in enumerate(pms): 
+            ### Set formatting for each subplot 
+            axs[i].set_ylim(0,1.0)
+            axs[i].set_yticks(np.arange(0,1.1,0.1)) # set the axis to [0,1]
+            axs[i].set_xlim(0,8)
+            axs[i].set_xticks(np.arange(0,8,1.0))
+            axs[i].grid(True, 'both')
+            axs[i].set_title(pm)
+
+            if i > 0: # no need to have these repeat between plots 
+                axs[i].yaxis.set_ticklabels([]) 
+
+            if i == 0: 
+                axs[i].yaxis.set_label_text("Performance Metric Score", fontweight ="bold")
+
+
+
+            # For each dataset being covered in the data
+            for dataset in np.unique(memreq["Dataset"]):  # for each dataset
+                for model in np.unique(memreq["Model"]): # for each model
+                    # Set up the x and y values for the plot
+                    x = memreq[(memreq["Model"] == model) & (memreq["Dataset"] == dataset)]["MemoryReq"]
+                    
+                    if dataset == "Rellis": 
+                        y = rellis_df[rellis_df["Model"] == model][pm] # i+1 to determine if mIoU or Dice is used 
+                    elif dataset == "RUGD": 
+                        y = rugd_df[rugd_df["Model"] == model][pm]
+                    else: # need a specific implementation for the df used in the plotting (for future use of the code)
+                        exit("No implementation provided for this dataset")
+
+                    if not y.empty and not x.empty:  # make sure there are values available to plot
+                        x = np.around(float(x)/1024, 2) # convert the MB values into GB
+
+                        axs[i].scatter(x,y)
+
+
+
+        if self.show: 
+            plt.show()
 
 
 
