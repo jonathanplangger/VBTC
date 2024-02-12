@@ -504,9 +504,9 @@ class FigMajMinPerformanceComparison(FigResults):
 class FigMinImprovement(FigResults): 
     def __init__(self, file, db_name, show = False): 
         super().__init__(file, db_name, show)
-        self.gen_fig()
+        self.gen_fig(db_name)
 
-    def gen_fig(self):
+    def gen_fig(self, db_name):
         # Apply conversion for easy switch between OO code & function-based code
         df = self.df 
         # Pick 6 of the worst performing classes to be plotted based on performance. (6 chosen for legibility.)
@@ -715,5 +715,5 @@ if __name__ == "__main__":
     
     #### - New Comparative Study Results Figures - ####
     # FigMajMinPerformanceComparison("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
-    # FigMinImprovement("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
-    FigMemReqPerformance("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
+    FigMinImprovement("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
+    # FigMemReqPerformance("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
