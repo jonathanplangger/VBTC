@@ -11,6 +11,13 @@ import csv
 import pandas as pd 
 from PIL import Image
 
+################################################################
+# Preset the file paths for the results file here
+RELLIS_RESULTS = 'figures/ComparativeStudyResults/rellis_results.csv'
+RUGD_RESULTS = "figures/ComparativeStudyResults/rugd_results.csv"
+MEMREQ = "figures/ComparativeStudyResults/memory_requirements.csv"
+
+#################################################################
 class FigResults(): 
     def __init__(self): 
         """
@@ -354,6 +361,9 @@ import pandas as pd
 import numpy as np
 
 class FigResults(): 
+    """FigResults: Base class for creating figures from the evaluation results obtained using eval.py.  
+    """    
+    
     def __init__(self,file, db_name, show = False): 
         self.maj = self.get_maj_mapping(db_name) # get the majority class mapping
         self.df = self.load_results(file) # load the results file
@@ -539,6 +549,11 @@ class FigMinImprovement(FigResults):
             axs[i].set_xticks(range(0,len(lf),1))
             axs[i].xaxis.set_ticklabels(lf, rotation = 20) # show the loss functions on the x-axis 
 
+            # for the first axis
+            if i == 0: 
+                axs[i].set_ylabel("Class-based mIoU")
+
+
             if i > 0: # for all subsequent plots 
                 axs[i].yaxis.set_ticklabels([]) # remove the ticks for the nex plots
 
@@ -551,6 +566,39 @@ class FigMinImprovement(FigResults):
 
         if self.show: 
             plt.show()
+
+class FigMemReqPerformance(FigResults): 
+    def __init__(self, results_file, db_name, show = False, memreq_file = None): 
+        super().__init__(results_file, db_name, show) # run super function 
+        self.memreq = self.load_memreq(memreq_file) # save the memory required
+        self.gen_fig() # generate the figure
+
+    def load_memreq(self, memreq_file):  # retrieve the memory required elements 
+        import csv
+        # Open and read the file 
+        with open(memreq_file, newline = "") as csvfile: 
+            reader = csv.reader(csvfile, delimiter=",")
+
+            data = []
+            for i, row in enumerate(reader): 
+                if i == 0: 
+                    header = row[:] # get all the header rows
+                else: 
+                    data.append(row) # retrieve all the file contents
+
+        #  return the dataframe representation of the data
+        return pd.DataFrame(data, columns = header)
+
+    def gen_fig(self): 
+        fig = plt.figure(1)
+        
+
+        #### Set up the data for plotting
+        
+
+        pass
+
+
 
 if __name__ == "__main__": 
 
@@ -607,5 +655,7 @@ if __name__ == "__main__":
     # FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = db_name)
     # QualitativeResults()
     
+    #### - New Comparative Study Results Figures - ####
     # FigMajMinPerformanceComparison("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
-    FigMinImprovement("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
+    # FigMinImprovement("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
+    FigMemReqPerformance("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")

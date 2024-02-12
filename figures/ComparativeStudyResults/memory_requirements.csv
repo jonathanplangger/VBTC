@@ -1,0 +1,7 @@
+Model,Dataset,ImageResolution,MemoryReq
+DeepLabv3+,Rellis,1920 x 1200,6072.44
+DeepLabv3+,RUGD,550 x 688,1095.59
+HRNetv2,Rellis,1024 x 640,3959.22
+HRNetv2,RUGD,550 x 688,2413.99
+Unet,Rellis,1920 x 1200,6062.43
+Unet,RUGD,550 x 688,1074.4
