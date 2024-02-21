@@ -714,6 +714,6 @@ if __name__ == "__main__":
     # QualitativeResults()
     
     #### - New Comparative Study Results Figures - ####
-    # FigMajMinPerformanceComparison("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
-    FigMinImprovement("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True)
-    # FigMemReqPerformance("figures/ComparativeStudyResults/rellis_results.csv", "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
+    FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
+    FigMinImprovement(RELLIS_RESULTS, "rellis", True)
+    FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
