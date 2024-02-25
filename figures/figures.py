@@ -681,6 +681,7 @@ class FigConfusionMatrix():
 
         disp = metrics.ConfusionMatrixDisplay(conf, display_labels=db.class_labels.values())
         disp.plot(include_values = False, cmap = "Blues") # create the plot for the confusion matrix
+        disp.ax_.get_images()[0].set_clim(0,1) # update the colour map to be between the range [0,1]
         fig = disp.figure_ # retrieve the figure for later formatting
         axs = fig.get_axes() # get the figure axes
         axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -75)
