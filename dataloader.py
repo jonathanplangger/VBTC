@@ -452,7 +452,8 @@ class RUGD(DataLoader):
             6: "water",
             7: "sky",
             8: "vehicle",
-            9: "container/generic-object",
+            # 9: "container/generic-object", # reduced size to make fitting to figure a lot easier
+            9: "object",
             10: "asphalt",
             11: "gravel",
             12: "building",

@@ -10,6 +10,7 @@ import os
 import csv   
 import pandas as pd 
 from PIL import Image
+from sklearn import metrics # for the confusion matrix
 
 ################################################################
 # Preset the file paths for the results file here
@@ -656,6 +657,39 @@ class FigMemReqPerformance(FigResults):
         if self.show: 
             plt.show()
 
+class FigConfusionMatrix():
+    def __init__(self, model_num):
+
+        file_name = "0{}_ConfusionMatrix".format(model_num) # get the file name based on model number
+        fp = "figures/ComparativeStudyResults/{}.csv".format(file_name) #  get the file path name 
+
+        results = []
+        with open(fp, "r") as file: 
+            csvreader = csv.reader(file)
+            for i, row in enumerate(csvreader): 
+                results.append(row)
+
+        # Convert the array to use the proper datatype
+        conf = np.array(results)
+        conf = conf.astype(float)
+
+        conf = conf + 0.00000001 # add a extremely small value to avoid divide by 0
+        mat = conf/conf.sum(axis=1) # normalize the values of the confusion matrix
+        disp = metrics.ConfusionMatrixDisplay(mat, display_labels=db.class_labels.values())
+        disp.plot(include_values = False) # create the plot for the confusion matrix
+        fig = disp.figure_ # retrieve the figure for later formatting
+        axs = fig.get_axes() # get the figure axes
+        axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -75)
+        axs[0].grid(visible = True) # display the grid on the figure
+        axs[1].yaxis.set_ticks(np.arange(0,1.1,0.1))
+        fig.set_figheight = 840
+        fig.set_figwidth = 840
+
+        plt.savefig("figures/ConfusionMatrix/{}.png".format(file_name))
+        plt.show()
+    
+
+
 
 
 if __name__ == "__main__": 
@@ -686,7 +720,10 @@ if __name__ == "__main__":
         19: "rubble",
     }
 
-    db_name = "rellis"
+    ##### Configuration Values #####
+    db_name = "rugd"
+    model_num = 41 # used to configure the model number employed in model-specific figures
+    ################################
 
     # # Add to path to allow access to the dataloader
     import sys
@@ -714,6 +751,7 @@ if __name__ == "__main__":
     # QualitativeResults()
     
     #### - New Comparative Study Results Figures - ####
-    FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
-    FigMinImprovement(RELLIS_RESULTS, "rellis", True)
-    FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
+    # FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
+    # FigMinImprovement(RELLIS_RESULTS, "rellis", True)
+    # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
+    FigConfusionMatrix(model_num = 41) # create the confusion matrix figure for a specific model

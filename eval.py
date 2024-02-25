@@ -18,6 +18,7 @@ import torchmetrics
 from tqdm import tqdm
 import time 
 import argparse
+from sklearn import metrics # for the confusion matrix
 from figures.figures import FigPredictionCertainty
 
 # Display masks
@@ -62,7 +63,7 @@ class ComparativeEvaluation():
 
         TOTAL_NUM_TEST = len(db.test_meta)
         NUM_TEST = TOTAL_NUM_TEST
-        # NUM_TEST = 20 # for quickly testing the eval program
+        # NUM_TEST = 100 # for quickly testing the eval program
         
         colors = db.get_colors()
 
@@ -99,6 +100,9 @@ class ComparativeEvaluation():
         # init loggers for model time measurement
         starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
         timings = torch.zeros((NUM_TEST+1, 1)) # prep array to store all the values for time
+
+        # Create blank master confusion matrix
+        master_conf_matrix = np.zeros((db.num_classes, db.num_classes))
 
         # Dummy input tensors employed during the warm-up cycle for the model
         dummy_input = torch.randn(1,3,input_size[0], input_size[1], dtype=torch.float).cuda()
@@ -146,9 +150,14 @@ class ComparativeEvaluation():
                 dice_score = dice(pred, ann.long())
                 mean_dice += dice_score
 
-                
-                # ----------- Plot the Results ----------------------- #
+                # Calculate the confusion matrix for this figure.                
+                conf_pred = pred.cpu().numpy().flatten()
+                conf_ann = ann.cpu().numpy().flatten()
+                # Sum the new confusion matrix results together
+                master_conf_matrix = master_conf_matrix + metrics.confusion_matrix(conf_ann, conf_pred, labels = range(0,db.num_classes))
 
+
+                # ----------- Plot the Results ----------------------- #
                 unique_classes = ann.unique() # get unique classes that are represented in the annotation
 
                 # for each unique class
@@ -229,6 +238,19 @@ class ComparativeEvaluation():
                 # end the testing if the desired # of tests has been obtained
                 if idx == NUM_TEST: 
                     break
+
+        ### Handle the Confusion Matrix for the Dataset ###
+        # Save the output confusion matrix for the dataset
+        model_num = db.cfg.EVAL.MODEL_FILE.split("/")[-2] # get the number for the model being evaluated
+        fp = "figures/ComparativeStudyResults/{}_ConfusionMatrix.csv".format(model_num) # update the file name based on the value
+        np.savetxt(fp, master_conf_matrix, delimiter = ",")        
+
+        # get the normalized amount of confusion for each class covered
+        # master_conf_matrix = master_conf_matrix + 0.0000001 # add a really small non-zero value to avoid divide by zero
+        # mat = master_conf_matrix/master_conf_matrix.sum(axis=1) 
+        # disp = metrics.ConfusionMatrixDisplay(mat)
+        # disp.plot(include_values = False) # display the plot after completion (w/o labels)
+        # plt.show()
 
         # Get the mean value 
         mean_dice = mean_dice / NUM_TEST           
