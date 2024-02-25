@@ -242,7 +242,7 @@ class ComparativeEvaluation():
         ### Handle the Confusion Matrix for the Dataset ###
         # Save the output confusion matrix for the dataset
         model_num = db.cfg.EVAL.MODEL_FILE.split("/")[-2] # get the number for the model being evaluated
-        fp = "figures/ComparativeStudyResults/{}_ConfusionMatrix.csv".format(model_num) # update the file name based on the value
+        fp = "figures/ConfusionMatrix/{}_ConfusionMatrix.csv".format(model_num) # update the file name based on the value
         np.savetxt(fp, master_conf_matrix, delimiter = ",")        
 
         # get the normalized amount of confusion for each class covered

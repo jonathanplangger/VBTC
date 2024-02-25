@@ -661,7 +661,7 @@ class FigConfusionMatrix():
     def __init__(self, model_num):
 
         file_name = "0{}_ConfusionMatrix".format(model_num) # get the file name based on model number
-        fp = "figures/ComparativeStudyResults/{}.csv".format(file_name) #  get the file path name 
+        fp = "figures/ConfusionMatrix/{}.csv".format(file_name) #  get the file path name 
 
         results = []
         with open(fp, "r") as file: 
@@ -674,9 +674,13 @@ class FigConfusionMatrix():
         conf = conf.astype(float)
 
         conf = conf + 0.00000001 # add a extremely small value to avoid divide by 0
-        mat = conf/conf.sum(axis=1) # normalize the values of the confusion matrix
-        disp = metrics.ConfusionMatrixDisplay(mat, display_labels=db.class_labels.values())
-        disp.plot(include_values = False) # create the plot for the confusion matrix
+
+        # Normalize all values based on the number of ground-truth labels (i.e. the amount of predictions to be expected)
+        for i, val in enumerate(conf.sum(axis=1)): # for each of the values in mat
+            conf[i] = conf[i] / val # divide by that value
+
+        disp = metrics.ConfusionMatrixDisplay(conf, display_labels=db.class_labels.values())
+        disp.plot(include_values = False, cmap = "Blues") # create the plot for the confusion matrix
         fig = disp.figure_ # retrieve the figure for later formatting
         axs = fig.get_axes() # get the figure axes
         axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -75)
@@ -721,8 +725,8 @@ if __name__ == "__main__":
     }
 
     ##### Configuration Values #####
-    db_name = "rugd"
-    model_num = 41 # used to configure the model number employed in model-specific figures
+    db_name = "rugd" # name of db used during eval
+    model_num = 44 # for model-specific figures
     ################################
 
     # # Add to path to allow access to the dataloader
@@ -754,4 +758,4 @@ if __name__ == "__main__":
     # FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
     # FigMinImprovement(RELLIS_RESULTS, "rellis", True)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
-    FigConfusionMatrix(model_num = 41) # create the confusion matrix figure for a specific model
+    FigConfusionMatrix(model_num = model_num) # create the confusion matrix figure for a specific model
