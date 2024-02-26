@@ -28,6 +28,7 @@ import torchvision.transforms.functional as F
 from torch.nn import functional as TF
 import torchinfo
 from torch.utils.tensorboard import SummaryWriter
+import pandas as pd
 
 from config import get_cfg_defaults
 import modelhandler
@@ -113,6 +114,9 @@ class ComparativeEvaluation():
 
         del dummy_input # no longer required for training (free memory)
 
+        log_dice = torch.empty(0) # used to log all values for the dice loss obtained
+        log_iou = torch.empty([NUM_TEST+1,25]) # same but for IoU
+
         with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # iterate through all tests while using batches 
             for idx in range(0, NUM_TEST, self.cfg.EVAL.BATCH_SIZE): 
@@ -148,6 +152,10 @@ class ComparativeEvaluation():
 
                 # # Measure the performance of the model
                 dice_score = dice(pred, ann.long())
+
+                # Log the values for storing later
+                log_iou[idx] = iou_score.cpu() # store the values onto the tensor
+                log_dice = torch.cat((log_dice, dice_score.cpu().unsqueeze(0)), dim=0)
                 mean_dice += dice_score
 
                 # Calculate the confusion matrix for this figure.                
@@ -239,18 +247,20 @@ class ComparativeEvaluation():
                 if idx == NUM_TEST: 
                     break
 
+        
+
         ### Handle the Confusion Matrix for the Dataset ###
         # Save the output confusion matrix for the dataset
         model_num = db.cfg.EVAL.MODEL_FILE.split("/")[-2] # get the number for the model being evaluated
         fp = "figures/ConfusionMatrix/{}_ConfusionMatrix.csv".format(model_num) # update the file name based on the value
         np.savetxt(fp, master_conf_matrix, delimiter = ",")        
 
-        # get the normalized amount of confusion for each class covered
-        # master_conf_matrix = master_conf_matrix + 0.0000001 # add a really small non-zero value to avoid divide by zero
-        # mat = master_conf_matrix/master_conf_matrix.sum(axis=1) 
-        # disp = metrics.ConfusionMatrixDisplay(mat)
-        # disp.plot(include_values = False) # display the plot after completion (w/o labels)
-        # plt.show()
+        ### Handle the logging for dice and iou scores
+        # Store values on dataframes
+        df_log = pd.DataFrame(log_iou[1:].numpy())
+        df_log["dice"] = log_dice.numpy()
+        df_log.to_csv("figures/ComparativeStudyResults/LoggedResults/{}_LoggedResults.csv".format(model_num))
+        df_log.rename(columns = db.class_labels)
 
         # Get the mean value 
         mean_dice = mean_dice / NUM_TEST           
