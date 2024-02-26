@@ -704,31 +704,55 @@ class FigPerfBoxPlot():
             if os.path.exists(fp): 
                 df[i] = pd.read_csv(fp)
 
-        
-
 
         # Configure which db/model is corresponding to model_num 
         plot_config = { # max and min value of the range
             "rugd": {
-                "unet" : [31,35],
-                "hrnet_ocr": [36,40],
-                "deeplabv3plus":[41,45]
+                "U-Net" : [31,35],
+                "HRNetv2": [36,40],
+                "DeepLabv3+":[41,45]
             }, 
             "rellis": {
-                "unet": [1,5], 
-                "hrnet_ocr":[6,10], 
-                "deeplabv3plus":[11,15]
-            }
+                "U-Net": [1,5], 
+                "HRNetv2":[6,10], 
+                "DeepLabv3+":[11,15]
+            },
+            "lf": ["CE", "FCIoUv2", "FocalLoss", "DiceLoss", "PowerJaccard"]
         }
 
-        fig,axs = plt.subplots(1,1) # one subplot per model
+        fig,axs = plt.subplots(1,3) # one subplot per model
+        fig.subplots_adjust(wspace = 0, hspace=0)
 
+        # select the RUGD dataset as preset
+        db = "rugd" # start with the RUGD dataset first, update this implementation later
+        
+        ### Plot the figure 
+        models = list(plot_config[db].keys()) # Get the models being evaluated
         for i, _ in enumerate(axs):
-            for j in range(0, 5): # for all 5 loss functions used
-                axs[i].boxplot(df[""]["dice"], showfliers=False)
+            ### Figure formatting
+            if i > 0: # for all subsequent plots
+                axs[i].set(yticklabels=([]))# remove the ticklabels
+
+            #### - Data plotting & handling
+            model_range = plot_config[db][models[i]]
+            # Boxplot for each LF used to train this specific model
+            model_dice = []
+            for j in range(model_range[0], model_range[1] + 1):
+                model_dice.append(df[j]["dice"]) # grab the Dice score data from the dataframe
+            axs[i].boxplot(model_dice, showfliers=False)# plot the model data
+            axs[i].set_xticklabels(plot_config["lf"], rotation = -60)
+
+            axs[i].set(ylim = (0,1))
+            axs[i].set_xlabel(models[i], va="top") 
+            axs[i].xaxis.set_label_position("top")
+            axs[i].set_yticks(np.arange(0,1.1, 0.1))
+            axs[i].minorticks_on()
+            axs[i].grid(True, which = "both", alpha = 0.25)
+
+
+
 
         plt.show()
-        pass
 
 
 if __name__ == "__main__": 
