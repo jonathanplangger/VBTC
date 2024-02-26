@@ -259,9 +259,8 @@ class ComparativeEvaluation():
         # Store values on dataframes
         df_log = pd.DataFrame(log_iou[1:].numpy())
         df_log["dice"] = log_dice.numpy()
-        df_log.to_csv("figures/ComparativeStudyResults/LoggedResults/{}_LoggedResults.csv".format(model_num))
-        df_log.rename(columns = db.class_labels)
-
+        df_log = df_log.rename(columns = db.class_labels)
+        df_log.to_csv("figures/ComparativeStudyResults/LoggedResults/{}_LoggedResults.csv".format(model_num), index = False)
         # Get the mean value 
         mean_dice = mean_dice / NUM_TEST           
 

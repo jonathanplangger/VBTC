@@ -694,7 +694,41 @@ class FigConfusionMatrix():
         plt.show()
     
 
+class FigPerfBoxPlot(): 
+    def __init__(self, model_num): 
+        # Load all the model data
+        df = {}
+        for i in range(0,46): 
+            fp = "figures/ComparativeStudyResults/LoggedResults/0{}_LoggedResults.csv".format(i) # file path
+            # Only add the data to the array if the file actually exists (avoid any errors)
+            if os.path.exists(fp): 
+                df[i] = pd.read_csv(fp)
 
+        
+
+
+        # Configure which db/model is corresponding to model_num 
+        plot_config = { # max and min value of the range
+            "rugd": {
+                "unet" : [31,35],
+                "hrnet_ocr": [36,40],
+                "deeplabv3plus":[41,45]
+            }, 
+            "rellis": {
+                "unet": [1,5], 
+                "hrnet_ocr":[6,10], 
+                "deeplabv3plus":[11,15]
+            }
+        }
+
+        fig,axs = plt.subplots(1,1) # one subplot per model
+
+        for i, _ in enumerate(axs):
+            for j in range(0, 5): # for all 5 loss functions used
+                axs[i].boxplot(df[""]["dice"], showfliers=False)
+
+        plt.show()
+        pass
 
 
 if __name__ == "__main__": 
@@ -727,7 +761,7 @@ if __name__ == "__main__":
 
     ##### Configuration Values #####
     db_name = "rugd" # name of db used during eval
-    model_num = 44 # for model-specific figures
+    model_num = 41 # for model-specific figures
     ################################
 
     # # Add to path to allow access to the dataloader
@@ -759,4 +793,5 @@ if __name__ == "__main__":
     # FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
     # FigMinImprovement(RELLIS_RESULTS, "rellis", True)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
-    FigConfusionMatrix(model_num = model_num) # create the confusion matrix figure for a specific model
+    # FigConfusionMatrix(model_num = model_num) # create the confusion matrix figure for a specific model
+    FigPerfBoxPlot(model_num = model_num)
