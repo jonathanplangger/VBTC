@@ -1,13 +1,13 @@
 # Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
 
 DB: # configure which database is being used during training / test
-  DB_NAME: "rellis" # currently only rugd & rellis
+  DB_NAME: "rugd" # currently only rugd & rellis
    
 EVAL:
   MODEL_NAME: "deeplabv3plus"
-  MODEL_FILE: "../models/1_Winter2024_TrainingResults/011/model.pt"
+  MODEL_FILE: "../models/1_Winter2024_TrainingResults/042/model.pt"
   # MODEL_FILE: "../models/2_LF Research Data/014/model.pt"
-  DISPLAY_IMAGE: True 
+  DISPLAY_IMAGE: False 
   PRED_CERTAINTY: False
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
@@ -16,8 +16,8 @@ EVAL:
     WIDTH: 1024
 
 TRAIN:
-  MODEL_NAME: 'gscnn'
-  CRITERION: 'crossentropyloss'
+  MODEL_NAME: 'deeplabv3plus'
+  CRITERION: 'fciouv2'
   BATCH_SIZE: 1
   TOTAL_EPOCHS: 10
   LR: 1.0e-5 # learning rate (1e-4 is base for most learning)

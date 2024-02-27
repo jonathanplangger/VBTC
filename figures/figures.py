@@ -11,6 +11,7 @@ import csv
 import pandas as pd 
 from PIL import Image
 from sklearn import metrics # for the confusion matrix
+import torch
 
 ################################################################
 # Preset the file paths for the results file here
@@ -19,6 +20,25 @@ RUGD_RESULTS = "figures/ComparativeStudyResults/rugd_results.csv"
 MEMREQ = "figures/ComparativeStudyResults/memory_requirements.csv"
 
 #################################################################
+#### Useful Functions
+
+def cvt_torch_2_plt_imgfmt(img, torch_in: bool = True):
+    """(function) cvt_torch_2_matplotlib_imgfmt
+    Quickly change the format from (C,H,W) used by Pytorch to the format (H,W,C) used in Matplotlib. Code assumes tensor input images as input. However ndarray should work as well\n
+    :param img: Image being converted
+    :type img: torch.tensor
+    :param torch_in: Designates that the input is in the pytorch format. If True, then converts to matplotlib format. False converts the other way around. 
+    :type torch_in: bool
+    :return: Resulting converted image
+    :rtype: torch.tensor
+    """         
+    if torch_in: # from torch to matplotlib fmt
+        return img.permute(1,2,0)
+    else: # from matplotlib to torch format
+        return img.permute(2,0,1) 
+    
+#################################################################
+
 class FigLFResults(): 
     def __init__(self): 
         """
@@ -766,12 +786,73 @@ class FigQualitativeResults():
     :param idx: Id specific to a single image in the corresponding dataset. Specify to re-use the same image 
     :type idx: int
     """         
-    def __init__(self, idx):
+    
+    def __init__(self, idx = 0, model_range: list = [41,45]):
         import eval 
-        exe = eval.ComparativeEvaluation()
-        
-        pass
+        self.eval_handler = eval.ComparativeEvaluation()
 
+
+
+        plot_config = { # max and min value of the range
+            "rugd": {
+                "U-Net" : [31,35],
+                "HRNetv2": [36,40],
+                "DeepLabv3+":[41,45]
+            }, 
+            "rellis": {
+                "U-Net": [1,5], 
+                "HRNetv2":[6,10], 
+                "DeepLabv3+":[11,15]
+            },
+            "lf": ["CE", "FCIoUv2", "FocalLoss", "DiceLoss", "PowerJaccard"]
+        }
+
+        # Grab the images for the figure        
+        pred, ann, raw_img = self.eval_handler.single_img_pred(idx, model_num = model_range[0])
+
+        fig = plt.figure()
+        spec = fig.add_gridspec(2,4)
+
+        axs = []
+        for i, _ in enumerate(spec): 
+            axs.append(fig.add_subplot(spec[i]))
+        
+        axs[-1].remove() # no plot required on the last element
+        axs[0].imshow(raw_img)
+        axs[1].imshow(self.prep_seg(ann))
+        axs[2].imshow(self.prep_seg(pred))
+
+        i = 3
+        for model_num in range(model_range[0]+1, model_range[1] + 1):
+            img, _, _ = self.eval_handler.single_img_pred(idx, model_num = model_num)
+            axs[i].imshow(self.prep_seg(img))
+
+            i = i + 1 # increment the axis number
+            pass 
+
+        fig.subplots_adjust(wspace = 0, hspace = 0)
+
+        # Apply formatting to all subplots
+        for i in range(0,7): 
+            axs[i].set_yticks([])
+            axs[i].set_xticks([])
+            axs[i].xaxis.set_label_position("top")
+            if i == 0: 
+                axs[i].set_xlabel("Raw Input Image")
+            elif i == 1: 
+                axs[i].set_xlabel("Ground-Truth")
+            elif i > 1: 
+                axs[i].set_xlabel(plot_config["lf"][i - 2])
+            
+
+
+        plt.show()
+        pass
+    
+    def prep_seg(self, seg_in): 
+        # Convert the segmented labelled image into a colour mapped one -> repeated several times
+        return cvt_torch_2_plt_imgfmt(self.eval_handler.cvt_color(seg_in).long())
+    
 
 if __name__ == "__main__": 
 
@@ -837,4 +918,4 @@ if __name__ == "__main__":
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
     # FigConfusionMatrix(model_num = model_num) # create the confusion matrix figure for a specific model
     # FigPerfBoxPlot()
-    FigQualitativeResults()
+    FigQualitativeResults(idx=203)

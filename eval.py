@@ -19,7 +19,7 @@ from tqdm import tqdm
 import time 
 import argparse
 from sklearn import metrics # for the confusion matrix
-from figures.figures import FigPredictionCertainty
+# from figures.figures import FigPredictionCertainty
 
 # Display masks
 import numpy as np
@@ -329,9 +329,9 @@ class ComparativeEvaluation():
         pred = model_handler.handle_output(pred) 
         
         # Update format for ease of handling in other functions
-        pred = pred.cpu()
-        ann = ann.cpu()
-        orig_images = torch.tensor(orig_images) # convert everything to torch tensors before sending off
+        pred = pred.cpu()[0]
+        ann = ann.cpu()[0]
+        orig_images = torch.tensor(orig_images)[0].long() # convert everything to torch tensors before sending off
 
         return pred, ann, orig_images
     
@@ -381,7 +381,7 @@ class ComparativeEvaluation():
         input_shape = sem_img.shape # get the shape of the input 
 
         # storage element for the mapped color elements
-        color_img = torch.zeros(3,input_shape[1], input_shape[2])
+        color_img = torch.zeros(3,input_shape[0], input_shape[1])
         zeros = torch.zeros(color_img.shape)
 
         for c, color in enumerate(colors): 
@@ -393,25 +393,12 @@ class ComparativeEvaluation():
             
 
         # Merge the R,G,B colour channels into one tensor
-        color_img = torch.cat(color_img)
+        # color_img = torch.cat(color_img)
         
         #Return the tensor w/ the matplotlib image format to the user
-        return self.cvt_torch_2_matplotlib_imgfmt(color_img, True)
+        return color_img
     
-    def cvt_torch_2_matplotlib_imgfmt(img, torch_in: bool):
-        """(function) cvt_torch_2_matplotlib_imgfmt
-        Quickly change the format from (C,H,W) used by Pytorch to the format (H,W,C) used in Matplotlib. Code assumes tensor input images as input. However ndarray should work as well\n
-        :param img: Image being converted
-        :type img: torch.tensor
-        :param torch_in: Designates that the input is in the pytorch format. If True, then converts to matplotlib format. False converts the other way around. 
-        :type torch_in: bool
-        :return: Resulting converted image
-        :rtype: torch.tensor
-        """         
-        if torch_in: # from torch to matplotlib fmt
-            return img.permute(1,2,0)
-        else: # from matplotlib to torch format
-            return img.permute(2,0,1) 
+
 
 
 
@@ -419,8 +406,8 @@ if __name__ == "__main__":
     
     # Run the evaluation program
     eval = ComparativeEvaluation()
-    # eval.eval( )
-    pred, ann, raw_img = eval.single_img_pred(model_num = 41)
-    # eval.img_mask_blend(pred, raw_img) # get the corresponding mask blend
-    eval.cvt_color(pred)
+    eval.eval( )
+    # pred, ann, raw_img = eval.single_img_pred(model_num = 41)
+    # # eval.img_mask_blend(pred, raw_img) # get the corresponding mask blend
+    # eval.cvt_color(pred)
     
