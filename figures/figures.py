@@ -223,9 +223,9 @@ class FigDBDistribution():
         plt.show() # display the results
 
 
-class QualitativeResults(): 
+class FigQualitativeResults_Paper(): 
     """
-        QualitativeResults()\n
+        FigQualitativeResults()\n
         --------------------------------------\n
         A single image is being displayed alongside all the other segmentation predictions obtained for all loss functions. \n
         Used to qualitatively represent the performance of each loss functions \n
@@ -695,7 +695,11 @@ class FigConfusionMatrix():
     
 
 class FigPerfBoxPlot(): 
-    def __init__(self, model_num): 
+    def __init__(self): 
+        """FigPerfBoxPlot()\n
+        Generates the box plot for all of the prepared LoggedResults files located in "figures/ComparativeStudyResults/LoggedResults/".\n
+        This encompasses all of the provided files. ONLY has the RUGD dataset currently implemented
+        """        
         # Load all the model data
         df = {}
         for i in range(0,46): 
@@ -754,6 +758,20 @@ class FigPerfBoxPlot():
 
         plt.show()
 
+class FigQualitativeResults(): 
+    """(class) FigQualitativeResults\n
+    Updated version of the Qualitative Results Figure to be employed in the thesis manuscript. Provides a visualization of the prediction results of the semantic 
+    segmentation models.
+
+    :param idx: Id specific to a single image in the corresponding dataset. Specify to re-use the same image 
+    :type idx: int
+    """         
+    def __init__(self, idx):
+        import eval 
+        exe = eval.ComparativeEvaluation()
+        
+        pass
+
 
 if __name__ == "__main__": 
 
@@ -811,11 +829,12 @@ if __name__ == "__main__":
     # FigLossShaping()
     # FigPowerTerm()
     # FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = db_name)
-    # QualitativeResults()
+    # FigQualitativeResults_Paper()
     
     #### - New Comparative Study Results Figures - ####
     # FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
     # FigMinImprovement(RELLIS_RESULTS, "rellis", True)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
     # FigConfusionMatrix(model_num = model_num) # create the confusion matrix figure for a specific model
-    FigPerfBoxPlot(model_num = model_num)
+    # FigPerfBoxPlot()
+    FigQualitativeResults()

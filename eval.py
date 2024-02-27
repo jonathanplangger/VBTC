@@ -43,15 +43,15 @@ class ComparativeEvaluation():
         # Load and update the configuration file. Serves as the main point of configuration for the testing. 
         self.cfg = get_cfg_defaults()
         self.cfg.merge_from_file("configs/config_comparative_study.yaml")
-
         # Set up the device where the program is going to be run -> gpu if available
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.db = dataloader.get_dataloader(self.cfg, setType="train")
     
 
     def eval(self):
 
         # Dataloader initialization
-        self.db = db = dataloader.get_dataloader(self.cfg, setType="train")
+        db = self.db # hold local version of the dataloader
         db.randomizeOrder()
 
         # Obtain the model handler -> used to generate model-specific features 
@@ -115,7 +115,7 @@ class ComparativeEvaluation():
         del dummy_input # no longer required for training (free memory)
 
         log_dice = torch.empty(0) # used to log all values for the dice loss obtained
-        log_iou = torch.empty([NUM_TEST+1,25]) # same but for IoU
+        log_iou = torch.empty([NUM_TEST+1, self.db.num_classes]) # same but for IoU
 
         with tqdm(total = TOTAL_NUM_TEST, unit = "Batch") as pbar:
         # iterate through all tests while using batches 
@@ -182,25 +182,14 @@ class ComparativeEvaluation():
                 # -------------- Show the image output for the segmentation  ---------- #
                 if self.cfg.EVAL.DISPLAY_IMAGE:     
 
-                    # create a blank array
-                    masks = torch.zeros(self.cfg.DB.NUM_CLASSES, self.cfg.DB.IMG_SIZE.HEIGHT , self.cfg.DB.IMG_SIZE.WIDTH, device=self.device, dtype=torch.bool)
-
                     if self.cfg.DB.DB_NAME == "rellis":
                         # Re-map back to the 0-35 scheme before displaying the output 
                         pred = db.map_labels(pred, True)
                         ann = db.map_labels(ann,True)
 
-                    # obtain a mask for each class
-                    for classID in range(masks.shape[0]): 
-                        masks[classID] = (pred == classID)
-
                     # move the masks and the image onto the CPU
                     images = orig_images # restore original images
-                    masks = masks.to('cpu')
                     del orig_images # no longer needed
-
-                    # convert to boolean 
-                    masks = masks.to(torch.bool) 
 
                     # place the annotations back onto the cpu
                     ann = ann.to('cpu')
@@ -213,9 +202,8 @@ class ComparativeEvaluation():
                     axs[0, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Base Image" )
 
                     # obtain the blended segmentation image 
-                    seg_img = draw_segmentation_masks(torch.tensor(images[0]).permute(2,0,1).to(torch.uint8), masks, alpha=0.7, colors=colors)
-                    img = F.to_pil_image(seg_img.detach())
-                    axs[0, 1].imshow(np.asarray(img))
+                    img = self.img_mask_blend(pred=pred, raw_img = torch.tensor(images))
+                    axs[0, 1].imshow(img)
                     axs[0, 1].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[], title="Image/Mask Blend" )
 
                     # Ground Truth Annotation masks 
@@ -294,15 +282,145 @@ class ComparativeEvaluation():
         print(list(table.values()))
         print("End of Evaluation Program")  
 
+    # Complete the eval process for only a single image. Used for generating figure output
+    def single_img_pred(self, idx = 0, model_num = None):
+        """(function) single_img_pred\n
+        Complete the prediction and output for a single image. Employs the preset configuration for eval.py to determine the correct model settings.\n
+        The specific model number examined can be updated programmatically through updating the model_num parameter. This is provided to allow for the obtainment of outputs for a set of the same models. 
+        Make sure that the model_num matches the model and dataset configured before usage. Or else the resulting model implemented will be wrong or not work at all.\n
+
+        :param idx: Index value for the specific image input to the model. Ensures the consistency in image employed, defaults to 0
+        :type idx: int, optional
+        :param model_num: Number of the model evaluated. Please ensure that the number is valid and corresponds to the model/db configured in the configuration file., defaults to 41
+        :type model_num: int, optional
+        :return: (pred, ann, orig_images) : returns 3 outputs concerning the labelled prediction and annotation images as well as the original input image to the network. 
+        :rtype: torch.tensor() : for all 3 return values
+        """        
+
+
+        if model_num is not None: # if the input has been modified, use the specified model
+            model_path =  "../models/1_Winter2024_TrainingResults/{}/model.pt".format(str(model_num).zfill(3)) # use the model number in determining the path
+            self.cfg.EVAL.MODEL_FILE = model_path # update the configuration to use this other path
+    
+        # Load the model based on the configuration file settings
+        model_handler = modelhandler.ModelHandler(self.cfg, "eval")# load the model handler 
+        model = model_handler.load_model()
+        model.eval()
+        model.to(self.device)#  place on GPU
+
+        # if the image size needs to be updated
+        if self.cfg.EVAL.INPUT_SIZE.RESIZE_IMG:
+        # new img size set by config file
+            input_size = (self.cfg.EVAL.INPUT_SIZE.HEIGHT, self.cfg.EVAL.INPUT_SIZE.WIDTH) 
+        else: 
+            input_size = (self.db.height, self.db.width) # use the original input size values instead.
+
+        # get the images used for prediction
+        orig_images, images, ann, _ = self.db.load_batch(idx, batch_size = 1, resize = input_size)
+
+        # Place the images onto the GPU
+        images = images.cuda()
+        ann = ann.cuda()
+
+        with torch.no_grad(): 
+            pred = model(images)
+
+        # Handle the output based on the specific model configured
+        pred = model_handler.handle_output(pred) 
+        
+        # Update format for ease of handling in other functions
+        pred = pred.cpu()
+        ann = ann.cpu()
+        orig_images = torch.tensor(orig_images) # convert everything to torch tensors before sending off
+
+        return pred, ann, orig_images
+    
+    def img_mask_blend(self, pred, raw_img): 
+        """(function) img_mask_blend
+        Output a merged representation of the annotated image and the raw input image. This allows for the segmentation to be easily
+        viewed on top of the original input image background. 
+
+        :param pred: Segmented (labelled) image based on each class shown. Dimension of (1xHxW) with values ranging from [0,C] classes expected. 
+        :type pred: torch.tensor
+        :param raw_img: Raw, original input image of dimensions (3xHxW) w/ RGB encoding. Used as the background for the merged image
+        :type raw_img: torch.tensor
+        """
+        masks = torch.zeros(self.cfg.DB.NUM_CLASSES, self.cfg.DB.IMG_SIZE.HEIGHT , self.cfg.DB.IMG_SIZE.WIDTH, device=self.device, dtype=torch.bool)
+
+        if self.cfg.DB.DB_NAME == "rellis":
+            # Re-map back to the 0-35 scheme before displaying the output 
+            pred = self.db.map_labels(pred, True)
+
+        # obtain a mask for each class
+        for classID in range(masks.shape[0]): 
+            masks[classID] = (pred == classID)
+
+        # move the masks and the image onto the CPU
+        masks = masks.to('cpu')
+
+        # convert to boolean 
+        masks = masks.to(torch.bool) 
+
+        seg_img = draw_segmentation_masks(raw_img[0].permute(2,0,1).to(torch.uint8), masks, alpha=0.7, colors=self.db.get_colors())
+        img = F.to_pil_image(seg_img.detach())
+        blend = np.asarray(img) # get the blended image
+
+        # Return the blended image
+        return blend
+
+
+    def cvt_color(self, sem_img):
+        """(function) cvt_color\n
+        Convert the output labelled semantic segmentationn mask into a coloured version of it. This allows for the effective output to be displayed in colour rather than values of range [0,C].\n
+
+        :param sem_img: Semantically labelled image containing values [0,C] (C = number of classes). Expected single input of dimensions [1 x H x W]
+        :type sem_img: torch.tensor
+        """
+        # Get the colors mapping for the model
+        colors = self.db.get_colors()
+        input_shape = sem_img.shape # get the shape of the input 
+
+        # storage element for the mapped color elements
+        color_img = torch.zeros(3,input_shape[1], input_shape[2])
+        zeros = torch.zeros(color_img.shape)
+
+        for c, color in enumerate(colors): 
+
+            # Obtain the pixel applicability mask
+            mask = (sem_img == c)
+            temp = [(zeros[i] + color[i]) for i,_ in enumerate(color)]
+            color_img = color_img + torch.stack(temp) * mask
+            
+
+        # Merge the R,G,B colour channels into one tensor
+        color_img = torch.cat(color_img)
+        
+        #Return the tensor w/ the matplotlib image format to the user
+        return self.cvt_torch_2_matplotlib_imgfmt(color_img, True)
+    
+    def cvt_torch_2_matplotlib_imgfmt(img, torch_in: bool):
+        """(function) cvt_torch_2_matplotlib_imgfmt
+        Quickly change the format from (C,H,W) used by Pytorch to the format (H,W,C) used in Matplotlib. Code assumes tensor input images as input. However ndarray should work as well\n
+        :param img: Image being converted
+        :type img: torch.tensor
+        :param torch_in: Designates that the input is in the pytorch format. If True, then converts to matplotlib format. False converts the other way around. 
+        :type torch_in: bool
+        :return: Resulting converted image
+        :rtype: torch.tensor
+        """         
+        if torch_in: # from torch to matplotlib fmt
+            return img.permute(1,2,0)
+        else: # from matplotlib to torch format
+            return img.permute(2,0,1) 
+
 
 
 if __name__ == "__main__": 
     
     # Run the evaluation program
     eval = ComparativeEvaluation()
-    eval.eval( )
-
-
-
-
+    # eval.eval( )
+    pred, ann, raw_img = eval.single_img_pred(model_num = 41)
+    # eval.img_mask_blend(pred, raw_img) # get the corresponding mask blend
+    eval.cvt_color(pred)
     
