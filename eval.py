@@ -38,11 +38,14 @@ EPS = 1e-10 # used to avoid dividing by zero.
 class ComparativeEvaluation():
 
     # TODO - Update the code to work in OO fashion 
-    def __init__(self):
+    def __init__(self, cfg_path = "configs/config_comparative_study.yaml", model_num = None):
 
         # Load and update the configuration file. Serves as the main point of configuration for the testing. 
         self.cfg = get_cfg_defaults()
-        self.cfg.merge_from_file("configs/config_comparative_study.yaml")
+        self.cfg.merge_from_file(cfg_path)
+        # Load the specified model instead.
+        if model_num is not None: 
+            self.cfg.EVAL.MODEL_FILE = "../models/1_Winter2024_TrainingResults/{}/model.pt".format(str(model_num).zfill(3))
         # Set up the device where the program is going to be run -> gpu if available
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.db = dataloader.get_dataloader(self.cfg, setType="train")
@@ -405,9 +408,16 @@ class ComparativeEvaluation():
 if __name__ == "__main__": 
     
     # Run the evaluation program
-    eval = ComparativeEvaluation()
-    eval.eval( )
-    # pred, ann, raw_img = eval.single_img_pred(model_num = 41)
-    # # eval.img_mask_blend(pred, raw_img) # get the corresponding mask blend
-    # eval.cvt_color(pred)
+    # eval = ComparativeEvaluation()
+    # eval.eval( )
+
+    ##### Iteratively run eval.py through all of the desired combinations -> this allows for AFK running of eval.py
+    for i in range(6,16): 
+        if i  < 11: # HRNet
+            cfg_path = "configs/006_010_config.yaml"
+        elif i < 16: # Deeplabv3plus
+            cfg_path = "configs/011_015_config.yaml"
+        
+        eval = ComparativeEvaluation(cfg_path, model_num = i)
+        eval.eval()
     

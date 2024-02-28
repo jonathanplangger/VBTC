@@ -1,0 +1,57 @@
+# Configuration settings for the comparative study. See config.py for more information regarding the specific configuration options. 
+
+DB: # configure which database is being used during training / test
+  DB_NAME: "rugd" # currently only rugd & rellis
+   
+EVAL:
+  MODEL_NAME: "deeplabv3plus"
+  MODEL_FILE: "../models/1_Winter2024_TrainingResults/042/model.pt"
+  # MODEL_FILE: "../models/2_LF Research Data/014/model.pt"
+  DISPLAY_IMAGE: False 
+  PRED_CERTAINTY: False
+  BATCH_SIZE: 1
+  INPUT_SIZE: # re-size input img to model to new size.
+    RESIZE_IMG: False # will only re-size the image to the dim below if True
+    HEIGHT: 640
+    WIDTH: 1024
+
+TRAIN:
+  MODEL_NAME: 'deeplabv3plus'
+  CRITERION: 'fciouv2'
+  BATCH_SIZE: 1
+  TOTAL_EPOCHS: 10
+  LR: 1.0e-5 # learning rate (1e-4 is base for most learning)
+  FINAL_LR: 1.0e-10
+  PRETRAINED: False
+  INPUT_NORM: False
+  INPUT_SIZE:
+    RESIZE_IMG: False
+    # HEIGHT: 520
+    # WIDTH: 832
+    HEIGHT: 640
+    WIDTH: 1024  
+
+MODELS:
+  UNET: # --> unet
+    MODEL_FILE: "../models/1_Winter2024_TrainingResults/012/model.pt"
+    # MODEL_FILE: "model.pt"
+    # BASE: 32 # Base value used in paper = 32
+    BASE: 32 # Base value used in paper = 32
+    KERNEL_SIZE: 5
+  # --> deeplabv3plus
+  DEEPLABV3PLUS: 
+    BACKBONE: 'resnet50' # xception, resnet101, resnet50
+    MODEL_FILE: "../models/1_Winter2024_TrainingResults/013/epoch8.pt"
+  # --> hrnet_ocr
+  HRNET_OCR:  
+    CONFIG: "/home/jplangger/Documents/Dev/VBTC/models/hrnet_ocr/experiments/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml"
+    MODEL_FILE: "../models/1_Winter2024_TrainingResults/007/epoch4.pt"
+    # "/home/jplangger/Documents/Dev/VBTC/models/HRNet-Semantic-Segmentation-HRNet-OCR/output/rellis/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484/final_state.pth"
+    SRC_DIR: "/home/jplangger/Documents/Dev/VBTC/models/hrnet_ocr"  
+    MODEL_NAME: "seg_hrnet_ocr"  # OCR is being used alongside the HRNet for testing
+  # --> gscnn
+  GSCNN: 
+    MODEL_FILE: "/home/jplangger/Documents/Dev/VBTC/models/gscnn/output/gscnn_best.pth"
+    
+
+

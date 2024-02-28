@@ -564,8 +564,13 @@ class FigMinImprovement(FigResults):
                 axs[i].plot(range(0,len(df_model["Loss Function"]),1), df_classes[c].values, label="_nolegend_")
 
             ## - Format the figure - ##
-            axs[i].set_yticks(np.arange(0,1.1,0.1)) # set the axis to [0,1]
-            axs[i].set_ylim(0,1.0)       
+            if db_name == "rellis":
+                axs[i].set_yticks(np.arange(0,1.1,0.1)) # set the axis to [0,1]
+                axs[i].set_ylim(0,1.0) 
+            elif db_name == "rugd":
+                axs[i].set_yticks(np.arange(0,0.6,0.1)) # set the axis to [0,1]
+                axs[i].set_ylim(0,0.6) 
+
             axs[i].set_xlim(-0.3,len(lf) - 0.5)
             axs[i].set_xticks(range(0,len(lf),1))
             axs[i].xaxis.set_ticklabels(lf, rotation = 20) # show the loss functions on the x-axis 
@@ -678,7 +683,7 @@ class FigMemReqPerformance(FigResults):
             plt.show()
 
 class FigConfusionMatrix():
-    def __init__(self, model_num):
+    def __init__(self, model_num, show = False):
 
         file_name = "0{}_ConfusionMatrix".format(model_num) # get the file name based on model number
         fp = "figures/ConfusionMatrix/{}.csv".format(file_name) #  get the file path name 
@@ -704,14 +709,17 @@ class FigConfusionMatrix():
         disp.ax_.get_images()[0].set_clim(0,1) # update the colour map to be between the range [0,1]
         fig = disp.figure_ # retrieve the figure for later formatting
         axs = fig.get_axes() # get the figure axes
-        axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -75)
+        axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -70)
         axs[0].grid(visible = True) # display the grid on the figure
         axs[1].yaxis.set_ticks(np.arange(0,1.1,0.1))
-        fig.set_figheight = 840
-        fig.set_figwidth = 840
+        fig.set_size_inches(9,7)
+        fig.subplots_adjust(bottom = 0.165)
+        plt.title("[PLACEHOLDER]: {}".format(model_num)) # update this to feature the actual LF/Model/Dataset combination -> Placeholder ONly
 
         plt.savefig("figures/ConfusionMatrix/{}.png".format(file_name))
-        plt.show()
+
+        if show:
+            plt.show()
     
 
 class FigPerfBoxPlot(): 
@@ -884,7 +892,7 @@ if __name__ == "__main__":
 
     ##### Configuration Values #####
     db_name = "rugd" # name of db used during eval
-    model_num = 41 # for model-specific figures
+    model_num = 34 # for model-specific figures
     ################################
 
     # # Add to path to allow access to the dataloader
@@ -913,9 +921,11 @@ if __name__ == "__main__":
     # FigQualitativeResults_Paper()
     
     #### - New Comparative Study Results Figures - ####
-    # FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
-    # FigMinImprovement(RELLIS_RESULTS, "rellis", True)
+    FigMajMinPerformanceComparison(RUGD_RESULTS, "rugd", True)
+    FigMinImprovement(RUGD_RESULTS, "rugd", True)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
-    # FigConfusionMatrix(model_num = model_num) # create the confusion matrix figure for a specific model
+    
+    # for i in range(31,46): 
+    #     FigConfusionMatrix(model_num = i) # create the confusion matrix figure for a specific model
     # FigPerfBoxPlot()
-    FigQualitativeResults(idx=203)
+    # FigQualitativeResults(idx=203)  
