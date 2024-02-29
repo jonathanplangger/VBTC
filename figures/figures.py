@@ -37,6 +37,50 @@ def cvt_torch_2_plt_imgfmt(img, torch_in: bool = True):
     else: # from matplotlib to torch format
         return img.permute(2,0,1) 
     
+
+def get_model_info(model_num): 
+    # Allows fro the re-use of plot_config
+    plot_config = { # max and min value of the range
+        "rugd": {
+            "U-Net" : [31,35],
+            "HRNetv2": [36,40],
+            "DeepLabv3+":[41,45]
+        }, 
+        "rellis": {
+            "U-Net": [1,5], 
+            "HRNetv2":[6,10], 
+            "DeepLabv3+":[11,15]
+        },
+        "db": ["rellis", "rugd"],
+        "lf": ["CE", "FCIoUv2", "FocalLoss", "DiceLoss", "PowerJaccard"]
+    }   
+
+    # Use the remainder to determine what the loss function is 
+    rem = model_num%10
+    if rem > 5: 
+        rem = rem-5
+    
+    # get the loss function based on the remainder value
+    lf = plot_config["lf"][rem-1] 
+
+    mn = model_num
+    # Assign the names of each value
+    if model_num > 30: 
+        db = "rugd"
+        mn = model_num - 30
+    else: 
+        db = "rellis"
+
+    # Retrieve the model type based on the db and model number selection
+    if mn < 6: 
+        model_type = list(plot_config[db].keys())[0]
+    elif mn < 11: 
+        model_type = list(plot_config[db].keys())[1]
+    elif mn  < 16: 
+        model_type = list(plot_config[db].keys())[2]
+
+    return model_type, lf
+    
 #################################################################
 
 class FigLFResults(): 
@@ -164,8 +208,10 @@ class FigPowerTerm():
 class FigDBDistribution(): 
 
     def __init__(self, class_labels={}, ignore=[], colors=None, db = ""):
+        self.db = db
         self.figcfg = self.get_figcfg(db) # get the configuration 
         self.gen_fig(self.figcfg["fpath"], class_labels, ignore, colors) # generate the figure 
+        
 
     def get_figcfg(self, db): # get the pre-set configuration for the figure 
         # Configuration based on the dataset being used
@@ -239,8 +285,8 @@ class FigDBDistribution():
         sub.yaxis.set_major_formatter(f)
         main.yaxis.set_major_formatter(f)
 
-        plt.savefig("figures/rellis3dDistribution.png", dpi = 400)
-        plt.show() # display the results
+        plt.savefig("figures/{}3dDistribution.png".format(self.db), dpi = 400)
+        # plt.show() # display the results
 
 
 class FigQualitativeResults_Paper(): 
@@ -712,9 +758,11 @@ class FigConfusionMatrix():
         axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -70)
         axs[0].grid(visible = True) # display the grid on the figure
         axs[1].yaxis.set_ticks(np.arange(0,1.1,0.1))
-        fig.set_size_inches(9,7)
+        fig.set_size_inches(8,7)
         fig.subplots_adjust(bottom = 0.165)
-        plt.title("[PLACEHOLDER]: {}".format(model_num)) # update this to feature the actual LF/Model/Dataset combination -> Placeholder ONly
+        
+        model_type, lf = get_model_info(model_num) # get the information for the specific model
+        plt.title("{} & {}".format(model_type, lf)) # update this to feature the actual LF/Model/Dataset combination -> Placeholder ONly
 
         plt.savefig("figures/ConfusionMatrix/{}.png".format(file_name))
 
@@ -754,6 +802,7 @@ class FigPerfBoxPlot():
 
         fig,axs = plt.subplots(1,3) # one subplot per model
         fig.subplots_adjust(wspace = 0, hspace=0)
+        fig.set_size_inches(8,6)
 
         # select the RUGD dataset as preset
         db = "rugd" # start with the RUGD dataset first, update this implementation later
@@ -782,9 +831,9 @@ class FigPerfBoxPlot():
             axs[i].grid(True, which = "both", alpha = 0.25)
 
 
-
-
-        plt.show()
+        fig.subplots_adjust(bottom = 0.19)
+        fig.savefig("figures/{}_PerfBoxPlot.jpg".format(db))
+        # plt.show()
 
 class FigQualitativeResults(): 
     """(class) FigQualitativeResults\n
@@ -890,6 +939,8 @@ if __name__ == "__main__":
         19: "rubble",
     }
 
+
+
     ##### Configuration Values #####
     db_name = "rugd" # name of db used during eval
     model_num = 34 # for model-specific figures
@@ -917,14 +968,14 @@ if __name__ == "__main__":
     # FigResults()
     # FigLossShaping()
     # FigPowerTerm()
-    # FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = db_name)
+    # FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = db_name)  
     # FigQualitativeResults_Paper()
     
     #### - New Comparative Study Results Figures - ####
-    FigMajMinPerformanceComparison(RUGD_RESULTS, "rugd", True)
-    FigMinImprovement(RUGD_RESULTS, "rugd", True)
+    # FigMajMinPerformanceComparison(RUGD_RESULTS, "rugd", True)
+    # FigMinImprovement(RUGD_RESULTS, "rugd", True)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
-    
+
     # for i in range(31,46): 
     #     FigConfusionMatrix(model_num = i) # create the confusion matrix figure for a specific model
     # FigPerfBoxPlot()

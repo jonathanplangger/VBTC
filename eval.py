@@ -408,16 +408,16 @@ class ComparativeEvaluation():
 if __name__ == "__main__": 
     
     # Run the evaluation program
-    # eval = ComparativeEvaluation()
-    # eval.eval( )
+    eval = ComparativeEvaluation()
+    eval.eval( )
 
     ##### Iteratively run eval.py through all of the desired combinations -> this allows for AFK running of eval.py
-    for i in range(6,16): 
-        if i  < 11: # HRNet
-            cfg_path = "configs/006_010_config.yaml"
-        elif i < 16: # Deeplabv3plus
-            cfg_path = "configs/011_015_config.yaml"
+    # for i in range(6,16): 
+    #     if i  < 11: # HRNet
+    #         cfg_path = "configs/006_010_config.yaml"
+    #     elif i < 16: # Deeplabv3plus
+    #         cfg_path = "configs/011_015_config.yaml"
         
-        eval = ComparativeEvaluation(cfg_path, model_num = i)
-        eval.eval()
+    #     eval = ComparativeEvaluation(cfg_path, model_num = i)
+    #     eval.eval()
     
