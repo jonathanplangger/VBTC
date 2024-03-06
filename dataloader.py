@@ -252,6 +252,28 @@ class Rellis(DataLoader):
             34: "rubble",
         }
 
+        self.remap_class_labels = {
+            0: "void & dirt",
+            1: "grass",
+            2: "tree",
+            3: "pole",
+            4: "water",
+            5: "sky",
+            6: "vehicle",
+            7: "object",
+            8: "asphalt",
+            9: "building",
+            10: "log",
+            11: "person",
+            12: "fence",
+            13: "bush",
+            14: "concrete",
+            15: "barrier",
+            16: "puddle",
+            17: "mud",
+            18: "rubble",
+        }
+
 
         path = self.path
 

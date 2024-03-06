@@ -17,7 +17,7 @@ EVAL:
     WIDTH: 1024
 
 TRAIN:
-  MODEL_NAME: 'deeplabv3plus'
+  MODEL_NAME: 'unet'
   CRITERION: 'fciouv2'
   BATCH_SIZE: 1
   TOTAL_EPOCHS: 10

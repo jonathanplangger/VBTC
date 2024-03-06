@@ -731,8 +731,9 @@ class FigMemReqPerformance(FigResults):
 class FigConfusionMatrix():
     def __init__(self, model_num, show = False):
 
+
         file_name = "0{}_ConfusionMatrix".format(model_num) # get the file name based on model number
-        fp = "figures/ConfusionMatrix/{}.csv".format(file_name) #  get the file path name 
+        fp = "figures/ConfusionMatrix/{}_ConfusionMatrix.csv".format(str(model_num).zfill(3)) #  get the file path name 
 
         results = []
         with open(fp, "r") as file: 
@@ -750,7 +751,12 @@ class FigConfusionMatrix():
         for i, val in enumerate(conf.sum(axis=1)): # for each of the values in mat
             conf[i] = conf[i] / val # divide by that value
 
-        disp = metrics.ConfusionMatrixDisplay(conf, display_labels=db.class_labels.values())
+        if db.cfg.DB.DB_NAME == "rellis": 
+            class_labels = db.remap_class_labels # use the remapped version of it
+        else: 
+            class_labels = db.class_labels
+
+        disp = metrics.ConfusionMatrixDisplay(conf, display_labels=class_labels.values())
         disp.plot(include_values = False, cmap = "Blues") # create the plot for the confusion matrix
         disp.ax_.get_images()[0].set_clim(0,1) # update the colour map to be between the range [0,1]
         fig = disp.figure_ # retrieve the figure for later formatting
@@ -910,6 +916,34 @@ class FigQualitativeResults():
         # Convert the segmented labelled image into a colour mapped one -> repeated several times
         return cvt_torch_2_plt_imgfmt(self.eval_handler.cvt_color(seg_in).long())
     
+class FigFCIoUComparison():
+    def __init__(self, with_v2: bool = False): 
+        import eval 
+        self.eval_handler = eval.ComparativeEvaluation()
+
+        ids = [0, 2]# FCIoUv1 and v2 with the U-Net
+
+        idx = 52
+        v1_pred, ann, raw_img = self.eval_handler.single_img_pred(idx, model_num = ids[0])
+        v2_pred, _, _ = self.eval_handler.single_img_pred(idx, ids[1])
+
+        if with_v2: # set the number of columns present in the plot
+            cols = 4
+        else: 
+            cols = 3
+
+
+        fig, axs = plt.subplots(1,cols)
+        axs[0].imshow(raw_img)
+        axs[1].imshow(ann)
+        axs[2].imshow(self.prep_seg(v1_pred))
+
+        if with_v2: 
+            axs[3].imshow(self.prep_seg(v2_pred))
+
+    def prep_seg(self, seg_in): 
+        # Convert the segmented labelled image into a colour mapped one -> repeated several times
+        return cvt_torch_2_plt_imgfmt(self.eval_handler.cvt_color(seg_in).long())
 
 if __name__ == "__main__": 
 
@@ -942,7 +976,7 @@ if __name__ == "__main__":
 
 
     ##### Configuration Values #####
-    db_name = "rugd" # name of db used during eval
+    db_name = "rellis" # name of db used during eval
     model_num = 34 # for model-specific figures
     ################################
 
@@ -976,7 +1010,8 @@ if __name__ == "__main__":
     # FigMinImprovement(RUGD_RESULTS, "rugd", True)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
 
-    # for i in range(31,46): 
+    # for i in range(1,6): 
     #     FigConfusionMatrix(model_num = i) # create the confusion matrix figure for a specific model
     # FigPerfBoxPlot()
     # FigQualitativeResults(idx=203)  
+    FigFCIoUComparison()
