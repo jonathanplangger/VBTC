@@ -32,6 +32,7 @@ def cvt_torch_2_plt_imgfmt(img, torch_in: bool = True):
     :return: Resulting converted image
     :rtype: torch.tensor
     """         
+
     if torch_in: # from torch to matplotlib fmt
         return img.permute(1,2,0)
     else: # from matplotlib to torch format
@@ -784,8 +785,8 @@ class FigPerfBoxPlot():
         """        
         # Load all the model data
         df = {}
-        for i in range(0,46): 
-            fp = "figures/ComparativeStudyResults/LoggedResults/0{}_LoggedResults.csv".format(i) # file path
+        for i in range(0,46): # open all the files and load the dataframe withn the collected information
+            fp = "figures/ComparativeStudyResults/LoggedResults/0{}_LoggedResults.csv".format(str(i).zfill(2)) # file path
             # Only add the data to the array if the file actually exists (avoid any errors)
             if os.path.exists(fp): 
                 df[i] = pd.read_csv(fp)
@@ -838,7 +839,7 @@ class FigPerfBoxPlot():
 
 
         fig.subplots_adjust(bottom = 0.19)
-        fig.savefig("figures/{}_PerfBoxPlot.jpg".format(db))
+        fig.savefig("figures/{}_PerfBoxPlot.jpg".format(db), dpi = 400)
         # plt.show()
 
 class FigQualitativeResults(): 
@@ -929,17 +930,36 @@ class FigFCIoUComparison():
 
         if with_v2: # set the number of columns present in the plot
             cols = 4
+            fp = "FigFCIoUComparison"
         else: 
+            fp = "FigFCIoUComparison_v1Only"
             cols = 3
 
 
         fig, axs = plt.subplots(1,cols)
+        fig.set_size_inches(8,6)
+        fig.subplots_adjust(wspace = 0.01, hspace = 0, right = 0.96, left = 0.04)
+
+
+        # Manually display the images in the figure.
         axs[0].imshow(raw_img)
-        axs[1].imshow(ann)
+        axs[1].imshow(self.prep_seg(ann))
         axs[2].imshow(self.prep_seg(v1_pred))
 
         if with_v2: 
             axs[3].imshow(self.prep_seg(v2_pred))
+
+        labels = ["Input Image", "Annotated Image", "FCIoUv1", "FCIoUv2"]
+
+        for i, ax in enumerate(axs): 
+            ax.set_yticks([])
+            ax.set_xticks([])
+            ax.set_xlabel(labels[i], va = "top")
+            ax.xaxis.set_label_position("top")
+
+        plt.savefig("figures/{}.png".format(fp), dpi = 400)
+
+        # plt.show()
 
     def prep_seg(self, seg_in): 
         # Convert the segmented labelled image into a colour mapped one -> repeated several times
@@ -1012,6 +1032,6 @@ if __name__ == "__main__":
 
     # for i in range(1,6): 
     #     FigConfusionMatrix(model_num = i) # create the confusion matrix figure for a specific model
-    # FigPerfBoxPlot()
+    FigPerfBoxPlot()
     # FigQualitativeResults(idx=203)  
-    FigFCIoUComparison()
+    # FigFCIoUComparison(with_v2=False)
