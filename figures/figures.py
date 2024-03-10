@@ -964,6 +964,40 @@ class FigFCIoUComparison():
     def prep_seg(self, seg_in): 
         # Convert the segmented labelled image into a colour mapped one -> repeated several times
         return cvt_torch_2_plt_imgfmt(self.eval_handler.cvt_color(seg_in).long())
+    
+class FigModelTrainingProcessImages(): 
+    def __init__(self): 
+        import eval 
+        self.eval_handler = eval.ComparativeEvaluation()
+
+        fp = "figures/ModelTrainingProcess/"
+        pred, ann, raw_img = self.eval_handler.single_img_pred(idx = 52, model_num = 12)
+
+        fig = plt.figure()
+        plt.imshow(self.prep_seg(pred))
+        axs = fig.get_axes()[0] # update the axes for the figure 
+        axs.set_xticks([])
+        axs.set_yticks([])
+        fig.savefig("figures/ModelTrainingProcess/pred.png", dpi = 400)
+
+        fig = plt.figure()
+        plt.imshow(self.prep_seg(ann))
+        axs = fig.get_axes()[0] # update the axes for the figure 
+        axs.set_xticks([])
+        axs.set_yticks([])
+        fig.savefig("figures/ModelTrainingProcess/ann.png", dpi = 400)
+
+        fig = plt.figure()
+        plt.imshow(raw_img)
+        axs = fig.get_axes()[0] # update the axes for the figure 
+        axs.set_xticks([])
+        axs.set_yticks([])
+        fig.savefig("figures/ModelTrainingProcess/raw_img.png", dpi = 400)
+
+
+    def prep_seg(self, seg_in): 
+        # Convert the segmented labelled image into a colour mapped one -> repeated several times
+        return cvt_torch_2_plt_imgfmt(self.eval_handler.cvt_color(seg_in).long())
 
 if __name__ == "__main__": 
 
@@ -1032,6 +1066,7 @@ if __name__ == "__main__":
 
     # for i in range(1,6): 
     #     FigConfusionMatrix(model_num = i) # create the confusion matrix figure for a specific model
-    FigPerfBoxPlot()
+    # FigPerfBoxPlot()
     # FigQualitativeResults(idx=203)  
     # FigFCIoUComparison(with_v2=False)
+    FigModelTrainingProcessImages()
