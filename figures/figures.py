@@ -971,7 +971,8 @@ class FigModelTrainingProcessImages():
         self.eval_handler = eval.ComparativeEvaluation()
 
         fp = "figures/ModelTrainingProcess/"
-        pred, ann, raw_img = self.eval_handler.single_img_pred(idx = 52, model_num = 12)
+        # 52 seems to be a good representation of the classes
+        pred, ann, raw_img = self.eval_handler.single_img_pred(idx = 109, model_num = 12)
 
         fig = plt.figure()
         plt.imshow(self.prep_seg(pred))
@@ -994,6 +995,7 @@ class FigModelTrainingProcessImages():
         axs.set_yticks([])
         fig.savefig("figures/ModelTrainingProcess/raw_img.png", dpi = 400)
 
+        
 
     def prep_seg(self, seg_in): 
         # Convert the segmented labelled image into a colour mapped one -> repeated several times

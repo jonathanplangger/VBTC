@@ -101,6 +101,10 @@ class DataLoader(object):
         orig_images = np.empty((batch_size, self.height, self.width, 3)) # stores the original images
         annMap = np.empty((batch_size, self.height, self.width))
 
+        # # Used to select a specifically desired file_name. Comment out when not required
+        # metadata[idx]["file_name"] = '../datasets/Rellis-3D/00000/pylon_camera_node/frame000110-1581624663_749.jpg'
+        # metadata[idx]["sem_seg_file_name"] = '../datasets/Rellis-3D/00000/pylon_camera_node_label_id/frame000110-1581624663_749.png'
+
         # load image and mask files
         for i in range(batch_size): 
             orig_images[i], annMap[i] = self.load_frame(metadata[i + idx]["file_name"], metadata[i + idx]["sem_seg_file_name"])
