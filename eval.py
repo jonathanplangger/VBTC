@@ -380,7 +380,8 @@ class ComparativeEvaluation():
         :type sem_img: torch.tensor
         """
         # Get the colors mapping for the model
-        colors = self.db.get_colors(remap_labels=True)[1:]
+        # colors = self.db.get_colors(remap_labels=True)[1:]
+        colors = self.db.get_colors(remap_labels=True)
         input_shape = sem_img.shape # get the shape of the input 
 
         # storage element for the mapped color elements

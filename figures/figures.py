@@ -995,7 +995,40 @@ class FigModelTrainingProcessImages():
         axs.set_yticks([])
         fig.savefig("figures/ModelTrainingProcess/raw_img.png", dpi = 400)
 
+        def prep_seg(self, seg_in): 
+            # Convert the segmented labelled image into a colour mapped one -> repeated several times
+            return cvt_torch_2_plt_imgfmt(self.eval_handler.cvt_color(seg_in).long())
+
+class FigDatasetExamples(FigModelTrainingProcessImages): 
+    def __init__(self): 
+        import eval 
+        self.eval_handler = eval.ComparativeEvaluation()
+
+        fp = "figures/DatasetExamples/"
         
+        # Set the image idx and and the model being used in the figure.
+        idxs = [109, 206, 963, 1102, 22, 162]
+        model_num = 42
+
+        fig, axs = plt.subplots(2, 6, figsize = (12,4), gridspec_kw={ 
+            "hspace": 0.0001, 
+            "wspace": 0.1, 
+            "top": 0.75, 
+            # "right": 0.0,
+        })
+        
+        for i in range(0, axs.shape[1]): 
+            _, ann, raw_img  = self.eval_handler.single_img_pred(idx = idxs[i], model_num = model_num)
+            # Place the raw image alongside the annotation files
+            axs[0,i].imshow(raw_img)
+            axs[1,i].imshow(self.prep_seg(ann))
+            [ax.xaxis.set_ticks([]) for ax in axs[:,i]]
+            [ax.yaxis.set_ticks([]) for ax in axs[:,i]]
+
+        # Save the figure
+        fig.savefig(fp + "RUGD_DatasetExamples.png", dpi = 400)
+        # plt.show()
+     
 
     def prep_seg(self, seg_in): 
         # Convert the segmented labelled image into a colour mapped one -> repeated several times
@@ -1032,8 +1065,8 @@ if __name__ == "__main__":
 
 
     ##### Configuration Values #####
-    db_name = "rellis" # name of db used during eval
-    model_num = 34 # for model-specific figures
+    db_name = "rugd" # name of db used during eval
+    model_num = 42 # for model-specific figures
     ################################
 
     # # Add to path to allow access to the dataloader
@@ -1071,4 +1104,5 @@ if __name__ == "__main__":
     # FigPerfBoxPlot()
     # FigQualitativeResults(idx=203)  
     # FigFCIoUComparison(with_v2=False)
-    FigModelTrainingProcessImages()
+    # FigModelTrainingProcessImages()
+    FigDatasetExamples() # create the figures for the dataset examples
