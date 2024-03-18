@@ -449,7 +449,7 @@ class Rellis(DataLoader):
                 colors[v+1] = temp[k]
             colors[0] = (0,0,0)
 
-        return colors
+        return colors[1:]
 
 class RUGD(DataLoader): 
 

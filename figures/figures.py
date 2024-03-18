@@ -1033,6 +1033,38 @@ class FigDatasetExamples(FigModelTrainingProcessImages):
     def prep_seg(self, seg_in): 
         # Convert the segmented labelled image into a colour mapped one -> repeated several times
         return cvt_torch_2_plt_imgfmt(self.eval_handler.cvt_color(seg_in).long())
+    
+class FigSemSegExamples(FigFCIoUComparison): 
+    def __init__(self): 
+        import eval
+        self.eval_handler = eval.ComparativeEvaluation()
+        idx = 52
+        pred, ann, raw_img = self.eval_handler.single_img_pred(idx, model_num = 12)
+
+        fig, axs = plt.subplots(1,3)
+        fig.set_size_inches(6,2.5)
+        fig.subplots_adjust(wspace=0.05, hspace=0.0, left = 0, right = 1)
+        
+        # Display the images on the figure
+        axs[0].imshow(raw_img)
+        axs[1].imshow(self.prep_seg(ann))
+        axs[2].imshow(self.prep_seg(pred))
+
+        labels = ["Terrain Image", "Annotated\nGround-Truth", "Semantic\nSegmentation Output"]
+
+        for i, ax, in enumerate(axs): 
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_xlabel(labels[i], va = "top")
+            ax.xaxis.set_label_position("top")
+        
+
+        plt.savefig("figures/FigSemSegExamples.png", dpi=400)
+        # plt.show()
+
+
+
+
 
 if __name__ == "__main__": 
 
@@ -1105,4 +1137,5 @@ if __name__ == "__main__":
     # FigQualitativeResults(idx=203)  
     # FigFCIoUComparison(with_v2=False)
     # FigModelTrainingProcessImages()
-    FigDatasetExamples() # create the figures for the dataset examples
+    # FigDatasetExamples() # create the figures for the dataset examples
+    FigSemSegExamples()
