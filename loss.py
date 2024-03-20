@@ -109,7 +109,7 @@ class FCIoUV2(nn.Module):
         denom = torch.sum(denom, dim=(2,3)) 
         
         # get the IoU score for each class 
-        loss_iou = 2*torch.div(num, denom) 
+        loss_iou = torch.div(num, denom) 
 
         # fit the iou values to a more suitable weighted loss value
         loss_iou = -torch.log10(torch.pow(loss_iou + self.eps,0.5) + self.eps)
@@ -165,7 +165,7 @@ class FCIoUV3(nn.Module):
         denom = torch.sum(denom, dim=(2,3)) 
         
         # get the IoU score for each class 
-        loss_iou = torch.div(num, denom) 
+        loss_iou = 2*torch.div(num, denom) 
 
         # fit the iou values to a more suitable weighted loss value
         loss_iou = -torch.log10(torch.pow(loss_iou + self.eps,0.5) + self.eps)

@@ -12,6 +12,7 @@ import pandas as pd
 from PIL import Image
 from sklearn import metrics # for the confusion matrix
 import torch
+from matplotlib.transforms import Bbox
 
 ################################################################
 # Preset the file paths for the results file here
@@ -494,7 +495,7 @@ class FigMajMinPerformanceComparison(FigResults):
         self.gen_fig()
         self.o_file_name = "MajMinPerformanceComparison.jpg" # output file name 
 
-    def gen_fig(self, figsize = (7.2,4.8)): 
+    def gen_fig(self, figsize = (7.2,5.6)): 
         # generate the figure
         # Quickly get the correctly named variables
         maj = self.maj
@@ -526,7 +527,7 @@ class FigMajMinPerformanceComparison(FigResults):
         # Create the figure (subplots based on the amount of models being evaluated)
         fig, axs = plt.subplots(1, len(models))
         fig.set_size_inches(figwidth, figheight)
-        fig.subplots_adjust(wspace = 0)
+        fig.subplots_adjust(wspace = 0, bottom = 0.2)
         fig.suptitle("Comparison of Majority, Minority, and Mean Class Performance")
 
         
@@ -548,7 +549,7 @@ class FigMajMinPerformanceComparison(FigResults):
             axs[i].set_ylim(0,1) # Bind the limits of the plot to the [0,1] range
             axs[i].set_xlim(-0.6, len(m_maj) - 0.4) # give some spacing between the different plots
             axs[i].set_xticks(range(0,len(m_maj),1))
-            axs[i].xaxis.set_ticklabels(m_maj["Loss Function"], rotation = 20)
+            axs[i].xaxis.set_ticklabels(m_maj["Loss Function"], rotation = 70)
             axs[i].set_xlabel(model, fontweight = "bold") # Set the label to the namne of the loss function
             axs[i].xaxis.set_label_position('top')
 
@@ -562,6 +563,8 @@ class FigMajMinPerformanceComparison(FigResults):
 
 
             axs[i].grid(True, 'both')
+
+        fig.savefig("figures/FigMajMinPerformanceComparison.png", dpi = 400)
 
         # Configure whether to show the figure 
         if self.show: 
@@ -594,7 +597,9 @@ class FigMinImprovement(FigResults):
         models = np.unique(df['Model'])# get the unique model names
 
         fig, axs = plt.subplots(1, len(models))
-        fig.subplots_adjust(wspace = 0) # remove the space between subplots
+        fig.subplots_adjust(wspace = 0, bottom = 0.2) # remove the space between subplots
+        figsize = fig.get_size_inches()
+        fig.set_size_inches(figsize[0] + 1.0, figsize[1] + 2.0)
 
         # Create a plot for each model (subplots in the figure)
         for i, model in enumerate(models): 
@@ -614,13 +619,15 @@ class FigMinImprovement(FigResults):
             if db_name == "rellis":
                 axs[i].set_yticks(np.arange(0,1.1,0.1)) # set the axis to [0,1]
                 axs[i].set_ylim(0,1.0) 
+                filename = "Rellis_FigMinImprovement"
             elif db_name == "rugd":
                 axs[i].set_yticks(np.arange(0,0.6,0.1)) # set the axis to [0,1]
                 axs[i].set_ylim(0,0.6) 
+                filename = "RUGD_FigMinImprovement"
 
             axs[i].set_xlim(-0.3,len(lf) - 0.5)
             axs[i].set_xticks(range(0,len(lf),1))
-            axs[i].xaxis.set_ticklabels(lf, rotation = 20) # show the loss functions on the x-axis 
+            axs[i].xaxis.set_ticklabels(lf, rotation = 60) # show the loss functions on the x-axis 
 
             # for the first axis
             if i == 0: 
@@ -636,6 +643,8 @@ class FigMinImprovement(FigResults):
 
 
             axs[i].grid(True, 'both')
+
+        fig.savefig("figures/{}.svg".format(filename), dpi = 400)
 
         if self.show: 
             plt.show()
@@ -754,13 +763,17 @@ class FigConfusionMatrix():
 
         if db.cfg.DB.DB_NAME == "rellis": 
             class_labels = db.remap_class_labels # use the remapped version of it
+            left = 0.13 # for formatting the y-label
         else: 
             class_labels = db.class_labels
+            left = 0.15 # for formatting y-label
 
         disp = metrics.ConfusionMatrixDisplay(conf, display_labels=class_labels.values())
         disp.plot(include_values = False, cmap = "Blues") # create the plot for the confusion matrix
         disp.ax_.get_images()[0].set_clim(0,1) # update the colour map to be between the range [0,1]
         fig = disp.figure_ # retrieve the figure for later formatting
+        fig.subplotpars.left = 0 # update the parameters to allow for the y-label to be displayed
+        fig.subplotpars.right = 1
         axs = fig.get_axes() # get the figure axes
         axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -70)
         axs[0].grid(visible = True) # display the grid on the figure
@@ -771,12 +784,11 @@ class FigConfusionMatrix():
         model_type, lf = get_model_info(model_num) # get the information for the specific model
         plt.title("{} & {}".format(model_type, lf)) # update this to feature the actual LF/Model/Dataset combination -> Placeholder ONly
 
-        plt.savefig("figures/ConfusionMatrix/{}.png".format(file_name))
+        plt.savefig("figures/ConfusionMatrix/{}.svg".format(file_name), dpi = 400)
 
         if show:
             plt.show()
     
-
 class FigPerfBoxPlot(): 
     def __init__(self): 
         """FigPerfBoxPlot()\n
@@ -816,7 +828,7 @@ class FigPerfBoxPlot():
         
         ### Plot the figure 
         models = list(plot_config[db].keys()) # Get the models being evaluated
-        for i, _ in enumerate(axs):
+        for i, _ in enumerate(axs): # for each model being analyzed - > go through all the loss functions 
             ### Figure formatting
             if i > 0: # for all subsequent plots
                 axs[i].set(yticklabels=([]))# remove the ticklabels
@@ -827,9 +839,11 @@ class FigPerfBoxPlot():
             model_dice = []
             for j in range(model_range[0], model_range[1] + 1):
                 model_dice.append(df[j]["dice"]) # grab the Dice score data from the dataframe
+            
+            order = [3,0,4,2,1]
+        
             axs[i].boxplot(model_dice, showfliers=False)# plot the model data
             axs[i].set_xticklabels(plot_config["lf"], rotation = -60)
-
             axs[i].set(ylim = (0,1))
             axs[i].set_xlabel(models[i], va="top") 
             axs[i].xaxis.set_label_position("top")
@@ -839,8 +853,8 @@ class FigPerfBoxPlot():
 
 
         fig.subplots_adjust(bottom = 0.19)
-        fig.savefig("figures/{}_PerfBoxPlot.jpg".format(db), dpi = 400)
-        # plt.show()
+        # fig.savefig("figures/{}_PerfBoxPlot.jpg".format(db), dpi = 400)
+        plt.show()
 
 class FigQualitativeResults(): 
     """(class) FigQualitativeResults\n
@@ -1097,7 +1111,7 @@ if __name__ == "__main__":
 
 
     ##### Configuration Values #####
-    db_name = "rugd" # name of db used during eval
+    db_name = "rellis" # name of db used during eval
     model_num = 42 # for model-specific figures
     ################################
 
@@ -1120,6 +1134,9 @@ if __name__ == "__main__":
         colors = colors[1:] # special case (remove one class)
         ignore = [0,1] # do not represent the void and dirt classes in the figure
 
+    # for i in range(1,16): 
+    #     FigConfusionMatrix(model_num = i, show = False) # create the confusion matrix figure for a specific model
+
     # FigResults()
     # FigLossShaping()
     # FigPowerTerm()
@@ -1127,15 +1144,14 @@ if __name__ == "__main__":
     # FigQualitativeResults_Paper()
     
     #### - New Comparative Study Results Figures - ####
-    # FigMajMinPerformanceComparison(RUGD_RESULTS, "rugd", True)
-    # FigMinImprovement(RUGD_RESULTS, "rugd", True)
+    # FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
+    # FigMinImprovement(RUGD_RESULTS, "rugd", False)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
 
-    # for i in range(1,6): 
-    #     FigConfusionMatrix(model_num = i) # create the confusion matrix figure for a specific model
-    # FigPerfBoxPlot()
+
+    FigPerfBoxPlot()
     # FigQualitativeResults(idx=203)  
     # FigFCIoUComparison(with_v2=False)
     # FigModelTrainingProcessImages()
     # FigDatasetExamples() # create the figures for the dataset examples
-    FigSemSegExamples()
+    # FigSemSegExamples()
