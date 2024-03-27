@@ -758,8 +758,8 @@ class FigConfusionMatrix():
         conf = conf + 0.00000001 # add a extremely small value to avoid divide by 0
 
         # Normalize all values based on the number of ground-truth labels (i.e. the amount of predictions to be expected)
-        for i, val in enumerate(conf.sum(axis=1)): # for each of the values in mat
-            conf[i] = conf[i] / val # divide by that value
+        for i, _ in enumerate(conf): # for each of the values in mat
+            conf[i] = conf[i] / conf[i].sum() # divide by that value
 
         if db.cfg.DB.DB_NAME == "rellis": 
             class_labels = db.remap_class_labels # use the remapped version of it
@@ -767,6 +767,9 @@ class FigConfusionMatrix():
         else: 
             class_labels = db.class_labels
             left = 0.15 # for formatting y-label
+
+        # Required for the xaxis = predicted, yaxis = true format
+        # conf = conf.transpose()
 
         disp = metrics.ConfusionMatrixDisplay(conf, display_labels=class_labels.values())
         disp.plot(include_values = False, cmap = "Blues") # create the plot for the confusion matrix
@@ -776,6 +779,8 @@ class FigConfusionMatrix():
         fig.subplotpars.right = 1
         axs = fig.get_axes() # get the figure axes
         axs[0].xaxis.set_ticklabels(axs[0].xaxis.get_ticklabels(), rotation = -70)
+        # axs[0].xaxis.set_label_text("True Label")
+        # axs[0].yaxis.set_label_text("Predicted Label")
         axs[0].grid(visible = True) # display the grid on the figure
         axs[1].yaxis.set_ticks(np.arange(0,1.1,0.1))
         fig.set_size_inches(8,7)
@@ -1076,9 +1081,32 @@ class FigSemSegExamples(FigFCIoUComparison):
         plt.savefig("figures/FigSemSegExamples.png", dpi=400)
         # plt.show()
 
+class FigImbalancedClassEffect(FigFCIoUComparison): 
+    def __init__(self, model_num=4, idx = 22): 
+        import eval
+        self.eval_handler = eval.ComparativeEvaluation()
+        pred, ann, raw_img = self.eval_handler.single_img_pred(idx, model_num)
 
 
+        fig, axs = plt.subplots(1,3)
+        fig.set_size_inches(6,2.5)
+        fig.subplots_adjust(wspace=0.05, hspace=0.0, left = 0, right = 1)
+        
+        # Display the images on the figure
+        axs[0].imshow(raw_img)
+        axs[1].imshow(self.prep_seg(ann))
+        axs[2].imshow(self.prep_seg(pred))
 
+        labels = ["Terrain Image", "Annotated\nGround-Truth", "Semantic\nSegmentation Output"]
+
+        for i, ax, in enumerate(axs): 
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_xlabel(labels[i], va = "top")
+            ax.xaxis.set_label_position("top")        
+
+        plt.savefig("figures/ImbalancedClassEffect.svg", dpi=400)  
+        plt.show()
 
 if __name__ == "__main__": 
 
@@ -1111,8 +1139,8 @@ if __name__ == "__main__":
 
 
     ##### Configuration Values #####
-    db_name = "rellis" # name of db used during eval
-    model_num = 42 # for model-specific figures
+    db_name = "rugd" # name of db used during eval
+    model_num = 44 # for model-specific figures
     ################################
 
     # # Add to path to allow access to the dataloader
@@ -1134,8 +1162,8 @@ if __name__ == "__main__":
         colors = colors[1:] # special case (remove one class)
         ignore = [0,1] # do not represent the void and dirt classes in the figure
 
-    # for i in range(1,16): 
-    #     FigConfusionMatrix(model_num = i, show = False) # create the confusion matrix figure for a specific model
+    # for i in range(34,35): 
+    #     FigConfusionMatrix(model_num = i, show = True) # create the confusion matrix figure for a specific model
 
     # FigResults()
     # FigLossShaping()
@@ -1143,15 +1171,16 @@ if __name__ == "__main__":
     # FigDBDistribution(class_labels=class_labels, ignore=ignore, colors=colors, db = db_name)  
     # FigQualitativeResults_Paper()
     
-    #### - New Comparative Study Results Figures - ####
+    #### - New Comparative Study Results Figures - #### 
     # FigMajMinPerformanceComparison(RELLIS_RESULTS, "rellis", True)
     # FigMinImprovement(RUGD_RESULTS, "rugd", False)
     # FigMemReqPerformance(RELLIS_RESULTS, "rellis", True, "figures/ComparativeStudyResults/memory_requirements.csv")
 
 
-    FigPerfBoxPlot()
+    # FigPerfBoxPlot()
     # FigQualitativeResults(idx=203)  
     # FigFCIoUComparison(with_v2=False)
     # FigModelTrainingProcessImages()
     # FigDatasetExamples() # create the figures for the dataset examples
     # FigSemSegExamples()
+    FigImbalancedClassEffect()
