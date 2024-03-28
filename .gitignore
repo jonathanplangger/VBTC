@@ -10,11 +10,12 @@ docs/
 backup/
 # for general outputs from models -> Don't need to be saved onto GitHub
 output/
+figures/
 
 # File extensions (images) 
-*.svg
-*.png
-*.jpg
+# *.svg
+# *.png
+# *.jpg
 
 # Visual Studio Code Specific Stuff
 .vscode
