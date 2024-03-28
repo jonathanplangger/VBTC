@@ -11,7 +11,7 @@ Plangger, Jonathan, Mohamed Atia, and Hicham Chaoui. “FCIoU: A Targeted Approa
 ### Repository Structure
 The structure of the repository code is represented as: 
 
-![Structural block diagram of the code contained in the repository](github/RepoStructure.png)
+![Structural block diagram of the code contained in the repository](github/RepoCodeStructure.png)
 
 ### FCIoU: A Focal Class-based Intersection over Union (IoU) Approach to Improving Minority Class Detection Performance for Off-road Segmentation Systems
 ## Abstract
