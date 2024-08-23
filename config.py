@@ -27,7 +27,9 @@ _C.DB.RELLIS.IMG_SIZE.WIDTH = 1920
 # -------- RUGD Dataset (rugd) ---------- #
 _C.DB.RUGD = CN()
 _C.DB.RUGD.DB_NAME = 'rugd'
-_C.DB.RUGD.PATH = "../datasets/RUGD/"
+_C.DB.RUGD.PATH = "/mnt/d/datasets/RUGD/" # path to the root directory of the (converted) dataset
+_C.DB.RUGD.IMG_DIR = "RUGD_annotations" # Name of the directory containing RGB coloured images
+_C.DB.RUGD.ANN_DIR = "RUGD_frames-with-annotations" # Name of the annotations directory
 _C.DB.RUGD.NUM_CLASSES = 25 # ? How many are there? 
 _C.DB.RUGD.EFF_NUM_CLASSES = 25 # effective n# of classes, some of the 35 classes are not used at all 
 _C.DB.RUGD.IMG_SIZE = CN()

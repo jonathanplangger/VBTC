@@ -4,9 +4,9 @@ DB: # configure which database is being used during training / test
   DB_NAME: "rugd" # currently only rugd & rellis
    
 EVAL:
-  MODEL_NAME: "n"
+  MODEL_NAME: "unet"
   # MODEL_FILE: "../models/1_Winter2024_TrainingResults/042/model.pt"
-  MODEL_FILE: "../models/1_Winter2024_TrainingResults/034/model.pt"
+  MODEL_FILE: "/mnt/d/Thesis/Test Results/1_Winter2024_TrainingResults/034/model.pt"
   # MODEL_FILE: "../models/2_LF Research Data/014/model.pt"
   DISPLAY_IMAGE: True 
   PRED_CERTAINTY: False

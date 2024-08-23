@@ -8,6 +8,11 @@ import albumentations as album
 import torch
 import yaml
 
+"""@package docstring
+Documentation for the dataloader module
+
+More Details.
+"""
 
 def get_dataloader(cfg, setType = "train"): 
     """_summary_
@@ -34,21 +39,49 @@ def get_dataloader(cfg, setType = "train"):
         exit("DB_NAME not properly configured, please review options and update the configuration file. ")
 
 class DataLoader(object): 
+
     def __init__(self, cfg, setType = "train"): 
-        self.cfg = cfg
-        self.setType = setType
-        # Base settings, should be overwriten  by the child classif desired
+        ##Configuration file for the dataloader. 
+        self.cfg = cfg 
+        ##Represents the application area for this dataloader (ie "train" or "eval"). 
+        self.setType = setType 
+        ## Toggle preprocessing of the input image, Default: False
         self.preprocessing = False
+        ##True Forces a remapping scheme for the index values 
         self.remap = False
+        ##True toggles normalization of the input RGB image. (Default: False)
         self.input_norm = False
+        ##Number of classes held within the dataset (Default: 0)
+        self.num_classes = 0 
+        ##Dictionary representing class name and its index ({index: class_name})
+        self.class_labels = {} 
     
+    ##Configures the metadata concerning image properties (height, width) for the respective dataset
     def setup_data(self): 
+        ##Number of elements within the entire dataset: [N(training images), N(testing images)]; N = Number of elements
         self.size = [len(self.train_meta), len(self.test_meta)] # n# of elements in the entire dataset
+        ##Height of all images, Note that a *static* dimension is assumed for both height and width of the input images
         self.height = int(self.train_meta[0]["height"])
+        ##Width of all images, Note that a *static* dimension is assumed for both height and width of the input images
         self.width = int(self.train_meta[0]["width"])
 
     def __reg_db(self): 
-        """__reg_db() is implemented to register the desired database. This must be overwritten for each dataset to function properly
+        """!
+        __reg_db() is utilized by all dataloaders to properly configure any dataset-specific information for the dataloader.
+        The exact implementation is specific to the dataset implemented as they are inherently different in format from one another. 
+        This method is overwritten within each child class (RUGD, Rellis, etc.). 
+
+        Parameters set:
+        -----------------
+        @param self.num_classes
+
+        Return values:
+        ----------------
+        @return train_meta: dictionary of all training images 
+        @return test_meta: dictionary of all testing images
+        @return val_meta: dictionary of all validation images
+        @return class_labels: dictionary of all class labels {index: class}
+
         """
         exit("No implementation for __reg_db() is provided for this dataset. Please update before continuing...")
     
@@ -452,7 +485,10 @@ class Rellis(DataLoader):
         return colors[1:]
 
 class RUGD(DataLoader): 
-
+    """!
+    The RUGD implementation of the dataloader provides a specific version of the dataloader suited to loading RUGD image assets.
+    Prior to using this class, make sure that the file path and database directory is properly configured in development environment configuration files. 
+    """
     def __init__(self, cfg, setType="train"): 
         # Base implementation
         super().__init__(cfg, setType=setType)
@@ -461,7 +497,7 @@ class RUGD(DataLoader):
         super().setup_data() # complete the same steps as the DataLoader class
 
     def __reg_db(self): 
-        """
+        """!
             Provides the dataloader with the required format used in detectron2 for  the Rellis 3D Dataset.\n 
             Current iteration employs filepath tied directly to the current file structure of the VM. This may need to be updated in future versions\n
             Parameters: \n
@@ -499,26 +535,34 @@ class RUGD(DataLoader):
 
         self.num_classes = len(class_labels)
 
+        """ __get_split_config(self):
+        Returns the split configuration data (from train.lst, test.lst and val.lst) for the RUGD dataset. Provides sorting information to split the dataset in the 3-way split.\n
+        Validates that data config exists and data is valid.
+        """
         train_meta, test_meta, val_meta = [], [], []
 
-        train_lst = open(self.cfg.DB.PATH + "train.lst", "r")
-        test_lst = open(self.cfg.DB.PATH + "test.lst", "r")
-        val_lst = open(self.cfg.DB.PATH + "val.lst", 'r')  
-        lsts = [train_lst, test_lst, val_lst] # 
-        
+        try:
+            train_lst = open(self.cfg.DB.PATH + "train.lst", "r")
+            test_lst = open(self.cfg.DB.PATH + "test.lst", "r")
+            val_lst = open(self.cfg.DB.PATH + "val.lst", 'r')  
+            lsts = [train_lst, test_lst, val_lst]
+        except FileNotFoundError: # Generate lst files if they don't exist 
+            print("No Configuration Files Present\nGenerating a new set of split configuration files...\n")
+            lsts = self.__gen_split_config_lsts() 
+
         for i, lst in enumerate(lsts): 
 
             for line in lst.readlines():
                 # obtain the image file name as well as the associated segmentation mask
                 [img_name, seg_name] = line.split(' ')
                 seg_name = seg_name[:-1] # remove the eol character
-                img_id = img_name.split("/")[-1] # get the image file name from this
+                # img_id = img_name.split("/")[-1] # get the image file name from this
                 # Create the new dictionary
                 meta = dict(
                     file_name = self.cfg.DB.PATH + img_name, # path for image file
                     height=self.cfg.DB.IMG_SIZE.HEIGHT,
                     width=self.cfg.DB.IMG_SIZE.WIDTH, 
-                    image_id=img_id, 
+                    image_id= img_name, 
                     sem_seg_file_name= self.cfg.DB.PATH + seg_name # paht for segmentation map
                 )
                 
@@ -532,6 +576,51 @@ class RUGD(DataLoader):
             
 
         return train_meta, test_meta, val_meta, class_labels
+
+    def __gen_split_config_lsts(self): 
+        """__gen_split_config_lsts _summary_
+
+        *Assumes that the RUGD dataset has been un-modified and obtained from http://rugd.vision/.         
+
+        :return: _description_
+        :rtype: _type_
+        """
+
+        # Split sets based on original split configuration in source RUGD paper. 
+        train_split = ["park-2", "trail", "trail-3", "trail-4", "trail-6", "trail-9", "trail-10", "trail-11", "trail-12", "trail-14", "trail-15", "village"]
+        val_split = ["park-8", "trail-5"]
+        test_split = ["creek", "park-1", "trail-7", "trail-13"]
+        splits = [train_split, test_split, val_split]
+        fnames = ["train.lst", "test.lst", "val.lst"] # Output file names
+
+        for i, _ in enumerate(splits): 
+            
+            with open("{}/{}".format(self.cfg.DB.PATH,fnames[i]), "a") as file: # Create new lst files in dataset location
+                for seq in splits[i]: # sequences in splits
+                    # Use only the image directory for the image ID. Check that the annotation also exists while doing this
+                    img_dir = "{}/{}/{}/".format(self.cfg.DB.PATH, self.cfg.DB.IMG_DIR, seq)
+                    ann_dir = "{}/{}/{}/".format(self.cfg.DB.PATH, self.cfg.DB.ANN_DIR, seq)
+                    iter = os.scandir(img_dir)
+                    for img in iter: 
+                        if img.name.endswith(".png"): # solely treat images
+                            img_path = img.path 
+                            ann_path = ann_dir + img.name # use the same id as the image, ensure duplicates
+                            
+                            if os.path.exists(ann_path): # only perform this when a corresponding annotation file exists
+                                file.write("{} {}\n".format(img_path, ann_path)) 
+                                
+
+            file.close() 
+    
+        # Return all the values on the files themselves
+        train_lst = open(self.cfg.DB.PATH + "train.lst", "r")
+        test_lst = open(self.cfg.DB.PATH + "test.lst", "r")
+        val_lst = open(self.cfg.DB.PATH + "val.lst", "r")
+
+
+        return [train_lst, test_lst, val_lst]
+
+
 
     def get_colors(self, remap_labels = False):  
         """get_colors
