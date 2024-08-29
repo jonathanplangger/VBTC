@@ -39,6 +39,13 @@ def get_dataloader(cfg, setType = "train"):
         exit("DB_NAME not properly configured, please review options and update the configuration file. ")
 
 class DataLoader(object): 
+    """!
+    <p>
+        Main parent class providing an inheritable structure for the specialized dataloader implementations.
+        All datasets featured within this development environment should employ the Dataloader child class to implement specific loading functions.
+        This class handles all functions concerning the dataset such as data fetching, pre-preperation, sorting, and run-time loading operations.
+    </p>
+    """
 
     def __init__(self, cfg, setType = "train"): 
         ##Configuration file for the dataloader. 
@@ -53,7 +60,7 @@ class DataLoader(object):
         self.input_norm = False
         ##Number of classes held within the dataset (Default: 0)
         self.num_classes = 0 
-        ##Dictionary representing class name and its index ({index: class_name})
+        ## Dictionary representing class name and its index ({index: class_name})
         self.class_labels = {} 
     
     ##Configures the metadata concerning image properties (height, width) for the respective dataset
@@ -85,33 +92,33 @@ class DataLoader(object):
         """
         exit("No implementation for __reg_db() is provided for this dataset. Please update before continuing...")
     
-    def load_frame(self, img_path, mask_path): 
-        """
-            Loads the given image alongside its segmentation mask. \n
-            ---------------------------\n
-            parameters:\n
-            img_path(str) = Path to the image 
-            mask_path(str) = Path to the mask file 
-            transform = transformation function to be applied to the incoming data
+    def load_frame(self, img_path, ann_path): 
+        """!
+        Reads and returns the selected image alongside its segmentation mask. 
+
+        @param img_path (str) = URL Path to the image 
+        @param ann_path (str) = URL Path to the mask annotation file 
         """
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # convert the color code to use RGB
-        mask = cv2.imread(mask_path)
+        mask = cv2.imread(ann_path)
         return img, mask[:,:,0] # keep only the first dimension (since the other 3 are the same thing) 
 
-    def load_batch(self, idx:int=None, batch_size:int = 1, resize = None):
-        """
-            Load a batch of size "batch_size". Returns the images, annotation maps, and the newly updated index value
-            ----------------\n
-            Parameters: \n 
-            idx (int): the index of the image in the list, this function iterates this index and returns the value later \n
-            batch_size (int): size of batch being retrieved by the program \n
-            --------\n
-            Returns: (images, annMap, idx)
-            - images: list of images in the given batch 
-            - annMap: list of annotation maps in the given batch
-            - idx: new index of the iamge on the list.
-            - resize (h,w): new size to be applied to ONLY the image. Annotation will be left alone. 
+    def load_batch(self, idx:int = None, batch_size:int = 1, resize = None):
+        """!
+            Loads an image batch of size "batch_size" returning the images, annotation maps, and the new index value. 
+            An index value is provided to allow for an iterable process where the initial index value provided is incremented by the batch_size loaded
+            by the *load_batch()* function. An additional optional re-sizing of the image is provided by the function to enable a reduction in input size
+            dimension. 
+
+            @param idx (int): the index of the image in the list, this function iterates this index and returns the value later. Default: None \n
+            @param batch_size (int): size of batch being retrieved by the program, Default: 1 \n
+            @param resize (tuple or None): (height,width) tuple dimension to re-size the input image to. Default: None
+
+            @return orig_images : list of the original (un-modified) images from the dataset. Same as *images* if resize = *None* or resize = (H_in, W_in)
+            @return images : list of images in the given batch 
+            @return annMap : list of annotation maps in the given batch
+            @return idx : new index of the image on the list.
         """
 
         if self.setType == "train": 
@@ -184,6 +191,14 @@ class DataLoader(object):
         random.shuffle(self.test_meta) # shuffle the testing set 
 
     def get_colors(self, remap_labels = False): 
+        """! Retrieve the colours/class mapping for the given dataset. Since each class is represented by a given colour, each colour will be unique to the class specified 
+        Since the color mapping is specific to a given dataset, an individual implementation of the function is provided for each implemented dataset. For datasets like Rellis-3D, 
+        an optional remapping is provided to ensure that the label indexes match the desired value ranges. 
+                
+        @param remap_labels (bool): True selects for class index remapping to occur within the color map
+        @return color_map (dict): dictionary containing the colour (value) in RGB for each class (key) of the dataset. 
+
+        """
         exit("No specific implementation provided for the get_colors function. Please update the code")
         
 # ------------- Dataloader for the new dataset ------------- #
@@ -541,6 +556,12 @@ class RUGD(DataLoader):
         """
         train_meta, test_meta, val_meta = [], [], []
 
+        # Convert and re-map the annotations to the new 0->Nclasses-1 map from the RGB colouring provided
+        # in the dataset
+        if not os.path.exists(self.cfg.DB.PATH + self.cfg.DB.MODIF_ANN_DIR):
+            print("Re-mapped annotation files not present. Remapping is required.")
+            self.__gen_modif_ann_dir() 
+
         try:
             train_lst = open(self.cfg.DB.PATH + "train.lst", "r")
             test_lst = open(self.cfg.DB.PATH + "test.lst", "r")
@@ -549,6 +570,7 @@ class RUGD(DataLoader):
         except FileNotFoundError: # Generate lst files if they don't exist 
             print("No Configuration Files Present\nGenerating a new set of split configuration files...\n")
             lsts = self.__gen_split_config_lsts() 
+
 
         for i, lst in enumerate(lsts): 
 
@@ -559,11 +581,11 @@ class RUGD(DataLoader):
                 # img_id = img_name.split("/")[-1] # get the image file name from this
                 # Create the new dictionary
                 meta = dict(
-                    file_name = self.cfg.DB.PATH + img_name, # path for image file
+                    file_name = img_name, # path for image file
                     height=self.cfg.DB.IMG_SIZE.HEIGHT,
                     width=self.cfg.DB.IMG_SIZE.WIDTH, 
                     image_id= img_name, 
-                    sem_seg_file_name= self.cfg.DB.PATH + seg_name # paht for segmentation map
+                    sem_seg_file_name= seg_name # paht for segmentation map
                 )
                 
                 if i == 0: 
@@ -576,14 +598,70 @@ class RUGD(DataLoader):
             
 
         return train_meta, test_meta, val_meta, class_labels
+    
+    def __gen_modif_ann_dir(self):
+        """! Generate a modified annotation directory and re-map the images into the desired format. 
+        This function handles the conversion process of all annotation images to use the (0->N_classes -1) numbering scheme rather than the colours present in the original dataset. 
+        The function should only be really during first-time initialization of the dataset and currently only triggers if no directory is present for the newly re-mapped output images. 
+        Currently only supports a CPU-based implementation of the conversion, so the time required to process the entire dataset is considerable. 
+        *Note* that the current implementation employs a GPU-based image conversion to greatly reduce conversion time. 
+        """
+        import torch # requires torch to speed up the conversion process
+
+        print("The re-mapping process is beginning. This will take a while to complete.")
+        modif_ann_path = "{}{}".format(self.cfg.DB.PATH, self.cfg.DB.MODIF_ANN_DIR)
+        ann_path = "{}{}".format(self.cfg.DB.PATH, self.cfg.DB.ANN_DIR)
+        os.mkdir(modif_ann_path) # TODO -> make sure to turn this back ON!!!!
+
+        seqs = os.listdir(ann_path) # get the sequences in the dataset
+        seqs.remove(self.cfg.DB.COLOR_MAP) # only use the sequences, not the color map config file 
+
+        # Get the color/class mapping based on the dataset provided configuration map
+        color_map = {}
+        with open("{}{}/{}".format(self.cfg.DB.PATH, self.cfg.DB.ANN_DIR, self.cfg.DB.COLOR_MAP), 'r') as file:
+            color_config = file.readlines()
+
+            for c in color_config:
+                c = c.strip() # remove eol characters such as \n
+                c = c.split(' ') 
+                color_map[(int(c[-3]), int(c[-2]), int(c[-1]))] = int(c[0])
+            
+            file.close()
+
+        # Go through all the images in the sequences and re-map them using the retrieved color_map value 
+        for seq in seqs: 
+            os.mkdir("{}/{}".format(modif_ann_path, seq)) # Create the new sequence directory (preserve old structure) 
+            
+            # Create the new images with the re-mapped colours
+            anns = os.scandir("{}/{}".format(ann_path, seq))
+            for ann in anns: 
+                if ann.name.split(".")[-1] == "png": # only applies to the png files 
+                    # Obtain and convert the image color to use RGB values (same as used in color_map)
+                    img = cv2.cvtColor(cv2.imread(ann.path), cv2.COLOR_BGR2RGB)
+                    img_shape = img.shape[:-1] # store shape to re-use, only one channel is required for the image  
+                    img = torch.tensor(img)
+
+                    # Will be using the GPU if available on the host machine, CPU used if not available
+                    device = torch.device('cuda') if torch.cuda.is_available() else torch.device("cpu")
+                    img.to(device)
+                    
+                    # Easier to handle the data mapping when flattening the image prior to mapping 
+                    img = img.flatten(end_dim = 1)
+                    img = [color_map[tuple(x.tolist())] for x in img] # re-maps the tensor using the new mapping scheme
+                    img = torch.tensor(img).reshape(img_shape).numpy() # convert and re-shape back to the original dimensions
+
+                    cv2.imwrite("{}/{}/{}".format(modif_ann_path, seq, ann.name), img)
+
+        print("Image Re-mapping is Complete and the new files are saved within the 'RUGD_modif_frames-with-annotations' directory")
+
+
 
     def __gen_split_config_lsts(self): 
-        """__gen_split_config_lsts _summary_
-
-        *Assumes that the RUGD dataset has been un-modified and obtained from http://rugd.vision/.         
-
-        :return: _description_
-        :rtype: _type_
+        """!Generates the train/test/val split configuration lists which outline which sequences are present within each split. 
+        *Assumes that the RUGD dataset has been un-modified and obtained from http://rugd.vision/.*
+    
+        The split configuration divides the dataset based on sequence in the manner outlined in the original RUGD paper publication. 
+        The generation of the split lists will occur if they are not present within the dataset directory (such as a newly downloaded dataset.). 
         """
 
         # Split sets based on original split configuration in source RUGD paper. 
@@ -594,22 +672,22 @@ class RUGD(DataLoader):
         fnames = ["train.lst", "test.lst", "val.lst"] # Output file names
 
         for i, _ in enumerate(splits): 
-            
-            with open("{}/{}".format(self.cfg.DB.PATH,fnames[i]), "a") as file: # Create new lst files in dataset location
-                for seq in splits[i]: # sequences in splits
-                    # Use only the image directory for the image ID. Check that the annotation also exists while doing this
-                    img_dir = "{}/{}/{}/".format(self.cfg.DB.PATH, self.cfg.DB.IMG_DIR, seq)
-                    ann_dir = "{}/{}/{}/".format(self.cfg.DB.PATH, self.cfg.DB.ANN_DIR, seq)
-                    iter = os.scandir(img_dir)
-                    for img in iter: 
-                        if img.name.endswith(".png"): # solely treat images
-                            img_path = img.path 
-                            ann_path = ann_dir + img.name # use the same id as the image, ensure duplicates
-                            
-                            if os.path.exists(ann_path): # only perform this when a corresponding annotation file exists
-                                file.write("{} {}\n".format(img_path, ann_path)) 
+            try:
+                with open("{}/{}".format(self.cfg.DB.PATH,fnames[i]), "a") as file: # Create new lst files in dataset location
+                    for seq in splits[i]: # sequences in splits
+                        # Use only the image directory for the image ID. Check that the annotation also exists while doing this
+                        img_dir = "{}{}/{}/".format(self.cfg.DB.PATH, self.cfg.DB.IMG_DIR, seq)
+                        ann_dir = "{}{}/{}/".format(self.cfg.DB.PATH, self.cfg.DB.MODIF_ANN_DIR, seq)
+                        iter = os.scandir(img_dir)
+                        for img in iter: 
+                            if img.name.endswith(".png"): # solely treat images
+                                img_path = img.path 
+                                ann_path = ann_dir + img.name # use the same id as the image, ensure duplicates
                                 
-
+                                if os.path.exists(ann_path): # only perform this when a corresponding annotation file exists
+                                    file.write("{} {}\n".format(img_path, ann_path)) 
+            except FileNotFoundError:
+                exit("RUGD dataset is missing or invalid path to the dataset is provided. Make sure to update prior to restarting the program")
             file.close() 
     
         # Return all the values on the files themselves
@@ -623,13 +701,9 @@ class RUGD(DataLoader):
 
 
     def get_colors(self, remap_labels = False):  
-        """get_colors
+        """!Get the colour mapping for each classes within the RUGD dataset.
 
-        :param remap_labels: Does nothing, used to allow for compatibility with other functions., defaults to False
-        :type remap_labels: List, optional
-        :return: colors -> Colours for each fo the classes of the RUGD dataset. Colour is associated to classes through index value of the array. Employable in visualization of the semantic classes
-        :rtype: List(int): List of set of 3 int values (RGB) for the colours. 
-
+        \see DataLoader for more information
         """            
         # open the colour map file for RUGD
         with open("{}/RUGD_annotations/RUGD_annotation-colormap.txt".format(self.cfg.DB.PATH)) as f: 

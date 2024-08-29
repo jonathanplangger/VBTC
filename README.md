@@ -33,6 +33,28 @@ pip install -r requirements.txt
 ##### Running the program
 Once all the dependencies are installed and resolved, the code can be started by directly running the eval.py and train.py code. The specific configurations by these programs can be configured using the config/config_comparative_study.yaml.
 
+#### First Time Setup
+
+## Datasets
+Before running the program, install one or more of the datasets supported in this development kit. Note that at this moment only the RUGD dataset and Rellis-3D dataset are supported. 
+
+### RUGD Dataset
+To use the RUGD dataset, the following options must be configured in the *config_comparative_study.yaml* file: 
+DB: 
+    DB_NAME: "rugd"
+    PATH: "/path/to/rugd/dataset/"
+
+For each of switching, the _C.DB.RUGD.PATH parameter may be configured within the *config.py* file instead. In doing so, only the DB_NAME parameter in the yaml configuration file has to be altered to switch between datasets. 
+
+When first using the dataset, pre-conversion of the original data is required to properly utilize the dataset. This is automatically completed by the dataloader and will trigger if a newly obtained dataset missing the conversions is detected. As the conversion is applied to all annotation images within the dataset, the conversion process is expected to take a considerable (~10-25 mins), but will only have to be completed once. The conversion process will result in a new directory "RUGD_modif_frames-with-annotations" which contains re-mapped annotation images. As such, the original directory containing the annotation images "RUGD_annotations" is no longer used by the package and can be safely removed as desired. This pre-conversion was selected to reduce the overhead resulting from the conversion and reduce the overall latency of the dataloader module. 
+
+### Rellis-3D dataset
+To use the Rellis-3D dataset, the following options must be configured in the *config_comparative_study.yaml* file:
+DB:
+    DB_NAME: "rellis"
+    PATH: "/path/to/rellis/dataset/"
+
+For each of switching, the _C.DB.RUGD.PATH parameter may be configured within the *config.py* file instead. In doing so, only the DB_NAME parameter in the yaml configuration file has to be altered to switch between datasets. 
 
 
 ### Loss Functions
