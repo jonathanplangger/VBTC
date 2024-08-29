@@ -7,6 +7,7 @@ import patchify
 import albumentations as album 
 import torch
 import yaml
+import textwrap as txt
 
 """@package docstring
 Documentation for the dataloader module
@@ -559,9 +560,29 @@ class RUGD(DataLoader):
         # Convert and re-map the annotations to the new 0->Nclasses-1 map from the RGB colouring provided
         # in the dataset
         if not os.path.exists(self.cfg.DB.PATH + self.cfg.DB.MODIF_ANN_DIR):
-            print("Re-mapped annotation files not present. Remapping is required.")
-            self.__gen_modif_ann_dir() 
-
+            print(txt.dedent("""\
+            
+            ----------------------------------------------------------------------
+            No modified annotations files detected. Re-mapping of the original dataset files are required prior to using the RUGD dataset in this environment.
+            Re-mapping will take a considerable amount of time (~10-25 mins) to complete but will only be required once per fresh install of the RUGD dataset.
+            Additionally, to speed up the process, the use of a CUDA-capable GPU is recommended (and pre-configured in the code) as conversion will be much quicker.
+            ----------------------------------------------------------------------
+            """))
+        
+            # Try to get user input 3 times before exiting out. 
+            for i in range(4):
+                inp = input("Proceed with the process (y/n)? ")
+                if inp == "y" or inp == "Y":
+                    self.__gen_modif_ann_dir() 
+                elif inp == "n" or inp == "N":
+                    print("Re-mapping is required to use the RUGD datasets. Exiting program...")
+                    exit(1)
+                else: 
+                    if i == 3: # on the 4th iteration
+                        print("Too many invalid inputs, exiting out the program...")
+                        exit(1)
+                    print("Invalid input, please use either (y/n) to select the option")
+            
         try:
             train_lst = open(self.cfg.DB.PATH + "train.lst", "r")
             test_lst = open(self.cfg.DB.PATH + "test.lst", "r")
