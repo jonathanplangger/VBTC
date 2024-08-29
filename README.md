@@ -13,6 +13,8 @@ The structure of the repository code is represented as:
 
 ![Structural block diagram of the code contained in the repository](github/RepoCodeStructure.png)
 
+Auto-generated documentation for the project is developed using the Doxygen documentation generator and can be accessed by opening the index.html file in the ./docs/html directory. From there the relevant hyperlinks to the classes and functions within the code repository are present. Note that the documentation is a work in progress and is focused solely on the novel code developed within this repository. As such, classes presented in the models/ directory will not have hand-configured documentation, but are kept for future reference. Only local file hosting of the html documents is currently provided and no plans on web hosting the documentation are currently planned. 
+
 ### FCIoU: A Focal Class-based Intersection over Union (IoU) Approach to Improving Minority Class Detection Performance for Off-road Segmentation Systems
 ## Abstract
 In this paper, we present a comparative study of modern semantic segmentation loss functions and their resultant impact when applied with state-of-the-art off-road datasets. Class imbalance, inherent in these datasets, presents a significant challenge to off-road terrain semantic segmentation systems. With numerous environment classes being extremely sparse and underrepresented, model training becomes inefficient and struggles to comprehend the infrequent minority
