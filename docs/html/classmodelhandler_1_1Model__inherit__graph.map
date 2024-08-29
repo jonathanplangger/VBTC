@@ -1,0 +1,9 @@
+<map id="modelhandler.Model" name="modelhandler.Model">
+<area shape="rect" id="node1" title=" " alt="" coords="116,107,271,133"/>
+<area shape="rect" id="node3" href="$classmodelhandler_1_1DeepLabV3Plus.html" title=" " alt="" coords="319,5,535,32"/>
+<area shape="rect" id="node4" href="$classmodelhandler_1_1GSCNN.html" title=" " alt="" coords="345,56,508,83"/>
+<area shape="rect" id="node5" href="$classmodelhandler_1_1HRNet__OCR.html" title=" " alt="" coords="331,107,523,133"/>
+<area shape="rect" id="node6" href="$classmodelhandler_1_1NewModel.html" title=" " alt="" coords="335,157,519,184"/>
+<area shape="rect" id="node7" href="$classmodelhandler_1_1UNet.html" title=" " alt="" coords="353,208,501,235"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,107,68,133"/>
+</map>

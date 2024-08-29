@@ -1,0 +1,9 @@
+<map id="datasets.base_dataset.BaseDataset" name="datasets.base_dataset.BaseDataset">
+<area shape="rect" id="node1" title=" " alt="" coords="127,99,332,141"/>
+<area shape="rect" id="node3" href="$classdatasets_1_1ade20k_1_1ADE20K.html" title=" " alt="" coords="414,5,601,32"/>
+<area shape="rect" id="node4" href="$classdatasets_1_1cocostuff_1_1COCOStuff.html" title=" " alt="" coords="401,56,614,83"/>
+<area shape="rect" id="node5" href="$classdatasets_1_1lip_1_1LIP.html" title=" " alt="" coords="447,107,568,133"/>
+<area shape="rect" id="node6" href="$classdatasets_1_1pascal__ctx_1_1PASCALContext.html" title=" " alt="" coords="380,157,635,184"/>
+<area shape="rect" id="node7" href="$classdatasets_1_1rellis_1_1Rellis.html" title=" " alt="" coords="430,208,585,235"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,107,79,133"/>
+</map>

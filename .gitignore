@@ -6,7 +6,6 @@ model.pot
 params.txt
 model.pt
 temp/
-docs/
 backup/
 # for general outputs from models -> Don't need to be saved onto GitHub
 output/
@@ -99,9 +98,6 @@ instance/
 
 # Scrapy stuff:
 .scrapy
-
-# Sphinx documentation
-docs/_build/
 
 # PyBuilder
 target/
