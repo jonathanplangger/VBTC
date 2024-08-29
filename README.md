@@ -17,11 +17,7 @@ Auto-generated documentation for the project is developed using the Doxygen docu
 
 ### FCIoU: A Focal Class-based Intersection over Union (IoU) Approach to Improving Minority Class Detection Performance for Off-road Segmentation Systems
 ## Abstract
-In this paper, we present a comparative study of modern semantic segmentation loss functions and their resultant impact when applied with state-of-the-art off-road datasets. Class imbalance, inherent in these datasets, presents a significant challenge to off-road terrain semantic segmentation systems. With numerous environment classes being extremely sparse and underrepresented, model training becomes inefficient and struggles to comprehend the infrequent minority
-classes. As a solution to this problem, loss functions have been configured to take class imbalance
-into account and counteract this issue. To this end, we present a novel loss function, Focal Classbased Intersection over Union (FCIoU), which directly targets performance imbalance through the
-optimization of class-based Intersection over Union (IoU). The new loss function results in a general
-increase in class-based performance when compared to state-of-the-art targeted loss functions. 
+In this paper, we present a comparative study of modern semantic segmentation loss functions and their resultant impact when applied with state-of-the-art off-road datasets. Class imbalance, inherent in these datasets, presents a significant challenge to off-road terrain semantic segmentation systems. With numerous environment classes being extremely sparse and underrepresented, model training becomes inefficient and struggles to comprehend the infrequent minority classes. As a solution to this problem, loss functions have been configured to take class imbalance into account and counteract this issue. To this end, we present a novel loss function, Focal Classbased Intersection over Union (FCIoU), which directly targets performance imbalance through the optimization of class-based Intersection over Union (IoU). The new loss function results in a general increase in class-based performance when compared to state-of-the-art targeted loss functions. 
 
 ### Getting Started 
 #### Environment Setup & Installation
@@ -42,9 +38,9 @@ Before running the program, install one or more of the datasets supported in thi
 
 ### RUGD Dataset
 To use the RUGD dataset, the following options must be configured in the *config_comparative_study.yaml* file: 
-DB: 
-    DB_NAME: "rugd"
-    PATH: "/path/to/rugd/dataset/"
+- DB: 
+  - DB_NAME: "rugd"
+  - PATH: "/path/to/rugd/dataset/"
 
 For each of switching, the _C.DB.RUGD.PATH parameter may be configured within the *config.py* file instead. In doing so, only the DB_NAME parameter in the yaml configuration file has to be altered to switch between datasets. 
 
@@ -52,9 +48,9 @@ When first using the dataset, pre-conversion of the original data is required to
 
 ### Rellis-3D dataset
 To use the Rellis-3D dataset, the following options must be configured in the *config_comparative_study.yaml* file:
-DB:
-    DB_NAME: "rellis"
-    PATH: "/path/to/rellis/dataset/"
+- DB:
+  - DB_NAME: "rellis"
+  -  PATH: "/path/to/rellis/dataset/"
 
 For each of switching, the _C.DB.RUGD.PATH parameter may be configured within the *config.py* file instead. In doing so, only the DB_NAME parameter in the yaml configuration file has to be altered to switch between datasets. 
 
