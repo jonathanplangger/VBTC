@@ -157,7 +157,7 @@ Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
 <tr class="memitem:a03ef4c9cac1b42584532bc53b3390ef5"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdataloader_1_1RUGD.html#a03ef4c9cac1b42584532bc53b3390ef5">__reg_db</a> (self)</td></tr>
-<tr class="memdesc:a03ef4c9cac1b42584532bc53b3390ef5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides the dataloader with the required format used in detectron2 for the <a class="el" href="classdataloader_1_1Rellis.html">Rellis</a> 3D Dataset.  <a href="classdataloader_1_1RUGD.html#a03ef4c9cac1b42584532bc53b3390ef5">More...</a><br /></td></tr>
+<tr class="memdesc:a03ef4c9cac1b42584532bc53b3390ef5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers (see <a class="el" href="classdataloader_1_1DataLoader.html">DataLoader</a>) the <a class="el" href="classdataloader_1_1RUGD.html" title="The RUGD implementation of the dataloader provides a specific version of the dataloader suited to loa...">RUGD</a> dataset based on the provided configuration file.  <a href="classdataloader_1_1RUGD.html#a03ef4c9cac1b42584532bc53b3390ef5">More...</a><br /></td></tr>
 <tr class="separator:a03ef4c9cac1b42584532bc53b3390ef5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a278efa2e8497d632fa9cb7a5e04f8fbb"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdataloader_1_1RUGD.html#a278efa2e8497d632fa9cb7a5e04f8fbb">__gen_modif_ann_dir</a> (self)</td></tr>
 <tr class="memdesc:a278efa2e8497d632fa9cb7a5e04f8fbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a modified annotation directory and re-map the images into the desired format.  <a href="classdataloader_1_1RUGD.html#a278efa2e8497d632fa9cb7a5e04f8fbb">More...</a><br /></td></tr>
@@ -192,7 +192,7 @@ Private Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Generate a modified annotation directory and re-map the images into the desired format. </p>
-<p>This function handles the conversion process of all annotation images to use the (0-&gt;N_classes -1) numbering scheme rather than the colours present in the original dataset. The function should only be really during first-time initialization of the dataset and currently only triggers if no directory is present for the newly re-mapped output images. Currently only supports a CPU-based implementation of the conversion, so the time required to process the entire dataset is considerable. </p>
+<p>This function handles the conversion process of all annotation images to use the (0-&gt;N_classes -1) numbering scheme rather than the colours present in the original dataset. The function should only be really during first-time initialization of the dataset and currently only triggers if no directory is present for the newly re-mapped output images. Currently only supports a CPU-based implementation of the conversion, so the time required to process the entire dataset is considerable. <em>Note</em> that the current implementation employs a GPU-based image conversion to greatly reduce conversion time. </p>
 
 </div>
 </div>
@@ -250,12 +250,8 @@ Private Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Provides the dataloader with the required format used in detectron2 for the <a class="el" href="classdataloader_1_1Rellis.html">Rellis</a> 3D Dataset. </p>
-<p><br  />
- Current iteration employs filepath tied directly to the current file structure of the VM. This may need to be updated in future versions<br  />
- Parameters: <br  />
- --------------------------------------&mdash;<br  />
- Returns: List[dict] - Metadata regarding each data file </p>
+<p>Registers (see <a class="el" href="classdataloader_1_1DataLoader.html">DataLoader</a>) the <a class="el" href="classdataloader_1_1RUGD.html" title="The RUGD implementation of the dataloader provides a specific version of the dataloader suited to loa...">RUGD</a> dataset based on the provided configuration file. </p>
+<p>If a freshly installed <a class="el" href="classdataloader_1_1RUGD.html" title="The RUGD implementation of the dataloader provides a specific version of the dataloader suited to loa...">RUGD</a> dataset is linked, the database registration will generate new *.lst split configuration files and re-map the annotation files. Due to expected long duration of the re-mapping, the user will be prompted to continue with this process. </p>
 
 <p>Reimplemented from <a class="el" href="classdataloader_1_1DataLoader.html#a350d04984514b21909b74833de5e789a">dataloader.DataLoader</a>.</p>
 

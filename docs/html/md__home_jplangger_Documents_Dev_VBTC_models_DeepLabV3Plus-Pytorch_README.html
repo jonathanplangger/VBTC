@@ -68,9 +68,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Pretrained DeepLabv3, DeepLabv3+ for Pascal VOC &amp; Cityscapes.</p>
-<h1><a class="anchor" id="autotoc_md3"></a>
+<h1><a class="anchor" id="autotoc_md1"></a>
 Quick Start</h1>
-<h2><a class="anchor" id="autotoc_md4"></a>
+<h2><a class="anchor" id="autotoc_md2"></a>
 1. Available Architectures</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -84,29 +84,29 @@ Quick Start</h1>
 <p>please refer to <a href="https://github.com/VainF/DeepLabV3Plus-Pytorch/blob/master/network/modeling.py">network/modeling.py</a> for all model entries.</p>
 <p>Download pretrained models: <a href="https://www.dropbox.com/sh/w3z9z8lqpi8b2w7/AAB0vkl4F5vy6HdIhmRCTKHSa?dl=0">Dropbox</a>, <a href="https://share.weiyun.com/qqx78Pv5">Tencent Weiyun</a></p>
 <p>Note: The HRNet backbone was contributed by @timothylimyl. A pre-trained backbone is available at <a href="https://drive.google.com/file/d/1NxCK7Zgn5PmeS7W1jYLt5J9E0RRZ2oyF/view?usp=sharing">google drive</a>.</p>
-<h2><a class="anchor" id="autotoc_md5"></a>
+<h2><a class="anchor" id="autotoc_md3"></a>
 2. Load the pretrained model:</h2>
 <div class="fragment"><div class="line">model = network.modeling.__dict__[MODEL_NAME](num_classes=NUM_CLASSES, output_stride=OUTPUT_SRTIDE)</div>
 <div class="line">model.load_state_dict( torch.load( PATH_TO_PTH )[&#39;model_state&#39;]  )</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md6"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md4"></a>
 3. Visualize segmentation outputs:</h2>
 <div class="fragment"><div class="line">outputs = model(images)</div>
 <div class="line">preds = outputs.max(1)[1].detach().cpu().numpy()</div>
 <div class="line">colorized_preds = val_dst.decode_target(preds).astype(&#39;uint8&#39;) # To RGB images, (N, H, W, 3), ranged 0~255, numpy array</div>
 <div class="line"># Do whatever you like here with the colorized segmentation maps</div>
 <div class="line">colorized_preds = Image.fromarray(colorized_preds[0]) # to PIL Image</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md7"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md5"></a>
 4. Atrous Separable Convolution</h2>
 <p><b>Note</b>: All pre-trained models in this repo were trained without atrous separable convolution.</p>
 <p>Atrous Separable Convolution is supported in this repo. We provide a simple tool <code>network.convert_to_separable_conv</code> to convert <code>nn.Conv2d</code> to <code>AtrousSeparableConvolution</code>. <b>Please run main.py with '&ndash;separable_conv' if it is required</b>. See 'main.py' and 'network/_deeplab.py' for more details.</p>
-<h2><a class="anchor" id="autotoc_md8"></a>
+<h2><a class="anchor" id="autotoc_md6"></a>
 5. Prediction</h2>
 <p>Single image: </p><div class="fragment"><div class="line">python predict.py --input datasets/data/cityscapes/leftImg8bit/train/bremen/bremen_000000_000019_leftImg8bit.png  --dataset cityscapes --model deeplabv3plus_mobilenet --ckpt checkpoints/best_deeplabv3plus_mobilenet_cityscapes_os16.pth --save_val_results_to test_results</div>
 </div><!-- fragment --><p>Image folder: </p><div class="fragment"><div class="line">python predict.py --input datasets/data/cityscapes/leftImg8bit/train/bremen  --dataset cityscapes --model deeplabv3plus_mobilenet --ckpt checkpoints/best_deeplabv3plus_mobilenet_cityscapes_os16.pth --save_val_results_to test_results</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md9"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md7"></a>
 6. New backbones</h2>
 <p>Please refer to <a href="https://github.com/VainF/DeepLabV3Plus-Pytorch/commit/c4b51e435e32b0deba5fc7c8ff106293df90590d">this commit (Xception)</a> for more details about how to add new backbones.</p>
-<h2><a class="anchor" id="autotoc_md10"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 7. New datasets</h2>
 <p>You can train deeplab models on your own datasets. Your <code>torch.utils.data.Dataset</code> should provide a decoding method that transforms your predictions to colorized images, just like the <a href="https://github.com/VainF/DeepLabV3Plus-Pytorch/blob/bfe01d5fca5b6bb648e162d522eed1a9a8b324cb/datasets/voc.py#L156">VOC Dataset</a>: </p><div class="fragment"><div class="line">class MyDataset(data.Dataset):</div>
 <div class="line">    ...</div>
@@ -114,9 +114,9 @@ Quick Start</h1>
 <div class="line">    def decode_target(cls, mask):</div>
 <div class="line">        &quot;&quot;&quot;decode semantic mask to RGB image&quot;&quot;&quot;</div>
 <div class="line">        return cls.cmap[mask]</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md11"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md9"></a>
 Results</h1>
-<h2><a class="anchor" id="autotoc_md12"></a>
+<h2><a class="anchor" id="autotoc_md10"></a>
 1. Performance on Pascal VOC2012 Aug (21 classes, 513 x 513)</h2>
 <p>Training: 513x513 random crop <br  />
  validation: 513x513 center crop</p>
@@ -136,7 +136,7 @@ Results</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyLeft">DeepLabV3Plus-ResNet101 </td><td class="markdownTableBodyCenter">16 </td><td class="markdownTableBodyCenter">83.4G </td><td class="markdownTableBodyCenter">16/16 </td><td class="markdownTableBodyCenter">0.783 </td><td class="markdownTableBodyCenter"><a href="https://www.dropbox.com/s/bm3hxe7wmakaqc5/best_deeplabv3plus_resnet101_voc_os16.pth?dl=0">Download</a> </td><td class="markdownTableBodyCenter"><a href="https://share.weiyun.com/UNPZr3dk">Download</a>  </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 2. Performance on Cityscapes (19 classes, 1024 x 2048)</h2>
 <p>Training: 768x768 random crop <br  />
  validation: 1024x2048</p>
@@ -148,21 +148,21 @@ Results</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyLeft">DeepLabV3Plus-ResNet101 </td><td class="markdownTableBodyCenter">16 </td><td class="markdownTableBodyCenter">N/A </td><td class="markdownTableBodyCenter">16/16 </td><td class="markdownTableBodyCenter">0.762 </td><td class="markdownTableBodyCenter"><a href="https://drive.google.com/file/d/1t7TC8mxQaFECt4jutdq_NMnWxdm6B-Nb/view?usp=sharing">Download</a> </td><td class="markdownTableBodyCenter">N/A  </td></tr>
 </table>
-<h3><a class="anchor" id="autotoc_md14"></a>
+<h3><a class="anchor" id="autotoc_md12"></a>
 Segmentation Results on Pascal VOC2012 (DeepLabv3Plus-MobileNet)</h3>
-<div> <img src="samples/1_image.png" alt="" width="20%" class="inline"/> <img src="samples/1_target.png" alt="" width="20%" class="inline"/> <img src="samples/1_pred.png" alt="" width="20%" class="inline"/> <img src="samples/1_overlay.png" alt="" width="20%" class="inline"/> </div><div> <img src="samples/23_image.png" alt="" width="20%" class="inline"/> <img src="samples/23_target.png" alt="" width="20%" class="inline"/> <img src="samples/23_pred.png" alt="" width="20%" class="inline"/> <img src="samples/23_overlay.png" alt="" width="20%" class="inline"/> </div><div> <img src="samples/114_image.png" alt="" width="20%" class="inline"/> <img src="samples/114_target.png" alt="" width="20%" class="inline"/> <img src="samples/114_pred.png" alt="" width="20%" class="inline"/> <img src="samples/114_overlay.png" alt="" width="20%" class="inline"/> </div><h3><a class="anchor" id="autotoc_md15"></a>
+<div> <img src="samples/1_image.png" alt="" width="20%" class="inline"/> <img src="samples/1_target.png" alt="" width="20%" class="inline"/> <img src="samples/1_pred.png" alt="" width="20%" class="inline"/> <img src="samples/1_overlay.png" alt="" width="20%" class="inline"/> </div><div> <img src="samples/23_image.png" alt="" width="20%" class="inline"/> <img src="samples/23_target.png" alt="" width="20%" class="inline"/> <img src="samples/23_pred.png" alt="" width="20%" class="inline"/> <img src="samples/23_overlay.png" alt="" width="20%" class="inline"/> </div><div> <img src="samples/114_image.png" alt="" width="20%" class="inline"/> <img src="samples/114_target.png" alt="" width="20%" class="inline"/> <img src="samples/114_pred.png" alt="" width="20%" class="inline"/> <img src="samples/114_overlay.png" alt="" width="20%" class="inline"/> </div><h3><a class="anchor" id="autotoc_md13"></a>
 Segmentation Results on Cityscapes (DeepLabv3Plus-MobileNet)</h3>
-<div> <img src="samples/city_1_target.png" alt="" width="45%" class="inline"/> <img src="samples/city_1_overlay.png" alt="" width="45%" class="inline"/> </div><div> <img src="samples/city_6_target.png" alt="" width="45%" class="inline"/> <img src="samples/city_6_overlay.png" alt="" width="45%" class="inline"/> </div><h3><a class="anchor" id="autotoc_md16"></a>
+<div> <img src="samples/city_1_target.png" alt="" width="45%" class="inline"/> <img src="samples/city_1_overlay.png" alt="" width="45%" class="inline"/> </div><div> <img src="samples/city_6_target.png" alt="" width="45%" class="inline"/> <img src="samples/city_6_overlay.png" alt="" width="45%" class="inline"/> </div><h3><a class="anchor" id="autotoc_md14"></a>
 Visualization of training</h3>
 <p><img src="samples/visdom-screenshoot.png" alt="trainvis" class="inline"/></p>
-<h1><a class="anchor" id="autotoc_md17"></a>
+<h1><a class="anchor" id="autotoc_md15"></a>
 Pascal VOC</h1>
-<h2><a class="anchor" id="autotoc_md18"></a>
+<h2><a class="anchor" id="autotoc_md16"></a>
 1. Requirements</h2>
 <div class="fragment"><div class="line">pip install -r requirements.txt</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md19"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md17"></a>
 2. Prepare Datasets</h2>
-<h3><a class="anchor" id="autotoc_md20"></a>
+<h3><a class="anchor" id="autotoc_md18"></a>
 2.1 Standard Pascal VOC</h3>
 <p>You can run train.py with "--download" option to download and extract pascal voc dataset. The defaut path is './datasets/data':</p>
 <div class="fragment"><div class="line">/datasets</div>
@@ -175,7 +175,7 @@ Pascal VOC</h1>
 <div class="line">            ...</div>
 <div class="line">        /VOCtrainval_11-May-2012.tar</div>
 <div class="line">        ...</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md21"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md19"></a>
 2.2  Pascal VOC trainaug (Recommended!!)</h3>
 <p>See chapter 4 of [2] </p><pre class="fragment">    The original dataset contains 1464 (train), 1449 (val), and 1456 (test) pixel-level annotated images. We augment the dataset by the extra annotations provided by [76], resulting in 10582 (trainaug) training images. The performance is measured in terms of pixel intersection-over-union averaged across the 21 classes (mIOU).
 </pre><p>*./datasets/data/train_aug.txt* includes the file names of 10582 trainaug images (val images are excluded). Please to download their labels from <a href="https://www.dropbox.com/s/oeu149j8qtbs1x0/SegmentationClassAug.zip?dl=0">Dropbox</a> or <a href="https://share.weiyun.com/5NmJ6Rk">Tencent Weiyun</a>. Those labels come from <a href="https://github.com/DrSleep/tensorflow-deeplab-resnet">DrSleep's repo</a>.</p>
@@ -191,39 +191,39 @@ Pascal VOC</h1>
 <div class="line">            ...</div>
 <div class="line">        /VOCtrainval_11-May-2012.tar</div>
 <div class="line">        ...</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md22"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md20"></a>
 3. Training on Pascal VOC2012 Aug</h2>
-<h3><a class="anchor" id="autotoc_md23"></a>
+<h3><a class="anchor" id="autotoc_md21"></a>
 3.1 Visualize training (Optional)</h3>
 <p>Start visdom sever for visualization. Please remove '&ndash;enable_vis' if visualization is not needed.</p>
 <div class="fragment"><div class="line"># Run visdom server on port 28333</div>
 <div class="line">visdom -port 28333</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md24"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md22"></a>
 3.2 Training with OS=16</h3>
 <p>Run main.py with *"--year 2012_aug"* to train your model on Pascal VOC2012 Aug. You can also parallel your training on 4 GPUs with '&ndash;gpu_id 0,1,2,3'</p>
 <p><b>Note: There is no SyncBN in this repo, so training with <em>multple GPUs and small batch size</em> may degrades the performance. See <a href="https://hangzhang.org/PyTorch-Encoding/tutorials/syncbn.html">PyTorch-Encoding</a> for more details about SyncBN</b></p>
 <div class="fragment"><div class="line">python main.py --model deeplabv3plus_mobilenet --enable_vis --vis_port 28333 --gpu_id 0 --year 2012_aug --crop_val --lr 0.01 --crop_size 513 --batch_size 16 --output_stride 16</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md25"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md23"></a>
 3.3 Continue training</h3>
 <p>Run main.py with '&ndash;continue_training' to restore the state_dict of optimizer and scheduler from YOUR_CKPT.</p>
 <div class="fragment"><div class="line">python main.py ... --ckpt YOUR_CKPT --continue_training</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md26"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md24"></a>
 3.4. Testing</h3>
 <p>Results will be saved at ./results.</p>
 <div class="fragment"><div class="line">python main.py --model deeplabv3plus_mobilenet --enable_vis --vis_port 28333 --gpu_id 0 --year 2012_aug --crop_val --lr 0.01 --crop_size 513 --batch_size 16 --output_stride 16 --ckpt checkpoints/best_deeplabv3plus_mobilenet_voc_os16.pth --test_only --save_val_results</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md27"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md25"></a>
 Cityscapes</h1>
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 1. Download cityscapes and extract it to 'datasets/data/cityscapes'</h2>
 <div class="fragment"><div class="line">/datasets</div>
 <div class="line">    /data</div>
 <div class="line">        /cityscapes</div>
 <div class="line">            /gtFine</div>
 <div class="line">            /leftImg8bit</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md29"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md27"></a>
 2. Train your model on Cityscapes</h2>
 <div class="fragment"><div class="line">python main.py --model deeplabv3plus_mobilenet --dataset cityscapes --enable_vis --vis_port 28333 --gpu_id 0  --lr 0.1  --crop_size 768 --batch_size 16 --output_stride 16 --data_root ./datasets/data/cityscapes </div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md30"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md28"></a>
 Reference</h1>
 <p>[1] <a href="https://arxiv.org/abs/1706.05587">Rethinking Atrous Convolution for Semantic Image Segmentation</a></p>
 <p>[2] <a href="https://arxiv.org/abs/1802.02611">Encoder-Decoder with Atrous Separable Convolution for Semantic Image Segmentation</a> </p>

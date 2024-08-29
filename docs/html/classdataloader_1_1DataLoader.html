@@ -174,17 +174,7 @@ Private Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p><a class="el" href="classdataloader_1_1DataLoader.html#a350d04984514b21909b74833de5e789a" title="__reg_db() is utilized by all dataloaders to properly configure any dataset-specific information for ...">__reg_db()</a> is utilized by all dataloaders to properly configure any dataset-specific information for the dataloader. </p>
-<p>The exact implementation is specific to the dataset implemented as they are inherently different in format from one another. This method is overwritten within each child class (<a class="el" href="classdataloader_1_1RUGD.html" title="The RUGD implementation of the dataloader provides a specific version of the dataloader suited to loa...">RUGD</a>, <a class="el" href="classdataloader_1_1Rellis.html">Rellis</a>, etc.).</p>
-<h2><a class="anchor" id="autotoc_md0"></a>
-Parameters set:</h2>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">self.num_classes</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<h2><a class="anchor" id="autotoc_md1"></a>
-Return values:</h2>
+<p>The exact implementation is specific to the dataset implemented as they are inherently different in format from one another. This method is overwritten within each child class (<a class="el" href="classdataloader_1_1RUGD.html" title="The RUGD implementation of the dataloader provides a specific version of the dataloader suited to loa...">RUGD</a>, <a class="el" href="classdataloader_1_1Rellis.html">Rellis</a>, etc.). The direct use of <a class="el" href="classdataloader_1_1DataLoader.html#a350d04984514b21909b74833de5e789a" title="__reg_db() is utilized by all dataloaders to properly configure any dataset-specific information for ...">DataLoader.__reg_db()</a> is currently not supported and will result in program termination.</p>
 <dl class="section return"><dt>Returns</dt><dd>train_meta: dictionary of all training images </dd>
 <dd>
 test_meta: dictionary of all testing images </dd>

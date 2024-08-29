@@ -68,13 +68,13 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>This is the official code for:</p>
-<h3><a class="anchor" id="autotoc_md32"></a>
+<h3><a class="anchor" id="autotoc_md30"></a>
 Gated-SCNN: Gated Shape CNNs for Semantic Segmentation</h3>
 <p><a href="https://tovacinni.github.io">Towaki Takikawa</a>, <a href="http://www.cs.toronto.edu/~davidj/">David Acuna</a>, <a href="https://varunjampani.github.io">Varun Jampani</a>, <a href="http://www.cs.toronto.edu/~fidler/">Sanja Fidler</a></p>
 <p>ICCV 2019 <b>[<a href="https://arxiv.org/abs/1907.05740">Paper</a>] [<a href="https://nv-tlabs.github.io/GSCNN/">Project Page</a>]</b></p>
 <p><img src="docs/resources/gscnn.gif" alt="GSCNN DEMO" class="inline"/></p>
 <p>Based on based on <a href="https://github.com/NVIDIA/semantic-segmentation">https://github.com/NVIDIA/semantic-segmentation</a>.</p>
-<h1><a class="anchor" id="autotoc_md33"></a>
+<h1><a class="anchor" id="autotoc_md31"></a>
 License</h1>
 <div class="fragment"><div class="line">Copyright (C) 2019 NVIDIA Corporation. Towaki Takikawa, David Acuna, Varun Jampani, Sanja Fidler</div>
 <div class="line">All rights reserved.</div>
@@ -94,13 +94,13 @@ License</h1>
 <div class="line">WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING</div>
 <div class="line">OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.</div>
 <div class="line">~                                                                             </div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md34"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md32"></a>
 Usage</h1>
-<h4><a class="anchor" id="autotoc_md35"></a>
+<h4><a class="anchor" id="autotoc_md33"></a>
 Clone this repo</h4>
 <div class="fragment"><div class="line">git clone https://github.com/nv-tlabs/GSCNN</div>
 <div class="line">cd GSCNN</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md36"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md34"></a>
 Python requirements</h3>
 <p>Currently, the code supports Python 3</p><ul>
 <li>numpy</li>
@@ -114,16 +114,16 @@ Python requirements</h3>
 <li>opencv</li>
 <li>PyYAML</li>
 </ul>
-<h3><a class="anchor" id="autotoc_md37"></a>
+<h3><a class="anchor" id="autotoc_md35"></a>
 Download pretrained models</h3>
 <p>Download the pretrained model from the <a href="https://drive.google.com/file/d/1wlhAXg-PfoUM-rFy2cksk43Ng3PpsK2c/view">Google Drive Folder</a>, and save it in 'checkpoints/'</p>
-<h3><a class="anchor" id="autotoc_md38"></a>
+<h3><a class="anchor" id="autotoc_md36"></a>
 Download inferred images</h3>
 <p>Download (if needed) the inferred images from the <a href="https://drive.google.com/file/d/105WYnpSagdlf5-ZlSKWkRVeq-MyKLYOV/view">Google Drive Folder</a></p>
-<h3><a class="anchor" id="autotoc_md39"></a>
+<h3><a class="anchor" id="autotoc_md37"></a>
 Evaluation (Cityscapes)</h3>
 <div class="fragment"><div class="line">python train.py --evaluate --snapshot checkpoints/best_cityscapes_checkpoint.pth</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md40"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md38"></a>
 Training</h3>
 <p>A note on training- we train on 8 NVIDIA GPUs, and as such, training will be an issue with WiderResNet38 if you try to train on a single GPU.</p>
 <p>If you use this code, please cite:</p>

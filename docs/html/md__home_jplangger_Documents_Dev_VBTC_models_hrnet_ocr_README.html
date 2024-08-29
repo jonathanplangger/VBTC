@@ -67,14 +67,14 @@ $(function() {
 <div class="title">High-resolution networks (HRNets) for Semantic Segmentation </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md43"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md41"></a>
 Branches</h1>
 <ul>
 <li>This is the implementation for HRNet + OCR.</li>
 <li>The PyTroch 1.1 version ia available <a href="https://github.com/HRNet/HRNet-Semantic-Segmentation/tree/pytorch-v1.1">here</a>.</li>
 <li>The PyTroch 0.4.1 version is available <a href="https://github.com/HRNet/HRNet-Semantic-Segmentation/tree/master">here</a>.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md44"></a>
+<h1><a class="anchor" id="autotoc_md42"></a>
 News</h1>
 <ul>
 <li>[2020/08/16] <a href="https://github.com/open-mmlab/mmsegmentation">MMSegmentation</a> has supported our HRNet + OCR.</li>
@@ -87,13 +87,13 @@ News</h1>
 <li>Rank #1 (83.7) in <a href="https://www.cityscapes-dataset.com/benchmarks/">Cityscapes leaderboard</a>. HRNet combined with an extension of <a href="https://arxiv.org/pdf/1809.00916.pdf">object context</a></li>
 <li>Pytorch-v1.1 and the official Sync-BN supported. We have reproduced the cityscapes results on the new codebase. Please check the <a href="https://github.com/HRNet/HRNet-Semantic-Segmentation/tree/pytorch-v1.1">pytorch-v1.1 branch</a>.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md45"></a>
+<h1><a class="anchor" id="autotoc_md43"></a>
 Introduction</h1>
 <p>This is the official code of <a href="https://arxiv.org/abs/1904.04514">high-resolution representations for Semantic Segmentation</a>. We augment the HRNet with a very simple segmentation head shown in the figure below. We aggregate the output representations at four different resolutions, and then use a 1x1 convolutions to fuse these representations. The output representations is fed into the classifier. We evaluate our methods on three datasets, Cityscapes, PASCAL-Context and LIP.</p>
 <p>&lt;figure&gt; &lt;text-align: center;&gt; <img src="./figures/seg-hrnet.png" alt="hrnet" width="900" height="150" class="inline"/> &lt;/figcaption&gt; &lt;/figure&gt;</p>
 <p>Besides, we further combine HRNet with <a href="https://arxiv.org/pdf/1909.11065.pdf">Object Contextual Representation</a> and achieve higher performance on the three datasets. The code of HRNet+OCR is contained in this branch. We illustrate the overall framework of OCR in the Figure as shown below:</p>
 <p>&lt;figure&gt; &lt;text-align: center;&gt; <img src="./figures/OCR.PNG" alt="OCR" width="900" height="200" class="inline"/> &lt;/figure&gt;</p>
-<h1><a class="anchor" id="autotoc_md46"></a>
+<h1><a class="anchor" id="autotoc_md44"></a>
 Segmentation models</h1>
 <p>The models are initialized by the weights pretrained on the ImageNet. You can download the pretrained models from <a href="https://github.com/HRNet/HRNet-Image-Classification">https://github.com/HRNet/HRNet-Image-Classification</a>. <em>Slightly different, we use align_corners = True for upsampling in HRNet</em>.</p>
 <ol type="1">
@@ -168,9 +168,9 @@ Segmentation models</h1>
 <td class="markdownTableBodyCenter">HRNetV2-W48 + OCR </td><td class="markdownTableBodyCenter">Yes </td><td class="markdownTableBodyCenter">Yes </td><td class="markdownTableBodyCenter">Yes </td><td class="markdownTableBodyCenter">45.5 </td><td class="markdownTableBodyCenter"><a href="https://drive.google.com/open?id=1JEzwhkcPUc-HXnq5ErbWy0vWnNpI9sZ8">GoogleDrive</a>/<a href="https://pan.baidu.com/s/1HLhjiLIdgaOHs0SzEtkgkQ">BaiduYun(Access Code:peg4)</a>  </td></tr>
 </table>
 <p><b>Note</b> We reproduce HRNet+OCR results on ADE20K dataset with PyTorch 0.4.1.</p>
-<h1><a class="anchor" id="autotoc_md47"></a>
+<h1><a class="anchor" id="autotoc_md45"></a>
 Quick start</h1>
-<h2><a class="anchor" id="autotoc_md48"></a>
+<h2><a class="anchor" id="autotoc_md46"></a>
 Install</h2>
 <ol type="1">
 <li>For LIP dataset, install PyTorch=0.4.1 following the <a href="https://pytorch.org/">official instructions</a>. For Cityscapes and PASCAL-Context, we use PyTorch=1.1.0.</li>
@@ -178,7 +178,7 @@ Install</h2>
 <li>Install dependencies: pip install -r requirements.txt</li>
 </ol>
 <p>If you want to train and evaluate our models on PASCAL-Context, you need to install <a href="https://github.com/zhanghang1989/detail-api">details</a>. </p><div class="fragment"><div class="line">pip install git+https://github.com/zhanghang1989/detail-api.git#subdirectory=PythonAPI</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md49"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md47"></a>
 Data preparation</h2>
 <p>You need to download the <a href="https://www.cityscapes-dataset.com/">Cityscapes</a>, <a href="http://sysu-hcp.net/lip/">LIP</a> and <a href="https://cs.stanford.edu/~roozbeh/pascal-context/">PASCAL-Context</a> datasets.</p>
 <p>Your directory tree should be look like this: </p><div class="fragment"><div class="line">$SEG_ROOT/data</div>
@@ -228,9 +228,9 @@ Data preparation</h2>
 <div class="line">│   │   ├── testvalList.txt</div>
 <div class="line">│   │   ├── trainList.txt</div>
 <div class="line">│   │   └── valList.txt</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md50"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md48"></a>
 Train and Test</h2>
-<h3><a class="anchor" id="autotoc_md51"></a>
+<h3><a class="anchor" id="autotoc_md49"></a>
 PyTorch Version Differences</h3>
 <p>Note that the codebase supports both PyTorch 0.4.1 and 1.1.0, and they use different command for training. In the following context, we use <code>$PY_CMD</code> to denote different startup command.</p>
 <div class="fragment"><div class="line"># For PyTorch 0.4.1</div>
@@ -239,13 +239,13 @@ PyTorch Version Differences</h3>
 <div class="line">PY_CMD=&quot;python -m torch.distributed.launch --nproc_per_node=4&quot;</div>
 </div><!-- fragment --><p>e.g., when training on Cityscapes, we use PyTorch 1.1.0. So the command </p><div class="fragment"><div class="line">$PY_CMD tools/train.py --cfg experiments/cityscapes/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml</div>
 </div><!-- fragment --><p>indicates </p><div class="fragment"><div class="line">python -m torch.distributed.launch --nproc_per_node=4 tools/train.py --cfg experiments/cityscapes/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md52"></a>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md50"></a>
 Training</h3>
 <p>Just specify the configuration file for <code>tools/train.py</code>.</p>
 <p>For example, train the HRNet-W48 on Cityscapes with a batch size of 12 on 4 GPUs: </p><div class="fragment"><div class="line">$PY_CMD tools/train.py --cfg experiments/cityscapes/seg_hrnet_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml</div>
 </div><!-- fragment --><p>For example, train the HRNet-W48 + OCR on Cityscapes with a batch size of 12 on 4 GPUs: </p><div class="fragment"><div class="line">$PY_CMD tools/train.py --cfg experiments/cityscapes/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml</div>
 </div><!-- fragment --><p>Note that we only reproduce HRNet+OCR on LIP dataset using PyTorch 0.4.1. So we recommend to use PyTorch 0.4.1 if you want to train on LIP dataset.</p>
-<h3><a class="anchor" id="autotoc_md53"></a>
+<h3><a class="anchor" id="autotoc_md51"></a>
 Testing</h3>
 <p>For example, evaluating HRNet+OCR on the Cityscapes validation set with multi-scale and flip testing: </p><div class="fragment"><div class="line">python tools/test.py --cfg experiments/cityscapes/seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml \</div>
 <div class="line">                     TEST.MODEL_FILE hrnet_ocr_cs_8162_torch11.pth \</div>
@@ -276,7 +276,7 @@ Testing</h3>
 <div class="line">                     TEST.MODEL_FILE hrnet_ocr_ade20k_4451_torch04.pth \</div>
 <div class="line">                     TEST.SCALE_LIST 0.5,0.75,1.0,1.25,1.5,1.75,2.0 \</div>
 <div class="line">                     TEST.MULTI_SCALE True TEST.FLIP_TEST True</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md54"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md52"></a>
 Other applications of HRNet</h1>
 <ul>
 <li><a href="https://github.com/leoxiaobin/deep-high-resolution-net.pytorch">Human pose estimation</a></li>
@@ -284,7 +284,7 @@ Other applications of HRNet</h1>
 <li><a href="https://github.com/HRNet/HRNet-Object-Detection">Object detection</a></li>
 <li><a href="https://github.com/HRNet/HRNet-Facial-Landmark-Detection">Facial landmark detection</a></li>
 </ul>
-<h1><a class="anchor" id="autotoc_md55"></a>
+<h1><a class="anchor" id="autotoc_md53"></a>
 Citation</h1>
 <p>If you find this work or code is helpful in your research, please cite: </p><div class="fragment"><div class="line">@inproceedings{SunXLW19,</div>
 <div class="line">  title={Deep High-Resolution Representation Learning for Human Pose Estimation},</div>
@@ -308,11 +308,11 @@ Citation</h1>
 <div class="line">  booktitle={ECCV},</div>
 <div class="line">  year={2020}</div>
 <div class="line">}</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md56"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md54"></a>
 Reference</h1>
 <p>[1] Deep High-Resolution Representation Learning for Visual Recognition. Jingdong Wang, Ke Sun, Tianheng Cheng, Borui Jiang, Chaorui Deng, Yang Zhao, Dong Liu, Yadong Mu, Mingkui Tan, Xinggang Wang, Wenyu Liu, Bin Xiao. Accepted by TPAMI. <a href="https://arxiv.org/pdf/1908.07919.pdf">download</a></p>
 <p>[2] Object-Contextual Representations for Semantic Segmentation. Yuhui Yuan, Xilin Chen, Jingdong Wang. <a href="https://arxiv.org/pdf/1909.11065.pdf">download</a></p>
-<h1><a class="anchor" id="autotoc_md57"></a>
+<h1><a class="anchor" id="autotoc_md55"></a>
 Acknowledgement</h1>
 <p>We adopt sync-bn implemented by <a href="https://github.com/mapillary/inplace_abn">InplaceABN</a> for PyTorch 0.4.1 experiments and the official sync-bn provided by PyTorch for PyTorch 1.10 experiments.</p>
 <p>We adopt data precosessing on the PASCAL-Context dataset, implemented by <a href="https://github.com/zhanghang1989/detail-api">PASCAL API</a>. </p>

@@ -77,14 +77,9 @@ class DataLoader(object):
         """!
         __reg_db() is utilized by all dataloaders to properly configure any dataset-specific information for the dataloader.
         The exact implementation is specific to the dataset implemented as they are inherently different in format from one another. 
-        This method is overwritten within each child class (RUGD, Rellis, etc.). 
+        This method is overwritten within each child class (RUGD, Rellis, etc.). The direct use of DataLoader.__reg_db() is currently not supported
+        and will result in program termination. 
 
-        Parameters set:
-        -----------------
-        @param self.num_classes
-
-        Return values:
-        ----------------
         @return train_meta: dictionary of all training images 
         @return test_meta: dictionary of all testing images
         @return val_meta: dictionary of all validation images
@@ -514,11 +509,10 @@ class RUGD(DataLoader):
 
     def __reg_db(self): 
         """!
-            Provides the dataloader with the required format used in detectron2 for  the Rellis 3D Dataset.\n 
-            Current iteration employs filepath tied directly to the current file structure of the VM. This may need to be updated in future versions\n
-            Parameters: \n
-            -----------------------------------------\n
-            Returns: List[dict] - Metadata regarding each data file 
+            Registers (see DataLoader) the RUGD dataset  based on the provided configuration file.
+            If a freshly installed RUGD dataset is linked, the database registration will generate new *.lst split configuration files and re-map the annotation files. 
+            Due to expected long duration of the re-mapping, the user will be prompted to continue with this process. 
+
         """
         class_labels = {
             0:"void",
@@ -551,10 +545,6 @@ class RUGD(DataLoader):
 
         self.num_classes = len(class_labels)
 
-        """ __get_split_config(self):
-        Returns the split configuration data (from train.lst, test.lst and val.lst) for the RUGD dataset. Provides sorting information to split the dataset in the 3-way split.\n
-        Validates that data config exists and data is valid.
-        """
         train_meta, test_meta, val_meta = [], [], []
 
         # Convert and re-map the annotations to the new 0->Nclasses-1 map from the RGB colouring provided
@@ -569,7 +559,7 @@ class RUGD(DataLoader):
             ----------------------------------------------------------------------
             """))
         
-            # Try to get user input 3 times before exiting out. 
+            # Prompt the user 4 times to see if they want to proceed or exit out of the program. On 4th try, auto-exit program
             for i in range(4):
                 inp = input("Proceed with the process (y/n)? ")
                 if inp == "y" or inp == "Y":
