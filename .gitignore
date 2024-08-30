@@ -10,11 +10,16 @@ backup/
 # for general outputs from models -> Don't need to be saved onto GitHub
 output/
 figures/
+# Don't keep the output of the profiler
+profiler/ 
 
 # File extensions (images) 
 # *.svg
 # *.png
 # *.jpg
+
+# No need to save the profiler outputs (only used for optimization and debugging)
+*.prof  
 
 # Visual Studio Code Specific Stuff
 .vscode

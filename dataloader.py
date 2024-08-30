@@ -5,7 +5,7 @@ import numpy as np
 import random
 import patchify
 import albumentations as album 
-import torch
+import torch, torchvision
 import yaml
 import textwrap as txt
 
@@ -554,7 +554,7 @@ class RUGD(DataLoader):
             
             ----------------------------------------------------------------------
             No modified annotations files detected. Re-mapping of the original dataset files are required prior to using the RUGD dataset in this environment.
-            Re-mapping will take a considerable amount of time (~10-25 mins) to complete but will only be required once per fresh install of the RUGD dataset.
+            Re-mapping will take a bit of time (~3 mins on GPU) to complete but will only be required once per fresh install of the RUGD dataset.
             Additionally, to speed up the process, the use of a CUDA-capable GPU is recommended (and pre-configured in the code) as conversion will be much quicker.
             ----------------------------------------------------------------------
             """))
@@ -627,17 +627,24 @@ class RUGD(DataLoader):
         seqs = os.listdir(ann_path) # get the sequences in the dataset
         seqs.remove(self.cfg.DB.COLOR_MAP) # only use the sequences, not the color map config file 
 
-        # Get the color/class mapping based on the dataset provided configuration map
-        color_map = {}
         with open("{}{}/{}".format(self.cfg.DB.PATH, self.cfg.DB.ANN_DIR, self.cfg.DB.COLOR_MAP), 'r') as file:
             color_config = file.readlines()
-
-            for c in color_config:
-                c = c.strip() # remove eol characters such as \n
-                c = c.split(' ') 
-                color_map[(int(c[-3]), int(c[-2]), int(c[-1]))] = int(c[0])
-            
+            color_map = []
+            for i, c in enumerate(color_config): 
+                c = c.strip()
+                c = c.split()
+                color_map.append([int(c[-3]), int(c[-2]), int(c[-1])]) # add to the structure
             file.close()
+        
+        color_map = torch.tensor(color_map).type(torch.uint8)
+
+        import time ### TODO -> Remove this once the updated time has been measured. 
+        time_start_mapping = time.time() 
+        time_per_img = [] # hold the time required for each image (in seconds)
+
+        # Will be using the GPU if available on the host machine, CPU used if not available
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device("cpu")
+        color_map = color_map.to(device)
 
         # Go through all the images in the sequences and re-map them using the retrieved color_map value 
         for seq in seqs: 
@@ -647,25 +654,28 @@ class RUGD(DataLoader):
             anns = os.scandir("{}/{}".format(ann_path, seq))
             for ann in anns: 
                 if ann.name.split(".")[-1] == "png": # only applies to the png files 
+                    time_start_single_img = time.time()
                     # Obtain and convert the image color to use RGB values (same as used in color_map)
-                    img = cv2.cvtColor(cv2.imread(ann.path), cv2.COLOR_BGR2RGB)
-                    img_shape = img.shape[:-1] # store shape to re-use, only one channel is required for the image  
-                    img = torch.tensor(img)
-
-                    # Will be using the GPU if available on the host machine, CPU used if not available
-                    device = torch.device('cuda') if torch.cuda.is_available() else torch.device("cpu")
-                    img.to(device)
+                    img = torchvision.io.read_image(ann.path)
+                    img_shape = img.shape[1:] # store shape to re-use, only one channel is required for the image  
+                    img = img.to(device)
                     
                     # Easier to handle the data mapping when flattening the image prior to mapping 
-                    img = img.flatten(end_dim = 1)
-                    img = [color_map[tuple(x.tolist())] for x in img] # re-maps the tensor using the new mapping scheme
-                    img = torch.tensor(img).reshape(img_shape).numpy() # convert and re-shape back to the original dimensions
+                    img = img.flatten(start_dim = 1, end_dim = 2).transpose(1,0)
 
-                    cv2.imwrite("{}/{}/{}".format(modif_ann_path, seq, ann.name), img)
+                    img = img.repeat(25,1,1).transpose(1,0) # expand to complete operations with the color_Map
+                    img = (img == color_map).type(torch.uint8) # apply the masking 
+                    img = img.sum(dim=2, dtype=torch.uint8).argmax(dim=1)
+
+                    img = img.type(torch.uint8).reshape(img_shape).unsqueeze(dim=0) # only require one of the channels (others are identic)
+                    img = img.to("cpu") # bring back on the CPU (does nothing if already on the CPU)
+                    torchvision.io.write_png(img, "{}/{}/{}".format(modif_ann_path, seq, ann.name))
+                    time_per_img.append(time.time() - time_start_single_img)
+
+                
+        print("Total time (in seconds) required to newly map the files: {}s".format(time.time() - time_start_mapping))
 
         print("Image Re-mapping is Complete and the new files are saved within the 'RUGD_modif_frames-with-annotations' directory")
-
-
 
     def __gen_split_config_lsts(self): 
         """!Generates the train/test/val split configuration lists which outline which sequences are present within each split. 
