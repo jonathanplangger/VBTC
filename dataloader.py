@@ -478,13 +478,14 @@ class Rellis(DataLoader):
                 exit()
 
         # add all the colours to a list object 
-        colors = []
+        colors = [(0,0,0)]
         for i in range(35): 
             try: 
                 val = tuple(ont[1][i])
                 colors.append(val)
             except: # if the dict element does not exist
                 colors.append((0,0,0)) # assign black colour to the unused masks
+        
 
         if remap_labels: 
             temp = colors
@@ -622,8 +623,8 @@ class RUGD(DataLoader):
         print("The re-mapping process is beginning. This will take a while to complete.")
         modif_ann_path = "{}{}".format(self.cfg.DB.PATH, self.cfg.DB.MODIF_ANN_DIR)
         ann_path = "{}{}".format(self.cfg.DB.PATH, self.cfg.DB.ANN_DIR)
-        os.mkdir(modif_ann_path) # TODO -> make sure to turn this back ON!!!!
-
+        os.mkdir(modif_ann_path)
+        
         seqs = os.listdir(ann_path) # get the sequences in the dataset
         seqs.remove(self.cfg.DB.COLOR_MAP) # only use the sequences, not the color map config file 
 

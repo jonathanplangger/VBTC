@@ -1,4 +1,3 @@
-# Code obtained from: https://github.com/AdeelH/pytorch-multi-class-focal-loss/blob/master/focal_loss.py
 
 from typing import Optional, Sequence
 
@@ -7,7 +6,7 @@ from torch import Tensor
 from torch import nn
 from torch.nn import functional as F
 
-
+# Code for Focal Loss obtained from: https://github.com/AdeelH/pytorch-multi-class-focal-loss/blob/master/focal_loss.py
 class FocalLoss(nn.Module):
     """ Focal Loss, as described in https://arxiv.org/abs/1708.02002.
 

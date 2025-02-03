@@ -79,9 +79,10 @@ _C.MODELS = CN()
 _C.MODELS.MODELS_DIR = "models" # location of the Models source code 
 # Modified UNet 
 _C.MODELS.UNET = CN()
-_C.MODELS.UNET.MODEL_FILE = "" # Path to model file 
+_C.MODELS.UNET.MODEL_FILE = "models/U-Net" # Path to model file 
 _C.MODELS.UNET.BASE = 40 # base value for the n# of U-Net channels per layer. (Every succeeding layer increases the n# of channels by 2)\
 _C.MODELS.UNET.KERNEL_SIZE = 5 # kernel size employed in the convolution
+_C.MODELS.UNET.SRC_DIR = "models/U-Net"
 
 # DeepLabv3+
 _C.MODELS.DEEPLABV3PLUS = CN()

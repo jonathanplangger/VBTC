@@ -13,10 +13,12 @@ class Block(nn.Module):
         self.conv1 = nn.Conv2d(in_ch, out_ch, kernel_size, padding=2)
         self.relu  = nn.ReLU()
         self.conv2 = nn.Conv2d(out_ch, out_ch, kernel_size, padding=2)
+        # self.dropout = nn.Dropout2d(p = 0.2) # add a dropout layer to the model
     
     # configure forward pass through the Block
     def forward(self, x):
         return self.conv2(self.relu(self.conv1(x)))
+        # return self.dropout(self.conv2(self.relu(self.conv1(x))))
 
 
 class Encoder(nn.Module):
@@ -38,7 +40,7 @@ class Decoder(nn.Module):
     def __init__(self, chs=(1024, 512, 256, 128, 64), kernel_size = 3):
         super().__init__()
         self.chs         = chs
-        self.upconvs    = nn.ModuleList([nn.ConvTranspose2d(chs[i], chs[i+1], 2, 2) for i in range(len(chs)-1)])
+        self.upconvs    = nn.ModuleList([nn.ConvTranspose2d(chs[i], chs[i+1], kernel_size, 2) for i in range(len(chs)-1)])
         self.dec_blocks = nn.ModuleList([Block(chs[i], chs[i+1], kernel_size) for i in range(len(chs)-1)]) 
         
     def forward(self, x, encoder_features):
@@ -50,7 +52,11 @@ class Decoder(nn.Module):
         return x
     
     def crop(self, enc_ftrs, x):
-        _, _, H, W = x.shape
+        
+        if len(x.shape) == 4:
+            _, _, H, W = x.shape
+        elif len(x.shape) == 3: # handle when only one image is input as well 
+            _, H, W = x.shape
         enc_ftrs   = torchvision.transforms.CenterCrop([H, W])(enc_ftrs)
         return enc_ftrs
 
@@ -74,7 +80,7 @@ class UNet(nn.Module):
         self.out_sz = out_sz # output size value   
 
     def forward(self, x):
-        out = self.encoder(x)
+        out = self.encoder(x)  
         out      = self.decoder(out[::-1][0], out[::-1][1:])
         out      = self.head(out)
         # print(self.head.weight)
@@ -87,12 +93,26 @@ if __name__ == "__main__":
     img_h = 1920
     img_w = 1200
 
-    base = 2
+    base = 16
     model = UNet(
         enc_chs=(3,base, base*2, base*4, base*8, base*16),
         dec_chs=(base*16, base*8, base*4, base*2, base), 
-        out_sz=(img_h,img_w), retain_dim=True, num_class=35, kernel_size = 7
+        out_sz=(img_h,img_w), retain_dim=True, num_class=19, kernel_size = 5
         )
     device = torch.device("cuda")
     model = model.to(device)
     torchsummary.summary(model, (3,1920,1200))
+
+
+    # Used for testing the models themselves
+    import torch.autograd.profiler as profiler
+
+    # Fake input to be used in benchmarking
+    input = torch.rand(1,3,1200,1920).to(device)
+
+    with profiler.profile(with_stack=True, profile_memory=True, use_cuda = True) as prof:     
+        pred = model(input)
+
+    print(prof.key_averages(group_by_stack_n=3).table(sort_by="cuda_time", row_limit=6))   
+
+

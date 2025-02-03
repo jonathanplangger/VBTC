@@ -13,7 +13,6 @@ torch.cuda.empty_cache()
 # Model configuration
 from torch import nn 
 import torch.nn.functional as F
-import unet 
 import datetime
 from patchify import patchify
 import modelhandler
@@ -43,7 +42,7 @@ from config import get_cfg_defaults # obtain model configurations
         # The training process was configured into a class to better suit the needs for modularity and logging purposes\n
         # -------------------------------------------------\n
 
-class TrainModel(object):
+class TrainModel:
     """ Implements the basic functionalities for the implementation of model training. Configuration of training is defined by the configuration file. \n
     No configuration params are available at the moment.
 
@@ -138,15 +137,12 @@ class TrainModel(object):
             self.db.randomizeOrder()
             # create/wipe the array recording the loss values
 
-            # TODO -  Turn this into a configurable parameter
-            load_size = 1
-            
             with tqdm.tqdm(total=len(self.db.train_meta), unit="Batch") as pbar:
                 
                 for i in range(len(self.db.train_meta)): 
                              
                     # load the image batch
-                    _, images, ann, idx = self.db.load_batch(idx, batch_size=load_size, resize = input_size)
+                    _, images, ann, idx = self.db.load_batch(idx, batch_size=1, resize = input_size)
 
                     for i, img in enumerate(images): 
                         

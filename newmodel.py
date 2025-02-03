@@ -2,7 +2,7 @@ import torch, torchvision
 import torch.nn as nn
 import sys, os
 from torchinfo import summary
-import unet
+
 import torch.autograd.profiler as profiler 
 from lib.partialconv.models.partialconv2d import PartialConv2d # import the partial convolutions
 # Add the resnet to the available backbone to run the program

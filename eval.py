@@ -29,6 +29,7 @@ from torch.nn import functional as TF
 import torchinfo
 from torch.utils.tensorboard import SummaryWriter
 import pandas as pd
+from sklearn.metrics import confusion_matrix
 
 from config import get_cfg_defaults
 import modelhandler
@@ -54,8 +55,8 @@ class ComparativeEvaluation():
     def eval(self):
 
         # Dataloader initialization
-        db = self.db # hold local version of the dataloader
-        db.randomizeOrder()
+        # Randomize the order of the elements within the meta list. 
+        self.db.randomizeOrder()
 
         # Obtain the model handler -> used to generate model-specific features 
         model_handler = modelhandler.ModelHandler(self.cfg, "eval")
@@ -65,11 +66,11 @@ class ComparativeEvaluation():
         # Empty the cache prior to training the network
         torch.cuda.empty_cache()
 
-        TOTAL_NUM_TEST = len(db.test_meta)
+        TOTAL_NUM_TEST = len(self.db.test_meta)
         NUM_TEST = TOTAL_NUM_TEST
         # NUM_TEST = 100 # for quickly testing the eval program
         
-        colors = db.get_colors()
+        colors = self.db.get_colors()
 
         # Get model and place on GPU. 
         model = model_handler.load_model()
@@ -81,7 +82,7 @@ class ComparativeEvaluation():
         # new img size set by config file
             input_size = (self.cfg.EVAL.INPUT_SIZE.HEIGHT, self.cfg.EVAL.INPUT_SIZE.WIDTH) 
         else: 
-            input_size = (db.height, db.width) # use the original input size values instead.
+            input_size = (self.db.height, self.db.width) # use the original input size values instead.
 
         # Get the model summary information
         torchinfo.summary(model, input_size=(1, 3, input_size[0], input_size[1]))
@@ -90,15 +91,12 @@ class ComparativeEvaluation():
         dice = torchmetrics.Dice().to(self.device)
 
         # Intersection over Union metric calculator 
-        iou = torchmetrics.JaccardIndex(task='multiclass', num_classes=db.num_classes, average='none')
+        iou = torchmetrics.JaccardIndex(task='multiclass', num_classes=self.db.num_classes, average='none')
 
         # Used to tally the final mean intersection over union score
-        iou_c = torch.zeros(db.num_classes).to(self.device)
+        iou_c = torch.zeros(self.db.num_classes).to(self.device)
         # Count the n# of instances with this class in it
-        count_c = torch.zeros(db.num_classes).to(self.device)
-
-
-        from sklearn.metrics import confusion_matrix
+        count_c = torch.zeros(self.db.num_classes).to(self.device)
 
         mean_dice = torch.tensor(0.).cuda() # used to calculate the mean Dice value for the model
         # init loggers for model time measurement
@@ -106,7 +104,7 @@ class ComparativeEvaluation():
         timings = torch.zeros((NUM_TEST+1, 1)) # prep array to store all the values for time
 
         # Create blank master confusion matrix
-        master_conf_matrix = np.zeros((db.num_classes, db.num_classes))
+        master_conf_matrix = np.zeros((self.db.num_classes, self.db.num_classes))
 
         # Dummy input tensors employed during the warm-up cycle for the model
         dummy_input = torch.randn(1,3,input_size[0], input_size[1], dtype=torch.float).cuda()
@@ -126,13 +124,11 @@ class ComparativeEvaluation():
 
                 # ------------ Run the model with the loaded images  ---------------- #
                 # load the batch from the dataset
-                orig_images, images, ann, idx = db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, resize=input_size) # load images
+                orig_images, images, ann, idx = self.db.load_batch(idx, self.cfg.EVAL.BATCH_SIZE, resize=input_size) # load images
                 
                 # Place the images and annotations on the GPU.
-                images = images.cuda()
-                ann = ann.cuda()
-              
-                startTime = time.time() # used to measure prediction time for the model
+                images = images.to(self.device)
+                ann = ann.to(self.device)
 
                 # run model
                 with torch.no_grad(): # do not calculate gradients for this task
@@ -150,22 +146,28 @@ class ComparativeEvaluation():
                 # Convert the prediction output to argmax labels representing each class predicted
                 pred = model_handler.handle_output(pred)
 
+                # Log the results of the evaluation onto tensorboard
+                writer.add_scalar("Metrics/Time(ms)", timings[idx], idx)
+                    
                 # Get the iou score for each of the classes individually
                 iou_score = iou(pred.cpu(), ann.long().cpu()).to(self.device)
 
                 # # Measure the performance of the model
                 dice_score = dice(pred, ann.long())
 
+                writer.add_scalar("Metrics/Dice", dice_score.item(), idx) # record the dice score                     
+
                 # Log the values for storing later
                 log_iou[idx] = iou_score.cpu() # store the values onto the tensor
                 log_dice = torch.cat((log_dice, dice_score.cpu().unsqueeze(0)), dim=0)
+                # Add dice score to Dice Sum 
                 mean_dice += dice_score
 
                 # Calculate the confusion matrix for this figure.                
                 conf_pred = pred.cpu().numpy().flatten()
                 conf_ann = ann.cpu().numpy().flatten()
                 # Sum the new confusion matrix results together
-                master_conf_matrix = master_conf_matrix + metrics.confusion_matrix(conf_ann, conf_pred, labels = range(0,db.num_classes))
+                master_conf_matrix = master_conf_matrix + metrics.confusion_matrix(conf_ann, conf_pred, labels = range(0,self.db.num_classes))
 
 
                 # ----------- Plot the Results ----------------------- #
@@ -177,18 +179,13 @@ class ComparativeEvaluation():
                     iou_c[c] += iou_score[c] #add to the final sum count for IoU
                     count_c[c] += 1 # increment the final count 
 
-                # Log the results of the evaluation onto tensorboard
-                if not self.cfg.EVAL.DISPLAY_IMAGE:
-                    writer.add_scalar("Metrics/Dice", dice_score.item(), idx) # record the dice score 
-                    writer.add_scalar("Metrics/Time", time.time() - startTime, idx)
-
                 # -------------- Show the image output for the segmentation  ---------- #
                 if self.cfg.EVAL.DISPLAY_IMAGE:     
 
                     if self.cfg.DB.DB_NAME == "rellis":
                         # Re-map back to the 0-35 scheme before displaying the output 
-                        pred = db.map_labels(pred, True)
-                        ann = db.map_labels(ann,True)
+                        pred = self.db.map_labels(pred, True)
+                        ann = self.db.map_labels(ann,True)
 
                     # move the masks and the image onto the CPU
                     images = orig_images # restore original images
@@ -220,9 +217,9 @@ class ComparativeEvaluation():
                     plt.show()
 
                 # display the figure 
-                if self.cfg.EVAL.PRED_CERTAINTY: 
-                    FigPredictionCertainty(torch.softmax(pred_raw, dim=1), pred, ann, class_labels = db.class_labels, color_map=colors)
-                    # FigPredictionCertainty(torch.nn.functional.normalize(pred_raw, dim=1), pred, ann, class_labels = db.class_labels, color_map=colors)
+                # if self.cfg.EVAL.PRED_CERTAINTY: 
+                #     FigPredictionCertainty(torch.softmax(pred_raw, dim=1), pred, ann, class_labels = self.db.class_labels, color_map=colors)
+                #     # FigPredictionCertainty(torch.nn.functional.normalize(pred_raw, dim=1), pred, ann, class_labels = self.db.class_labels, color_map=colors)
 
 
 
@@ -242,7 +239,7 @@ class ComparativeEvaluation():
 
         ### Handle the Confusion Matrix for the Dataset ###
         # Save the output confusion matrix for the dataset
-        model_num = db.cfg.EVAL.MODEL_FILE.split("/")[-2] # get the number for the model being evaluated
+        model_num = self.db.cfg.EVAL.MODEL_FILE.split("/")[-2] # get the number for the model being evaluated
         fp = "figures/ConfusionMatrix/{}_ConfusionMatrix.csv".format(model_num) # update the file name based on the value
         np.savetxt(fp, master_conf_matrix, delimiter = ",")        
 
@@ -250,7 +247,7 @@ class ComparativeEvaluation():
         # Store values on dataframes
         df_log = pd.DataFrame(log_iou[1:].numpy())
         df_log["dice"] = log_dice.numpy()
-        df_log = df_log.rename(columns = db.class_labels)
+        df_log = df_log.rename(columns = self.db.class_labels)
         df_log.to_csv("figures/ComparativeStudyResults/LoggedResults/{}_LoggedResults.csv".format(model_num), index = False)
         # Get the mean value 
         mean_dice = mean_dice / NUM_TEST           
@@ -261,7 +258,7 @@ class ComparativeEvaluation():
         table = {}
 
             # Obtain the class label strings & update to merge "void" and "dirt" classes as done in the model
-        class_labels = list(db.class_labels.values())
+        class_labels = list(self.db.class_labels.values())
 
         # ONLY perform these steps if the rellis dataset is being used here
         if self.cfg.DB.DB_NAME == 'rellis':         
@@ -294,7 +291,7 @@ class ComparativeEvaluation():
 
         :param idx: Index value for the specific image input to the model. Ensures the consistency in image employed, defaults to 0
         :type idx: int, optional
-        :param model_num: Number of the model evaluated. Please ensure that the number is valid and corresponds to the model/db configured in the configuration file., defaults to 41
+        :param model_num: Number of the model evaluated. Please ensure that the number is valid and corresponds to the model/self.db configured in the configuration file., defaults to 41
         :type model_num: int, optional
         :return: (pred, ann, orig_images) : returns 3 outputs concerning the labelled prediction and annotation images as well as the original input image to the network. 
         :rtype: torch.tensor() : for all 3 return values
@@ -350,9 +347,9 @@ class ComparativeEvaluation():
         """
         masks = torch.zeros(self.cfg.DB.NUM_CLASSES, self.cfg.DB.IMG_SIZE.HEIGHT , self.cfg.DB.IMG_SIZE.WIDTH, device=self.device, dtype=torch.bool)
 
-        if self.cfg.DB.DB_NAME == "rellis":
-            # Re-map back to the 0-35 scheme before displaying the output 
-            pred = self.db.map_labels(pred, True)
+        # if self.cfg.DB.DB_NAME == "rellis":
+        #     # Re-map back to the 0-35 scheme before displaying the output 
+        #     pred = self.db.map_labels(pred, True)
 
         # obtain a mask for each class
         for classID in range(masks.shape[0]): 

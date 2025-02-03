@@ -1,5 +1,4 @@
 import datetime
-import unet
 from torch.nn import functional as TF
 import torch
 from dataloader import map_labels
@@ -20,6 +19,7 @@ class Model(object):
         self.cfg = cfg # configuration file
         self.resize_img = False # default to false, overwritten in next function
         self.input_size = self.__input_size(mode)
+        self.mode = mode # preset the mode of operation for the model
 
     def __input_size(self, mode): 
         """
@@ -113,12 +113,17 @@ class Model(object):
 #                                           Model Configurations                                              #
 # ----------------------------------------------------------------------------------------------------------- #
 
-class UNet(Model): 
+class UNet(Model):
+    def __init__(self, cfg, mode): 
+        sys.path.insert(0, cfg.MODELS.UNET.SRC_DIR)
+        super().__init__(cfg, mode) 
 
     def gen_model(self, num_classes):
         """
             Generates the model based on the parameters specifed within the configuration file.
         """
+        import unet 
+
         base = self.cfg.MODELS.UNET.BASE
         kernel_size = self.cfg.MODELS.UNET.KERNEL_SIZE
         num_class = num_classes
@@ -141,7 +146,10 @@ class UNet(Model):
         """.format(self.cfg.MODELS.UNET.BASE, self.cfg.MODELS.UNET.KERNEL_SIZE, self.cfg.TRAIN.LR)
 
     def load_model(self): 
-        return torch.load(self.cfg.EVAL.MODEL_FILE)
+        if self.mode == "train": 
+            return torch.load(self.cfg.MODELS.UNET.MODEL_FILE)
+        elif self.mode == "eval": 
+            return torch.load(self.cfg.EVAL.MODEL_FILE)
     
     def handle_output_eval(self, pred):
         pred = super().handle_output_eval(pred)
@@ -186,8 +194,6 @@ class HRNet_OCR(Model):
     def gen_model(self, num_classes): 
         src_dir = self.cfg.MODELS.HRNET_OCR.SRC_DIR
         sys.path.insert(0, src_dir + "/lib") # add to path to allow for import 
-        # from . import config
-        # from config import update_config
         from hrnet_config import config, update_config # import the default config and update_config f'n
 
         # import the model library
