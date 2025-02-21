@@ -7,7 +7,7 @@ EVAL:
   MODEL_NAME: "unet" # hrnet_ocr, unet, deeplabv3plus
   MODEL_FILE: "/mnt/d/Thesis/Test Results/1_Winter2024_TrainingResults/031/model.pt"
   # MODEL_FILE: "./saves/epoch1.pt"
-  DISPLAY_IMAGE: False 
+  DISPLAY_IMAGE: True 
   PRED_CERTAINTY: False
   BATCH_SIZE: 1
   INPUT_SIZE: # re-size input img to model to new size.
